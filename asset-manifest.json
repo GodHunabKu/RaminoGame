@@ -1,15 +1,15 @@
 {
   "files": {
-    "main.css": "/RaminoGame/static/css/main.0fe9564f.css",
-    "main.js": "/RaminoGame/static/js/main.9b37168a.js",
-    "static/js/488.42a5972d.chunk.js": "/RaminoGame/static/js/488.42a5972d.chunk.js",
-    "index.html": "/RaminoGame/index.html",
-    "main.0fe9564f.css.map": "/RaminoGame/static/css/main.0fe9564f.css.map",
-    "main.9b37168a.js.map": "/RaminoGame/static/js/main.9b37168a.js.map",
-    "488.42a5972d.chunk.js.map": "/RaminoGame/static/js/488.42a5972d.chunk.js.map"
+    "main.css": "./static/css/main.0fe9564f.css",
+    "main.js": "./static/js/main.e9737aa9.js",
+    "static/js/488.42a5972d.chunk.js": "./static/js/488.42a5972d.chunk.js",
+    "index.html": "./index.html",
+    "main.0fe9564f.css.map": "./static/css/main.0fe9564f.css.map",
+    "main.e9737aa9.js.map": "./static/js/main.e9737aa9.js.map",
+    "488.42a5972d.chunk.js.map": "./static/js/488.42a5972d.chunk.js.map"
   },
   "entrypoints": [
     "static/css/main.0fe9564f.css",
-    "static/js/main.9b37168a.js"
+    "static/js/main.e9737aa9.js"
   ]
 }
