@@ -1,15 +1,15 @@
 {
   "files": {
-    "main.css": "/gestionale-mole-frontend/static/css/main.0fe9564f.css",
-    "main.js": "/gestionale-mole-frontend/static/js/main.a79b3456.js",
-    "static/js/488.42a5972d.chunk.js": "/gestionale-mole-frontend/static/js/488.42a5972d.chunk.js",
-    "index.html": "/gestionale-mole-frontend/index.html",
-    "main.0fe9564f.css.map": "/gestionale-mole-frontend/static/css/main.0fe9564f.css.map",
-    "main.a79b3456.js.map": "/gestionale-mole-frontend/static/js/main.a79b3456.js.map",
-    "488.42a5972d.chunk.js.map": "/gestionale-mole-frontend/static/js/488.42a5972d.chunk.js.map"
+    "main.css": "/RaminoGame/static/css/main.0fe9564f.css",
+    "main.js": "/RaminoGame/static/js/main.9b37168a.js",
+    "static/js/488.42a5972d.chunk.js": "/RaminoGame/static/js/488.42a5972d.chunk.js",
+    "index.html": "/RaminoGame/index.html",
+    "main.0fe9564f.css.map": "/RaminoGame/static/css/main.0fe9564f.css.map",
+    "main.9b37168a.js.map": "/RaminoGame/static/js/main.9b37168a.js.map",
+    "488.42a5972d.chunk.js.map": "/RaminoGame/static/js/488.42a5972d.chunk.js.map"
   },
   "entrypoints": [
     "static/css/main.0fe9564f.css",
-    "static/js/main.a79b3456.js"
+    "static/js/main.9b37168a.js"
   ]
 }
