@@ -1,0 +1,152 @@
+# ==========================================
+# ONE SERVER - .htaccess Ottimizzato
+# Performance, Cache & Security
+# ==========================================
+
+# ==========================================
+# COMPRESSIONE GZIP
+# ==========================================
+<IfModule mod_deflate.c>
+    # Comprimi HTML, CSS, JavaScript, Text, XML
+    AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css text/javascript
+    AddOutputFilterByType DEFLATE application/xml application/xhtml+xml application/rss+xml
+    AddOutputFilterByType DEFLATE application/javascript application/x-javascript
+    AddOutputFilterByType DEFLATE image/svg+xml
+</IfModule>
+
+# ==========================================
+# BROWSER CACHING
+# ==========================================
+<IfModule mod_expires.c>
+    ExpiresActive On
+
+    # Immagini - 1 anno
+    ExpiresByType image/jpg "access plus 1 year"
+    ExpiresByType image/jpeg "access plus 1 year"
+    ExpiresByType image/gif "access plus 1 year"
+    ExpiresByType image/png "access plus 1 year"
+    ExpiresByType image/svg+xml "access plus 1 year"
+    ExpiresByType image/webp "access plus 1 year"
+    ExpiresByType image/x-icon "access plus 1 year"
+
+    # CSS e JavaScript - 1 mese
+    ExpiresByType text/css "access plus 1 month"
+    ExpiresByType application/javascript "access plus 1 month"
+    ExpiresByType application/x-javascript "access plus 1 month"
+
+    # Font - 1 anno
+    ExpiresByType font/ttf "access plus 1 year"
+    ExpiresByType font/otf "access plus 1 year"
+    ExpiresByType font/woff "access plus 1 year"
+    ExpiresByType font/woff2 "access plus 1 year"
+    ExpiresByType application/font-woff "access plus 1 year"
+
+    # HTML - 1 ora (per avere aggiornamenti rapidi)
+    ExpiresByType text/html "access plus 1 hour"
+
+    # Default - 1 settimana
+    ExpiresDefault "access plus 1 week"
+</IfModule>
+
+# ==========================================
+# CACHE CONTROL HEADERS
+# ==========================================
+<IfModule mod_headers.c>
+    # Cache immagini per 1 anno
+    <FilesMatch "\.(jpg|jpeg|png|gif|svg|webp|ico)$">
+        Header set Cache-Control "max-age=31536000, public"
+    </FilesMatch>
+
+    # Cache CSS/JS per 1 mese
+    <FilesMatch "\.(css|js)$">
+        Header set Cache-Control "max-age=2592000, public"
+    </FilesMatch>
+
+    # Cache font per 1 anno
+    <FilesMatch "\.(ttf|otf|woff|woff2|eot)$">
+        Header set Cache-Control "max-age=31536000, public"
+    </FilesMatch>
+
+    # No cache per HTML
+    <FilesMatch "\.(html|php)$">
+        Header set Cache-Control "no-cache, no-store, must-revalidate"
+        Header set Pragma "no-cache"
+        Header set Expires "0"
+    </FilesMatch>
+</IfModule>
+
+# ==========================================
+# SICUREZZA
+# ==========================================
+<IfModule mod_headers.c>
+    # Previeni clickjacking
+    Header always set X-Frame-Options "SAMEORIGIN"
+
+    # Previeni MIME type sniffing
+    Header always set X-Content-Type-Options "nosniff"
+
+    # XSS Protection
+    Header always set X-XSS-Protection "1; mode=block"
+
+    # Referrer Policy
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+</IfModule>
+
+# Disabilita directory browsing
+Options -Indexes
+
+# Proteggi file sensibili
+<FilesMatch "^(config\.php|\.env|visite\.txt|\.htaccess|\.git)">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# ==========================================
+# REWRITE ENGINE (se necessario)
+# ==========================================
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /
+
+    # Forza HTTPS (decommenta se hai SSL)
+    # RewriteCond %{HTTPS} off
+    # RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+    # Rimuovi www (opzionale)
+    # RewriteCond %{HTTP_HOST} ^www\.(.*)$ [NC]
+    # RewriteRule ^(.*)$ https://%1/$1 [R=301,L]
+</IfModule>
+
+# ==========================================
+# PHP SETTINGS (opzionale)
+# ==========================================
+<IfModule mod_php7.c>
+    # Disabilita display errors in produzione
+    php_flag display_errors Off
+
+    # Abilita log errors
+    php_flag log_errors On
+
+    # Aumenta memory limit (opzionale)
+    # php_value memory_limit 256M
+
+    # Aumenta upload size (opzionale)
+    # php_value upload_max_filesize 20M
+    # php_value post_max_size 20M
+</IfModule>
+
+# ==========================================
+# PERFORMANCE
+# ==========================================
+# ETags (per cache validation)
+<IfModule mod_headers.c>
+    Header unset ETag
+</IfModule>
+FileETag None
+
+# Limit Request Size (previeni DDoS)
+LimitRequestBody 10485760
+
+# ==========================================
+# END
+# ==========================================

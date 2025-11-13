@@ -62,8 +62,42 @@ if(isset($item_shop) && $item_shop != "") {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
     <title><?php print $site_title.' - '.$title; if($offline) print ' - '.$lang['server-offline']; ?></title>
+
+    <!-- SEO Meta Tags -->
     <meta name="description" content="ONE: Il nuovo server Metin2 italiano con livello max 220, gameplay FULL NEWSTYLE e oltre 1000 personalizzazioni. Shop 100% in-game!">
-    <meta name="keywords" content="metin2, server metin2, metin2 italiano, ONE server, newstyle, mmorpg">
+    <meta name="keywords" content="metin2, server metin2, metin2 italiano, ONE server, newstyle, mmorpg, metin2 privato, server privato metin2">
+    <meta name="author" content="ONE Server">
+    <meta name="robots" content="index, follow">
+    <meta name="language" content="Italian">
+    <meta name="revisit-after" content="7 days">
+
+    <!-- Open Graph / Facebook / Discord -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="<?php echo $site_url; ?>">
+    <meta property="og:title" content="<?php print $site_title.' - '.$title; ?>">
+    <meta property="og:description" content="ONE: Il nuovo server Metin2 italiano con livello max 220, gameplay FULL NEWSTYLE e oltre 1000 personalizzazioni. Shop 100% in-game!">
+    <meta property="og:image" content="<?php echo $site_url; ?>images/og-image.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:site_name" content="<?php print $site_title; ?>">
+    <meta property="og:locale" content="it_IT">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="<?php echo $site_url; ?>">
+    <meta name="twitter:title" content="<?php print $site_title.' - '.$title; ?>">
+    <meta name="twitter:description" content="ONE: Il nuovo server Metin2 italiano con livello max 220, gameplay FULL NEWSTYLE e oltre 1000 personalizzazioni. Shop 100% in-game!">
+    <meta name="twitter:image" content="<?php echo $site_url; ?>images/og-image.png">
+
+    <!-- Canonical URL -->
+    <link rel="canonical" href="<?php echo $site_url; ?>">
+
+    <!-- Theme Color -->
+    <meta name="theme-color" content="#E74C3C">
+    <meta name="msapplication-TileColor" content="#E74C3C">
+
+    <!-- Apple Touch Icon -->
+    <link rel="apple-touch-icon" sizes="180x180" href="<?php echo $site_url; ?>images/apple-touch-icon.png">
     
     <!-- Preconnect -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
