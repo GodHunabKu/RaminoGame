@@ -1,13 +1,13 @@
 /**
  * ==========================================
  * ONE SERVER - JavaScript Ottimizzato
- * Version: 2.4
+ * Version: 3.0 - Pulito e Performante
  * ==========================================
  */
 
 (function() {
     'use strict';
-    
+
     // ===== UTILITY FUNCTIONS =====
     const Utils = {
         // Debounce per ottimizzare eventi ripetuti
@@ -22,7 +22,7 @@
                 timeout = setTimeout(later, wait);
             };
         },
-        
+
         // Throttle per limitare la frequenza di esecuzione
         throttle(func, limit) {
             let inThrottle;
@@ -34,7 +34,7 @@
                 }
             };
         },
-        
+
         // Animazione smooth per scroll
         smoothScroll(target, duration = 800) {
             const targetPosition = target.getBoundingClientRect().top + window.pageYOffset;
@@ -67,12 +67,12 @@
             const preloader = document.getElementById('preloader');
             if (!preloader) return;
 
-            // Nasconde il preloader quando la pagina � completamente caricata
+            // Nasconde il preloader quando la pagina è completamente caricata
             window.addEventListener('load', () => {
                 setTimeout(() => {
                     preloader.classList.add('loaded');
                     document.body.classList.add('loaded');
-                    
+
                     // Rimuove completamente il preloader dopo l'animazione
                     setTimeout(() => {
                         preloader.style.display = 'none';
@@ -95,7 +95,7 @@
         init() {
             const mobileMenuButton = document.getElementById('mobile-menu-toggle');
             const sidebar = document.querySelector('.sidebar');
-            
+
             if (!mobileMenuButton || !sidebar) return;
 
             // Toggle menu
@@ -131,8 +131,8 @@
         toggleMenu() {
             document.body.classList.toggle('sidebar-open');
             const isOpen = document.body.classList.contains('sidebar-open');
-            
-            // Previeni scroll del body quando il menu � aperto
+
+            // Previeni scroll del body quando il menu è aperto
             if (isOpen) {
                 document.body.style.overflow = 'hidden';
             } else {
@@ -152,10 +152,10 @@
             document.querySelectorAll('a[href^="#"]').forEach(anchor => {
                 anchor.addEventListener('click', function(e) {
                     const href = this.getAttribute('href');
-                    
+
                     // Ignora link vuoti o solo "#"
                     if (!href || href === '#') return;
-                    
+
                     const target = document.querySelector(href);
                     if (target) {
                         e.preventDefault();
@@ -163,217 +163,6 @@
                     }
                 });
             });
-        }
-    };
-
-    // ===== PASSWORD STRENGTH INDICATOR =====
-    const PasswordStrengthModule = {
-        init() {
-            const passwordInput = document.getElementById('password');
-            const strengthFill = document.getElementById('strength-fill');
-            const strengthText = document.getElementById('strength-text');
-            
-            if (!passwordInput || !strengthFill || !strengthText) return;
-
-            passwordInput.addEventListener('input', () => {
-                const password = passwordInput.value;
-                const strength = this.calculateStrength(password);
-                
-                strengthFill.style.width = strength.percentage + '%';
-                strengthText.textContent = strength.text;
-                strengthText.style.color = strength.color;
-            });
-        },
-
-        calculateStrength(password) {
-            let score = 0;
-            
-            if (password.length === 0) {
-                return { percentage: 0, text: 'Forza password', color: 'var(--color-text-dark)' };
-            }
-            
-            // Lunghezza
-            if (password.length >= 5) score += 25;
-            if (password.length >= 8) score += 25;
-            
-            // Maiuscole
-            if (/[A-Z]/.test(password)) score += 25;
-            
-            // Numeri
-            if (/[0-9]/.test(password)) score += 25;
-            
-            // Caratteri speciali (bonus)
-            if (/[^A-Za-z0-9]/.test(password)) score = Math.min(100, score + 10);
-            
-            // Determina testo e colore
-            let text, color;
-            if (score <= 25) {
-                text = 'Debole';
-                color = '#E74C3C';
-            } else if (score <= 50) {
-                text = 'Media';
-                color = '#F39C12';
-            } else if (score <= 75) {
-                text = 'Buona';
-                color = '#3498DB';
-            } else {
-                text = 'Forte';
-                color = '#27AE60';
-            }
-            
-            return { percentage: score, text, color };
-        }
-    };
-
-    // ===== FORM VALIDATION =====
-    const FormValidationModule = {
-        init() {
-            this.validateUsername();
-            this.validateEmail();
-            this.validatePasswordMatch();
-        },
-
-        validateUsername() {
-            const usernameInput = document.getElementById('username');
-            const checkNameEl = document.getElementById('checkname');
-            const checkName2El = document.getElementById('checkname2');
-            
-            if (!usernameInput) return;
-
-            usernameInput.addEventListener('input', Utils.debounce(() => {
-                const username = usernameInput.value;
-                
-                // Reset messaggi
-                if (checkNameEl) checkNameEl.textContent = '';
-                if (checkName2El) checkName2El.textContent = '';
-                
-                // Validazione lunghezza
-                if (username.length > 0 && username.length < 5) {
-                    if (checkNameEl) checkNameEl.textContent = 'Username troppo corto (minimo 5 caratteri)';
-                    return;
-                }
-                
-                // Validazione caratteri
-                if (username.length > 0 && !/^[A-Za-z0-9]+$/.test(username)) {
-                    if (checkName2El) checkName2El.textContent = 'Solo lettere e numeri permessi';
-                    return;
-                }
-                
-                // Verifica disponibilit� (se esiste l'endpoint)
-                if (username.length >= 5 && typeof site_url !== 'undefined') {
-                    this.checkUsernameAvailability(username, checkNameEl);
-                }
-            }, 500));
-        },
-
-        validateEmail() {
-            const emailInput = document.getElementById('email');
-            const checkEmailEl = document.getElementById('checkemail');
-            
-            if (!emailInput) return;
-
-            emailInput.addEventListener('input', Utils.debounce(() => {
-                const email = emailInput.value;
-                
-                if (checkEmailEl) checkEmailEl.textContent = '';
-                
-                if (email.length > 0 && !this.isValidEmail(email)) {
-                    if (checkEmailEl) checkEmailEl.textContent = 'Indirizzo email non valido';
-                }
-            }, 500));
-        },
-
-        validatePasswordMatch() {
-            const passwordInput = document.getElementById('password');
-            const rpasswordInput = document.getElementById('rpassword');
-            const checkPasswordEl = document.getElementById('checkpassword');
-            
-            if (!passwordInput || !rpasswordInput) return;
-
-            rpasswordInput.addEventListener('input', () => {
-                if (checkPasswordEl) checkPasswordEl.textContent = '';
-                
-                if (rpasswordInput.value.length > 0 && 
-                    passwordInput.value !== rpasswordInput.value) {
-                    if (checkPasswordEl) checkPasswordEl.textContent = 'Le password non coincidono';
-                }
-            });
-        },
-
-        isValidEmail(email) {
-            return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-        },
-
-        checkUsernameAvailability(username, element) {
-            // Implementa chiamata AJAX per verificare disponibilit� username
-            // Esempio base (modifica secondo il tuo backend):
-            /*
-            fetch(`${site_url}api/check-username.php?username=${encodeURIComponent(username)}`)
-                .then(response => response.json())
-                .then(data => {
-                    if (data.available === false) {
-                        element.textContent = 'Username gi� in uso';
-                    } else {
-                        element.textContent = '';
-                        element.style.color = '#27AE60';
-                        element.innerHTML = '<i class="fas fa-check"></i> Username disponibile';
-                    }
-                })
-                .catch(error => console.error('Error:', error));
-            */
-        }
-    };
-
-    // ===== LAZY LOADING IMAGES =====
-    const LazyLoadModule = {
-        init() {
-            if ('IntersectionObserver' in window) {
-                const imageObserver = new IntersectionObserver((entries, observer) => {
-                    entries.forEach(entry => {
-                        if (entry.isIntersecting) {
-                            const img = entry.target;
-                            if (img.dataset.src) {
-                                img.src = img.dataset.src;
-                                img.removeAttribute('data-src');
-                                img.classList.add('loaded');
-                                observer.unobserve(img);
-                            }
-                        }
-                    });
-                });
-
-                document.querySelectorAll('img[data-src]').forEach(img => {
-                    imageObserver.observe(img);
-                });
-            } else {
-                // Fallback per browser che non supportano IntersectionObserver
-                document.querySelectorAll('img[data-src]').forEach(img => {
-                    img.src = img.dataset.src;
-                    img.removeAttribute('data-src');
-                });
-            }
-        }
-    };
-
-    // ===== ANIMATIONS ON SCROLL =====
-    const ScrollAnimationsModule = {
-        init() {
-            if ('IntersectionObserver' in window) {
-                const animationObserver = new IntersectionObserver((entries) => {
-                    entries.forEach(entry => {
-                        if (entry.isIntersecting) {
-                            entry.target.classList.add('animate-in');
-                        }
-                    });
-                }, {
-                    threshold: 0.1,
-                    rootMargin: '0px 0px -50px 0px'
-                });
-
-                document.querySelectorAll('.content-box, .stat-box, .ranking-box').forEach(el => {
-                    animationObserver.observe(el);
-                });
-            }
         }
     };
 
@@ -387,7 +176,7 @@
                 button.innerHTML = '<i class="fas fa-arrow-up"></i>';
                 button.setAttribute('aria-label', 'Torna su');
                 document.body.appendChild(button);
-                
+
                 this.addStyles();
             }
 
@@ -430,9 +219,9 @@
                     opacity: 0;
                     visibility: hidden;
                     transform: translateY(20px);
-                    transition: all 0.3s ease;
+                    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
                     box-shadow: 0 4px 15px rgba(231, 76, 60, 0.3);
-                    z-index: 999;
+                    z-index: 998;
                 }
                 #back-to-top.visible {
                     opacity: 1;
@@ -440,8 +229,11 @@
                     transform: translateY(0);
                 }
                 #back-to-top:hover {
-                    transform: translateY(-5px);
+                    transform: translateY(-5px) scale(1.05);
                     box-shadow: 0 8px 25px rgba(231, 76, 60, 0.5);
+                }
+                #back-to-top:active {
+                    transform: translateY(-2px) scale(0.98);
                 }
                 @media (max-width: 768px) {
                     #back-to-top {
@@ -461,14 +253,14 @@
     const DropdownModule = {
         init() {
             const dropdowns = document.querySelectorAll('.dropdown');
-            
+
             dropdowns.forEach(dropdown => {
                 const button = dropdown.querySelector('.dropbtn');
                 const content = dropdown.querySelector('.dropdown-content');
-                
+
                 if (!button || !content) return;
 
-                // Toggle on click
+                // Toggle on click (per mobile)
                 button.addEventListener('click', (e) => {
                     e.stopPropagation();
                     this.closeAllDropdowns();
@@ -489,28 +281,133 @@
         }
     };
 
-    // ===== FAQ ACCORDION =====
-    const FAQModule = {
+    // ===== HOVER EFFECTS ENHANCEMENT =====
+    const HoverEffectsModule = {
         init() {
-            const faqItems = document.querySelectorAll('.faq-item');
-            
-            faqItems.forEach(item => {
-                const question = item.querySelector('.faq-question');
-                const answer = item.querySelector('.faq-answer');
-                
-                if (!question || !answer) return;
+            // Aggiungi effetto ripple ai bottoni
+            this.addRippleEffect();
 
-                question.addEventListener('click', () => {
-                    const isActive = item.classList.contains('active');
-                    
-                    // Chiudi tutti gli altri
-                    faqItems.forEach(i => i.classList.remove('active'));
-                    
-                    // Toggle corrente
-                    if (!isActive) {
-                        item.classList.add('active');
+            // Aggiungi effetto parallax leggero alle card
+            this.addParallaxEffect();
+
+            // Aggiungi effetto glow ai link della nav
+            this.addNavGlowEffect();
+        },
+
+        addRippleEffect() {
+            const buttons = document.querySelectorAll('.btn-submit, .btn-download, .btn-more, .search-btn');
+
+            buttons.forEach(button => {
+                button.addEventListener('click', function(e) {
+                    const ripple = document.createElement('span');
+                    const rect = this.getBoundingClientRect();
+                    const size = Math.max(rect.width, rect.height);
+                    const x = e.clientX - rect.left - size / 2;
+                    const y = e.clientY - rect.top - size / 2;
+
+                    ripple.style.cssText = `
+                        position: absolute;
+                        width: ${size}px;
+                        height: ${size}px;
+                        border-radius: 50%;
+                        background: rgba(255, 255, 255, 0.5);
+                        left: ${x}px;
+                        top: ${y}px;
+                        pointer-events: none;
+                        animation: ripple-effect 0.6s ease-out;
+                    `;
+
+                    // Aggiungi keyframes se non esistono
+                    if (!document.getElementById('ripple-keyframes')) {
+                        const style = document.createElement('style');
+                        style.id = 'ripple-keyframes';
+                        style.textContent = `
+                            @keyframes ripple-effect {
+                                from {
+                                    transform: scale(0);
+                                    opacity: 1;
+                                }
+                                to {
+                                    transform: scale(2);
+                                    opacity: 0;
+                                }
+                            }
+                        `;
+                        document.head.appendChild(style);
+                    }
+
+                    this.appendChild(ripple);
+                    setTimeout(() => ripple.remove(), 600);
+                });
+            });
+        },
+
+        addParallaxEffect() {
+            const cards = document.querySelectorAll('.content-box, .stat-box');
+
+            cards.forEach(card => {
+                card.addEventListener('mousemove', function(e) {
+                    const rect = this.getBoundingClientRect();
+                    const x = e.clientX - rect.left;
+                    const y = e.clientY - rect.top;
+
+                    const centerX = rect.width / 2;
+                    const centerY = rect.height / 2;
+
+                    const deltaX = (x - centerX) / centerX;
+                    const deltaY = (y - centerY) / centerY;
+
+                    this.style.transform = `perspective(1000px) rotateY(${deltaX * 3}deg) rotateX(${-deltaY * 3}deg) translateY(-5px)`;
+                });
+
+                card.addEventListener('mouseleave', function() {
+                    this.style.transform = '';
+                });
+            });
+        },
+
+        addNavGlowEffect() {
+            const navLinks = document.querySelectorAll('.main-nav a, .sidebar-nav a');
+
+            navLinks.forEach(link => {
+                link.addEventListener('mouseenter', function() {
+                    const icon = this.querySelector('i');
+                    if (icon) {
+                        icon.style.filter = 'drop-shadow(0 0 8px var(--color-primary))';
                     }
                 });
+
+                link.addEventListener('mouseleave', function() {
+                    const icon = this.querySelector('i');
+                    if (icon) {
+                        icon.style.filter = '';
+                    }
+                });
+            });
+        }
+    };
+
+    // ===== ANIMATIONS ON SCROLL =====
+    const ScrollAnimationsModule = {
+        init() {
+            // Usa Intersection Observer solo se disponibile
+            if (!('IntersectionObserver' in window)) return;
+
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.style.animation = 'fadeIn 0.6s ease-out forwards';
+                        observer.unobserve(entry.target); // Anima solo una volta
+                    }
+                });
+            }, {
+                threshold: 0.1,
+                rootMargin: '0px 0px -50px 0px'
+            });
+
+            // Osserva solo elementi che hanno senso animare
+            document.querySelectorAll('.content-box, .trailer-container, .ranking-box').forEach(el => {
+                observer.observe(el);
             });
         }
     };
@@ -525,51 +422,269 @@
                 'text-shadow: 2px 2px 0px #C0392B'
             ].join(';');
 
-            console.log('%c?? ONE SERVER ??', styles);
-            console.log('%cSito caricato con successo!', 'color: #27AE60; font-size: 14px;');
-            console.log('%cVersion: 2.4 - Ottimizzato', 'color: #95A5A6; font-size: 12px;');
-            
+            console.log('%c🎮 ONE SERVER 🎮', styles);
+            console.log('%c✓ Sito caricato con successo!', 'color: #27AE60; font-size: 14px;');
+            console.log('%cVersion: 3.0 - Ottimizzato & Professionale', 'color: #95A5A6; font-size: 12px;');
+
             // Easter egg
-            console.log('%cCurioso? Unisciti al nostro team! ??', 'color: #3498DB; font-size: 12px;');
+            console.log('%c🔥 Curioso? Unisciti al nostro team!', 'color: #3498DB; font-size: 12px;');
         }
     };
 
     // ===== PERFORMANCE MONITORING =====
     const PerformanceModule = {
         init() {
-            if ('performance' in window) {
-                window.addEventListener('load', () => {
-                    setTimeout(() => {
-                        const perfData = performance.timing;
-                        const pageLoadTime = perfData.loadEventEnd - perfData.navigationStart;
-                        const connectTime = perfData.responseEnd - perfData.requestStart;
-                        
-                        console.log(`? Page Load Time: ${pageLoadTime}ms`);
-                        console.log(`?? Server Response: ${connectTime}ms`);
-                    }, 0);
-                });
+            if (!('performance' in window)) return;
+
+            window.addEventListener('load', () => {
+                setTimeout(() => {
+                    const perfData = performance.timing;
+                    const pageLoadTime = perfData.loadEventEnd - perfData.navigationStart;
+                    const connectTime = perfData.responseEnd - perfData.requestStart;
+
+                    console.log(`⚡ Page Load Time: ${pageLoadTime}ms`);
+                    console.log(`🌐 Server Response: ${connectTime}ms`);
+
+                    // Alert se il caricamento è lento
+                    if (pageLoadTime > 3000) {
+                        console.warn('⚠️ Caricamento lento rilevato. Considera ottimizzazioni.');
+                    }
+                }, 0);
+            });
+        }
+    };
+
+    // ===== FORM VALIDATION (Solo per pagine con form) =====
+    const FormValidationModule = {
+        init() {
+            // Controlla se siamo in una pagina con form di registrazione
+            const passwordInput = document.getElementById('password');
+            const rpasswordInput = document.getElementById('rpassword');
+
+            if (passwordInput && rpasswordInput) {
+                this.validatePasswordMatch();
+                this.addPasswordStrength();
             }
+
+            // Validazione email generica
+            const emailInputs = document.querySelectorAll('input[type="email"]');
+            emailInputs.forEach(input => {
+                input.addEventListener('blur', () => {
+                    if (input.value && !this.isValidEmail(input.value)) {
+                        input.style.borderColor = 'var(--color-primary)';
+                    } else {
+                        input.style.borderColor = '';
+                    }
+                });
+            });
+        },
+
+        validatePasswordMatch() {
+            const passwordInput = document.getElementById('password');
+            const rpasswordInput = document.getElementById('rpassword');
+            const checkPasswordEl = document.getElementById('checkpassword');
+
+            if (!passwordInput || !rpasswordInput) return;
+
+            rpasswordInput.addEventListener('input', () => {
+                if (checkPasswordEl) checkPasswordEl.textContent = '';
+
+                if (rpasswordInput.value.length > 0 &&
+                    passwordInput.value !== rpasswordInput.value) {
+                    if (checkPasswordEl) {
+                        checkPasswordEl.textContent = 'Le password non coincidono';
+                        checkPasswordEl.style.color = 'var(--color-primary)';
+                    }
+                    rpasswordInput.style.borderColor = 'var(--color-primary)';
+                } else {
+                    rpasswordInput.style.borderColor = '';
+                }
+            });
+        },
+
+        addPasswordStrength() {
+            const passwordInput = document.getElementById('password');
+            if (!passwordInput) return;
+
+            // Crea indicatore se non esiste
+            let strengthContainer = document.getElementById('password-strength');
+            if (!strengthContainer) {
+                strengthContainer = document.createElement('div');
+                strengthContainer.id = 'password-strength';
+                strengthContainer.style.cssText = `
+                    margin-top: 8px;
+                    height: 4px;
+                    background: rgba(255, 255, 255, 0.1);
+                    border-radius: 2px;
+                    overflow: hidden;
+                `;
+
+                const strengthBar = document.createElement('div');
+                strengthBar.id = 'strength-bar';
+                strengthBar.style.cssText = `
+                    height: 100%;
+                    width: 0%;
+                    transition: width 0.3s, background 0.3s;
+                    border-radius: 2px;
+                `;
+
+                strengthContainer.appendChild(strengthBar);
+                passwordInput.parentNode.appendChild(strengthContainer);
+            }
+
+            passwordInput.addEventListener('input', () => {
+                const strength = this.calculatePasswordStrength(passwordInput.value);
+                const strengthBar = document.getElementById('strength-bar');
+
+                if (strengthBar) {
+                    strengthBar.style.width = strength.percentage + '%';
+                    strengthBar.style.background = strength.color;
+                }
+            });
+        },
+
+        calculatePasswordStrength(password) {
+            if (password.length === 0) {
+                return { percentage: 0, color: 'transparent' };
+            }
+
+            let score = 0;
+
+            // Lunghezza
+            if (password.length >= 5) score += 25;
+            if (password.length >= 8) score += 25;
+
+            // Maiuscole
+            if (/[A-Z]/.test(password)) score += 25;
+
+            // Numeri
+            if (/[0-9]/.test(password)) score += 25;
+
+            // Caratteri speciali (bonus)
+            if (/[^A-Za-z0-9]/.test(password)) score = Math.min(100, score + 10);
+
+            // Determina colore
+            let color;
+            if (score <= 25) {
+                color = '#E74C3C';
+            } else if (score <= 50) {
+                color = '#F39C12';
+            } else if (score <= 75) {
+                color = '#3498DB';
+            } else {
+                color = '#27AE60';
+            }
+
+            return { percentage: score, color };
+        },
+
+        isValidEmail(email) {
+            return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+        }
+    };
+
+    // ===== NUMBER COUNTER ANIMATION =====
+    const CounterAnimationModule = {
+        init() {
+            if (!('IntersectionObserver' in window)) return;
+
+            const counters = document.querySelectorAll('.stat-info h4');
+
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting && !entry.target.classList.contains('counted')) {
+                        this.animateCounter(entry.target);
+                        entry.target.classList.add('counted');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, { threshold: 0.5 });
+
+            counters.forEach(counter => observer.observe(counter));
+        },
+
+        animateCounter(element) {
+            const target = parseInt(element.textContent.replace(/\D/g, '')) || 0;
+            const duration = 2000;
+            const step = target / (duration / 16);
+            let current = 0;
+
+            const timer = setInterval(() => {
+                current += step;
+                if (current >= target) {
+                    element.textContent = target.toLocaleString();
+                    clearInterval(timer);
+                } else {
+                    element.textContent = Math.floor(current).toLocaleString();
+                }
+            }, 16);
+        }
+    };
+
+    // ===== TYPING EFFECT FOR TAGLINE =====
+    const TypingEffectModule = {
+        init() {
+            const tagline = document.querySelector('.hero-tagline');
+            if (!tagline || tagline.dataset.typed) return;
+
+            const text = tagline.textContent;
+            tagline.textContent = '';
+            tagline.dataset.typed = 'true';
+
+            let index = 0;
+            const speed = 50;
+
+            function typeWriter() {
+                if (index < text.length) {
+                    tagline.textContent += text.charAt(index);
+                    index++;
+                    setTimeout(typeWriter, speed);
+                } else {
+                    tagline.style.borderRight = 'none'; // Rimuovi cursore
+                }
+            }
+
+            // Aggiungi cursore lampeggiante
+            tagline.style.borderRight = '2px solid var(--color-primary)';
+            tagline.style.paddingRight = '5px';
+
+            // Inizia dopo un breve delay
+            setTimeout(typeWriter, 500);
         }
     };
 
     // ===== MAIN INITIALIZATION =====
     document.addEventListener('DOMContentLoaded', () => {
         try {
+            // Moduli essenziali (sempre caricati)
             PreloaderModule.init();
             MobileMenuModule.init();
             SmoothScrollModule.init();
-            PasswordStrengthModule.init();
-            FormValidationModule.init();
-            LazyLoadModule.init();
-            ScrollAnimationsModule.init();
             BackToTopModule.init();
             DropdownModule.init();
-            FAQModule.init();
             ConsoleArtModule.init();
             PerformanceModule.init();
+
+            // Moduli avanzati (solo se elementi presenti)
+            HoverEffectsModule.init();
+            ScrollAnimationsModule.init();
+            FormValidationModule.init();
+            CounterAnimationModule.init();
+            TypingEffectModule.init();
+
+            console.log('✅ Tutti i moduli inizializzati correttamente');
         } catch (error) {
-            console.error('Errore durante l\'inizializzazione:', error);
+            console.error('❌ Errore durante l\'inizializzazione:', error);
         }
+    });
+
+    // ===== PERFORMANCE: Debounce resize events =====
+    let resizeTimer;
+    window.addEventListener('resize', () => {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(() => {
+            console.log('🔄 Viewport ridimensionato');
+        }, 250);
     });
 
 })();
