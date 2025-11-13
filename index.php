@@ -134,10 +134,9 @@ if(isset($item_shop) && $item_shop != "") {
     <div id="preloader"></div>
 
     <div class="page-wrapper">
-        
-        <?php if (!$is_homepage) : ?>
+
         <!-- ====================================
-             HEADER (SOLO PAGINE NON-HOMEPAGE)
+             HEADER - SEMPRE VISIBILE
              ==================================== -->
         <header class="main-header">
             <a href="<?php echo $site_url; ?>" class="nav-logo" aria-label="Homepage ONE">
@@ -178,7 +177,6 @@ if(isset($item_shop) && $item_shop != "") {
             </div>
             <button id="mobile-menu-toggle" aria-label="Menu" aria-expanded="false"><i class="fas fa-bars"></i></button>
         </header>
-        <?php endif; ?>
 
         <div class="main-container">
             
