@@ -1,90 +1,112 @@
-<div class="container">
-	<div class="page-hd" style="background-image: url(<?php print $site_url; ?>images/user.png)">
-		<div class="bd-c">
-			<h2 class="pre-social"><?php print $lang['donate']; ?></h2>
-		</div>
-	</div>
-	<?php
-	if(isset($_POST['id']) && isset($_POST['type']) && isset($_POST['code']) && strlen($_POST['code']) >= 3 && strlen($_POST['code']) <= 50)
-	{
-		if(isset($jsondataDonate[$_POST['id']]['list'][$_POST['type']]))
-		{
-			$price = $jsondataDonate[$_POST['id']]['list'][$_POST['type']];
-			$type = $jsondataDonate[$_POST['id']]['name'].' ['.$price['price'].' '.$jsondataCurrency[$price['currency']]['name'].' - '.$price['md'].' MD]';
-			
-							insert_donate($_SESSION['id'], $_POST['code'], $type);
-		
-							print '<div class="alert alert-success alert-dismissible fade show" role="alert">
-										<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close">
-											
-										</button>';
-							print $lang['send-donate'];
-							print '</div>';	
-		}
-	}
-	if(count($jsondataDonate)) { ?>
-	
-	<?php $i=-1; foreach($jsondataDonate as $key => $donate) { $i++; ?>
-		<div class="card">
-			<div class="card-header" role="tab" id="heading<?php print $i; ?>">
-				<h5 class="mb-0">
-			<a data-bs-toggle="collapse" data-parent="#accordion" href="#collapse<?php print $i; ?>" aria-expanded="true" aria-controls="collapse<?php print $i; ?>">
-				<?php print $donate['name']; ?>
-			</a>
-		  </h5>
-			</div>
+<div class="account-page-modern">
+    <div class="account-hero">
+        <div class="account-hero-content">
+            <div class="hero-icon">
+                <i class="fas fa-donate"></i>
+            </div>
+            <h1 class="account-title"><?php print htmlspecialchars($lang['donate'], ENT_QUOTES, 'UTF-8'); ?></h1>
+            <p class="account-subtitle">Supporta il server e ottieni ricompense esclusive</p>
+        </div>
+    </div>
 
-			<div id="collapse<?php print $i; ?>" class="collapse show" role="tabpanel" aria-labelledby="heading<?php print $i; ?>">
-				<div class="card-block">
-				<?php 
-					if(strtolower($donate['name'])=="paypal")
-					{
-				?>
-					<form action="" method="post">
-						<input type="hidden" name="id" value="<?php print $i; ?>">
-						<input type="hidden" name="method" value="<?php print $donate['name']; ?>">
-						<div class="form-group row">
-							<div class="col-sm-6">
-								<select class="form-control" name="type">
-								<?php $j=-1; foreach($jsondataDonate[$i]['list'] as $key => $price) { $j++; ?>
-									<option value="<?php print $j; ?>"><?php print $lang['price'].' '.$price['price'].' '.$jsondataCurrency[$price['currency']]['name'].' - '.$price['md'].' MD'; ?></option>
-								<?php } ?>
-								</select>
-							</div>
-							<div class="col-sm-6">
-								<button type="submit" name="submit" class="btn btn-primary"><?php print $lang['send']; ?></button>
-							</div>
-						</div>
-					</form>
-				<?php } else { ?>
-					<form action="" method="post">
-						<input type="hidden" name="id" value="<?php print $i; ?>">
-						<input type="hidden" name="method" value="<?php print $donate['name']; ?>">
-						<div class="form-group row">
-							<div class="col-sm-6">
-								<select class="form-control" name="type">
-								<?php $j=-1; foreach($jsondataDonate[$i]['list'] as $key => $price) { $j++; ?>
-									<option value="<?php print $j; ?>"><?php print $lang['price'].' '.$price['price'].' '.$jsondataCurrency[$price['currency']]['name'].' - '.$price['md'].' MD'; ?></option>
-								<?php } ?>
-								</select>
-							</div>
-							<div class="col-sm-6">
-								<input type="text" class="form-control" max="50" name="code" placeholder="<?php print $lang['code']; ?>">
-							</div>
-						</div>
-						<div class="form-group row">
-							<button type="submit" name="submit" class="btn btn-primary"><?php print $lang['send']; ?></button>
-						</div>
-					</form>
-				<?php } ?>
-				</div>
-			</div>
-		</div>
-	<?php } ?>
-	
-	<?php } else { ?>
-	<div class="alert alert-info" role="alert">
-		<strong>Info!</strong> Donate methods not found.
-	</div>
-	<?php } ?>
+    <div class="account-container">
+        <?php
+        if(isset($_POST['id']) && isset($_POST['type']) && isset($_POST['code']) && strlen($_POST['code']) >= 3 && strlen($_POST['code']) <= 50)
+        {
+            if(isset($jsondataDonate[$_POST['id']]['list'][$_POST['type']]))
+            {
+                $price = $jsondataDonate[$_POST['id']]['list'][$_POST['type']];
+                $type = $jsondataDonate[$_POST['id']]['name'].' ['.$price['price'].' '.$jsondataCurrency[$price['currency']]['name'].' - '.$price['md'].' MD]';
+
+                insert_donate($_SESSION['id'], $_POST['code'], $type);
+
+                print '<div class="alert-modern alert-success">
+                          <div class="alert-icon"><i class="fas fa-check-circle"></i></div>
+                          <div class="alert-content">
+                              <strong>Successo!</strong>
+                              <p>'.htmlspecialchars($lang['send-donate'], ENT_QUOTES, 'UTF-8').'</p>
+                          </div>
+                          <button type="button" class="alert-close" onclick="this.parentElement.remove()">
+                              <i class="fas fa-times"></i>
+                          </button>
+                      </div>';
+            }
+        }
+
+        if(count($jsondataDonate)) { ?>
+
+        <div class="action-grid">
+            <?php $i=-1; foreach($jsondataDonate as $key => $donate) { $i++; ?>
+            <div class="action-card">
+                <div class="action-icon">
+                    <i class="fas fa-<?php if(strtolower($donate['name'])=="paypal") print 'paypal fab'; else print 'credit-card'; ?>"></i>
+                </div>
+                <div class="action-content">
+                    <h4><?php print htmlspecialchars($donate['name'], ENT_QUOTES, 'UTF-8'); ?></h4>
+                    <p>Scegli il metodo di donazione e l'importo</p>
+                </div>
+
+                <?php if(strtolower($donate['name'])=="paypal") { ?>
+                <form action="" method="post" class="action-form" style="width: 100%;">
+                    <input type="hidden" name="id" value="<?php print $i; ?>">
+                    <input type="hidden" name="method" value="<?php print htmlspecialchars($donate['name'], ENT_QUOTES, 'UTF-8'); ?>">
+                    <div class="form-group-modern">
+                        <label>
+                            <i class="fas fa-dollar-sign"></i>
+                            Seleziona Importo
+                        </label>
+                        <select class="form-control-modern" name="type" style="margin-bottom: 10px;">
+                        <?php $j=-1; foreach($jsondataDonate[$i]['list'] as $key => $price) { $j++; ?>
+                            <option value="<?php print $j; ?>"><?php print htmlspecialchars($lang['price'], ENT_QUOTES, 'UTF-8').' '.$price['price'].' '.$jsondataCurrency[$price['currency']]['name'].' - '.$price['md'].' MD'; ?></option>
+                        <?php } ?>
+                        </select>
+                    </div>
+                    <button type="submit" name="submit" class="action-button">
+                        <span><?php print htmlspecialchars($lang['send'], ENT_QUOTES, 'UTF-8'); ?></span>
+                        <i class="fas fa-arrow-right"></i>
+                    </button>
+                </form>
+                <?php } else { ?>
+                <form action="" method="post" class="action-form" style="width: 100%;">
+                    <input type="hidden" name="id" value="<?php print $i; ?>">
+                    <input type="hidden" name="method" value="<?php print htmlspecialchars($donate['name'], ENT_QUOTES, 'UTF-8'); ?>">
+                    <div class="form-group-modern">
+                        <label>
+                            <i class="fas fa-dollar-sign"></i>
+                            Seleziona Importo
+                        </label>
+                        <select class="form-control-modern" name="type" style="margin-bottom: 10px;">
+                        <?php $j=-1; foreach($jsondataDonate[$i]['list'] as $key => $price) { $j++; ?>
+                            <option value="<?php print $j; ?>"><?php print htmlspecialchars($lang['price'], ENT_QUOTES, 'UTF-8').' '.$price['price'].' '.$jsondataCurrency[$price['currency']]['name'].' - '.$price['md'].' MD'; ?></option>
+                        <?php } ?>
+                        </select>
+                    </div>
+                    <div class="form-group-modern">
+                        <label>
+                            <i class="fas fa-ticket-alt"></i>
+                            Codice Transazione
+                        </label>
+                        <input type="text" class="form-control-modern" maxlength="50" name="code" placeholder="<?php print htmlspecialchars($lang['code'], ENT_QUOTES, 'UTF-8'); ?>" required>
+                        <div class="input-border"></div>
+                    </div>
+                    <button type="submit" name="submit" class="action-button">
+                        <span><?php print htmlspecialchars($lang['send'], ENT_QUOTES, 'UTF-8'); ?></span>
+                        <i class="fas fa-arrow-right"></i>
+                    </button>
+                </form>
+                <?php } ?>
+            </div>
+            <?php } ?>
+        </div>
+
+        <?php } else { ?>
+        <div class="alert-modern alert-info">
+            <div class="alert-icon"><i class="fas fa-info-circle"></i></div>
+            <div class="alert-content">
+                <strong>Informazione</strong>
+                <p>Nessun metodo di donazione disponibile al momento.</p>
+            </div>
+        </div>
+        <?php } ?>
+    </div>
 </div>
