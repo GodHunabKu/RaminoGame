@@ -270,8 +270,36 @@ if(isset($item_shop) && $item_shop != "") {
                             </div>
                         </div>
                     </div>
+
+                    <!-- CTA BUTTONS -->
+                    <div class="hero-cta-buttons">
+                        <a href="<?php echo $site_url; ?>download" class="cta-button cta-primary">
+                            <i class="fas fa-download"></i>
+                            <span class="cta-text">
+                                <strong>SCARICA IL CLIENT</strong>
+                                <small>Inizia la tua avventura</small>
+                            </span>
+                        </a>
+                        <?php if(!$database->is_loggedin()) { ?>
+                        <a href="<?php echo $site_url; ?>users/register" class="cta-button cta-secondary">
+                            <i class="fas fa-user-plus"></i>
+                            <span class="cta-text">
+                                <strong>REGISTRATI ORA</strong>
+                                <small>Gratis e senza limiti</small>
+                            </span>
+                        </a>
+                        <?php } else { ?>
+                        <a href="<?php echo $site_url; ?>user/administration" class="cta-button cta-secondary">
+                            <i class="fas fa-user-circle"></i>
+                            <span class="cta-text">
+                                <strong>IL MIO ACCOUNT</strong>
+                                <small>Gestisci il tuo profilo</small>
+                            </span>
+                        </a>
+                        <?php } ?>
+                    </div>
                 </section>
-                
+
                 <!-- CONTENT GRID: 3 BOX -->
                 <div class="content-grid">
                     
