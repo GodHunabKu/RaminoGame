@@ -446,7 +446,7 @@
                 src="https://discord.com/widget?id=824954226114560001&theme=dark"
                 allowtransparency="true"
                 frameborder="0"
-                sandbox="allow-popups allow-popups-to-escape-sandbox allow-same-origin allow-scripts">
+                allow="clipboard-write">
             </iframe>
         </div>
     </div>
