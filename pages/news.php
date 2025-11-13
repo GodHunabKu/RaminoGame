@@ -1,434 +1,474 @@
 <style>
-.news-page-modern {
-    max-width: 1400px;
+.discord-page-modern {
+    max-width: 1200px;
     margin: 0 auto;
     padding: 20px;
 }
 
-.news-hero {
-    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-    border-radius: 20px;
-    padding: 40px;
-    margin-bottom: 30px;
-    box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+.discord-hero {
+    background: linear-gradient(135deg, #5865F2 0%, #7289DA 100%);
+    border-radius: 25px;
+    padding: 60px 40px;
+    margin-bottom: 40px;
+    box-shadow: 0 15px 50px rgba(88, 101, 242, 0.4);
     position: relative;
     overflow: hidden;
+    text-align: center;
 }
 
-.news-hero::before {
+.discord-hero::before {
     content: '';
     position: absolute;
     top: -50%;
-    right: -50%;
+    left: -50%;
     width: 200%;
     height: 200%;
-    background: radial-gradient(circle, rgba(231, 76, 60, 0.1) 0%, transparent 70%);
-    animation: pulse 8s ease-in-out infinite;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+    animation: rotate 20s linear infinite;
 }
 
-@keyframes pulse {
-    0%, 100% { transform: scale(1); opacity: 0.5; }
-    50% { transform: scale(1.1); opacity: 0.8; }
+@keyframes rotate {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
 }
 
-.news-hero-content {
+.discord-hero-content {
     position: relative;
     z-index: 1;
 }
 
-.hero-icon {
-    width: 80px;
-    height: 80px;
-    background: linear-gradient(135deg, #E74C3C 0%, #C0392B 100%);
+.discord-logo {
+    width: 120px;
+    height: 120px;
+    background: rgba(255, 255, 255, 0.2);
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    margin: 0 auto 20px;
-    box-shadow: 0 8px 25px rgba(231, 76, 60, 0.4);
+    margin: 0 auto 25px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(10px);
+    animation: pulse-discord 3s ease-in-out infinite;
 }
 
-.hero-icon i {
+@keyframes pulse-discord {
+    0%, 100% { transform: scale(1); box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3); }
+    50% { transform: scale(1.05); box-shadow: 0 15px 60px rgba(0, 0, 0, 0.5); }
+}
+
+.discord-logo i {
+    font-size: 60px;
+    color: #fff;
+}
+
+.discord-hero h1 {
+    font-size: 3rem;
+    font-weight: 800;
+    color: #fff;
+    margin: 0 0 15px 0;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    text-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+.discord-hero p {
+    font-size: 1.3rem;
+    color: rgba(255, 255, 255, 0.95);
+    margin: 0;
+    font-weight: 500;
+}
+
+.discord-content {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+    margin-bottom: 40px;
+}
+
+.discord-info-card {
+    background: linear-gradient(135deg, rgba(88, 101, 242, 0.1) 0%, rgba(114, 137, 218, 0.05) 100%);
+    border: 2px solid rgba(88, 101, 242, 0.3);
+    border-radius: 20px;
+    padding: 35px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.discord-info-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(88, 101, 242, 0.1), rgba(114, 137, 218, 0.1));
+    opacity: 0;
+    transition: opacity 0.3s;
+    pointer-events: none;
+}
+
+.discord-info-card:hover::before {
+    opacity: 1;
+}
+
+.discord-info-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 15px 60px rgba(88, 101, 242, 0.4);
+    border-color: #5865F2;
+}
+
+.info-card-icon {
+    width: 70px;
+    height: 70px;
+    background: linear-gradient(135deg, #5865F2 0%, #7289DA 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 20px;
+    box-shadow: 0 8px 25px rgba(88, 101, 242, 0.4);
+}
+
+.info-card-icon i {
     font-size: 35px;
     color: #fff;
 }
 
-.news-hero h1 {
-    font-size: 2.5rem;
+.discord-info-card h3 {
+    font-size: 1.5rem;
     font-weight: 700;
-    text-align: center;
+    color: #fff;
     margin: 0 0 15px 0;
-    background: linear-gradient(135deg, #fff 0%, #E74C3C 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
 }
 
-.news-tabs {
+.discord-info-card p {
+    font-size: 1rem;
+    color: rgba(255, 255, 255, 0.8);
+    line-height: 1.7;
+    margin: 0;
+}
+
+.discord-widget-section {
+    background: linear-gradient(135deg, rgba(26, 26, 46, 0.6) 0%, rgba(22, 33, 62, 0.6) 100%);
+    border: 2px solid rgba(88, 101, 242, 0.3);
+    border-radius: 25px;
+    padding: 40px;
+    box-shadow: 0 15px 50px rgba(0, 0, 0, 0.3);
     display: flex;
-    justify-content: center;
-    gap: 15px;
-    flex-wrap: wrap;
-}
-
-.news-tab {
-    padding: 12px 30px;
-    background: rgba(255, 255, 255, 0.05);
-    border: 2px solid rgba(231, 76, 60, 0.3);
-    border-radius: 50px;
-    color: #fff;
-    text-decoration: none;
-    font-weight: 600;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    position: relative;
-    overflow: hidden;
-}
-
-.news-tab::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(231, 76, 60, 0.3), transparent);
-    transition: left 0.5s;
-}
-
-.news-tab:hover::before {
-    left: 100%;
-}
-
-.news-tab:hover {
-    background: rgba(231, 76, 60, 0.1);
-    border-color: #E74C3C;
-    transform: translateY(-2px);
-    box-shadow: 0 5px 20px rgba(231, 76, 60, 0.3);
-}
-
-.news-tab.active {
-    background: linear-gradient(135deg, #E74C3C 0%, #C0392B 100%);
-    border-color: #E74C3C;
-    box-shadow: 0 5px 20px rgba(231, 76, 60, 0.4);
-}
-
-.alert-modern {
-    background: linear-gradient(135deg, rgba(220, 53, 69, 0.15) 0%, rgba(220, 53, 69, 0.05) 100%);
-    border: 2px solid rgba(220, 53, 69, 0.5);
-    border-radius: 15px;
-    padding: 20px;
-    margin: 20px 0;
-    color: #fff;
-    display: flex;
+    flex-direction: column;
     align-items: center;
-    gap: 15px;
-    box-shadow: 0 5px 20px rgba(220, 53, 69, 0.2);
-}
-
-.alert-modern i {
-    font-size: 24px;
-    color: #dc3545;
-}
-
-.alert-modern.server-offline {
-    background: linear-gradient(135deg, rgba(255, 193, 7, 0.15) 0%, rgba(255, 193, 7, 0.05) 100%);
-    border-color: rgba(255, 193, 7, 0.5);
-    box-shadow: 0 5px 20px rgba(255, 193, 7, 0.2);
-}
-
-.alert-modern.server-offline i {
-    color: #ffc107;
-}
-
-.news-layout {
-    display: grid;
-    grid-template-columns: 1fr 380px;
-    gap: 30px;
-    align-items: start;
-}
-
-.news-main {
-    min-height: 400px;
-}
-
-.discord-sidebar {
-    position: sticky;
-    top: 20px;
-}
-
-.discord-widget-container {
-    background: linear-gradient(135deg, rgba(114, 137, 218, 0.1) 0%, rgba(114, 137, 218, 0.05) 100%);
-    border: 2px solid rgba(114, 137, 218, 0.3);
-    border-radius: 20px;
-    padding: 25px;
-    box-shadow: 0 10px 40px rgba(0,0,0,0.3);
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
     overflow: hidden;
 }
 
-.discord-widget-container::before {
+.discord-widget-section::before {
     content: '';
     position: absolute;
     top: -2px;
     left: -2px;
     right: -2px;
     bottom: -2px;
-    background: linear-gradient(135deg, #7289DA, #5865F2, #7289DA);
-    border-radius: 20px;
+    background: linear-gradient(45deg, #5865F2, #7289DA, #5865F2, #7289DA);
+    background-size: 300% 300%;
+    border-radius: 25px;
     z-index: -1;
-    opacity: 0;
-    transition: opacity 0.3s;
+    animation: gradient-border 5s ease infinite;
+    opacity: 0.5;
 }
 
-.discord-widget-container:hover::before {
-    opacity: 0.3;
+@keyframes gradient-border {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
 }
 
-.discord-widget-container:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 15px 50px rgba(114, 137, 218, 0.4);
+.widget-header {
+    text-align: center;
+    margin-bottom: 30px;
 }
 
-.discord-widget-header {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-    margin-bottom: 20px;
-    padding-bottom: 15px;
-    border-bottom: 2px solid rgba(114, 137, 218, 0.3);
-}
-
-.discord-icon {
-    width: 50px;
-    height: 50px;
-    background: linear-gradient(135deg, #7289DA 0%, #5865F2 100%);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 5px 20px rgba(114, 137, 218, 0.4);
-}
-
-.discord-icon i {
-    font-size: 25px;
-    color: #fff;
-}
-
-.discord-widget-title {
-    flex: 1;
-}
-
-.discord-widget-title h3 {
-    margin: 0 0 5px 0;
-    font-size: 1.3rem;
+.widget-header h2 {
+    font-size: 2rem;
     font-weight: 700;
     color: #fff;
+    margin: 0 0 10px 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
 }
 
-.discord-widget-title p {
+.widget-header h2 i {
+    color: #5865F2;
+    font-size: 2.2rem;
+}
+
+.widget-header p {
+    font-size: 1.1rem;
+    color: rgba(255, 255, 255, 0.7);
     margin: 0;
-    font-size: 0.85rem;
-    color: rgba(255, 255, 255, 0.6);
 }
 
-.discord-iframe-wrapper {
-    border-radius: 15px;
+.discord-widget-frame {
+    width: 100%;
+    max-width: 500px;
+    border-radius: 20px;
     overflow: hidden;
-    box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+    box-shadow: 0 10px 50px rgba(0, 0, 0, 0.5);
+    background: #2c2f33;
 }
 
-.discord-iframe-wrapper iframe {
+.discord-widget-frame iframe {
     display: block;
     width: 100%;
+    height: 600px;
     border: none;
-    border-radius: 15px;
 }
 
-.pagination-wrapper {
-    margin-top: 30px;
-    display: flex;
-    justify-content: center;
+.discord-features {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 25px;
+    margin-top: 40px;
+}
+
+.feature-box {
+    background: rgba(88, 101, 242, 0.1);
+    border: 1px solid rgba(88, 101, 242, 0.3);
+    border-radius: 15px;
+    padding: 25px;
+    text-align: center;
+    transition: all 0.3s;
+}
+
+.feature-box:hover {
+    background: rgba(88, 101, 242, 0.2);
+    border-color: #5865F2;
+    transform: translateY(-5px);
+}
+
+.feature-box i {
+    font-size: 2.5rem;
+    color: #5865F2;
+    margin-bottom: 15px;
+    display: block;
+}
+
+.feature-box h4 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #fff;
+    margin: 0 0 10px 0;
+}
+
+.feature-box p {
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.7);
+    margin: 0;
 }
 
 /* Responsive Design */
 @media (max-width: 1024px) {
-    .news-layout {
+    .discord-content {
         grid-template-columns: 1fr;
+        gap: 30px;
     }
 
-    .discord-sidebar {
-        position: static;
-        margin-top: 30px;
-    }
-
-    .discord-widget-container {
-        max-width: 600px;
-        margin: 0 auto;
+    .discord-features {
+        grid-template-columns: 1fr;
+        gap: 20px;
     }
 }
 
 @media (max-width: 768px) {
-    .news-hero {
+    .discord-hero {
+        padding: 40px 25px;
+    }
+
+    .discord-hero h1 {
+        font-size: 2rem;
+    }
+
+    .discord-hero p {
+        font-size: 1.1rem;
+    }
+
+    .discord-logo {
+        width: 90px;
+        height: 90px;
+    }
+
+    .discord-logo i {
+        font-size: 45px;
+    }
+
+    .discord-info-card {
+        padding: 25px;
+    }
+
+    .discord-widget-section {
         padding: 30px 20px;
     }
 
-    .news-hero h1 {
-        font-size: 1.8rem;
-    }
-
-    .news-tabs {
+    .widget-header h2 {
+        font-size: 1.6rem;
+        flex-direction: column;
         gap: 10px;
     }
 
-    .news-tab {
-        padding: 10px 20px;
-        font-size: 0.9rem;
-    }
-
-    .discord-widget-container {
-        padding: 20px;
-    }
-
-    .discord-iframe-wrapper iframe {
-        height: 400px;
+    .discord-widget-frame iframe {
+        height: 500px;
     }
 }
 
 @media (max-width: 480px) {
-    .news-page-modern {
+    .discord-page-modern {
         padding: 15px;
     }
 
-    .news-hero {
-        padding: 25px 15px;
+    .discord-hero {
+        padding: 30px 20px;
     }
 
-    .news-hero h1 {
-        font-size: 1.5rem;
+    .discord-hero h1 {
+        font-size: 1.6rem;
+        letter-spacing: 1px;
     }
 
-    .hero-icon {
+    .discord-hero p {
+        font-size: 1rem;
+    }
+
+    .discord-logo {
+        width: 70px;
+        height: 70px;
+    }
+
+    .discord-logo i {
+        font-size: 35px;
+    }
+
+    .discord-info-card {
+        padding: 20px;
+    }
+
+    .info-card-icon {
         width: 60px;
         height: 60px;
     }
 
-    .hero-icon i {
+    .info-card-icon i {
         font-size: 28px;
     }
 
-    .news-tab {
-        padding: 8px 15px;
-        font-size: 0.85rem;
+    .discord-info-card h3 {
+        font-size: 1.2rem;
     }
 
-    .discord-iframe-wrapper iframe {
-        height: 350px;
+    .widget-header h2 {
+        font-size: 1.4rem;
+    }
+
+    .discord-widget-frame iframe {
+        height: 450px;
+    }
+
+    .feature-box {
+        padding: 20px;
+    }
+
+    .feature-box i {
+        font-size: 2rem;
     }
 }
 </style>
 
-<div class="news-page-modern">
+<div class="discord-page-modern">
     <!-- Hero Section -->
-    <div class="news-hero">
-        <div class="news-hero-content">
-            <div class="hero-icon">
-                <i class="fas fa-newspaper"></i>
+    <div class="discord-hero">
+        <div class="discord-hero-content">
+            <div class="discord-logo">
+                <i class="fab fa-discord"></i>
             </div>
-            <h1><?php print $lang['news']; ?></h1>
-            <div class="news-tabs">
-                <?php
-                $cat = 0;
-                if(isset($_GET['category']) && (int)$_GET['category']>0 && (int)$_GET['category']<=2)
-                    $cat = $_GET['category'];
-
-                $categories = array(
-                    0 => "All news",
-                    1 => "Updates",
-                    2 => "Events"
-                );
-
-                foreach($categories as $key => $value) {
-                    $activeClass = ($key == $cat) ? 'active' : '';
-                    print '<a href="'.$site_url.'news/'.$key.'/1" class="news-tab '.$activeClass.'">';
-                    if($key == 0) print '<i class="fas fa-list"></i> ';
-                    elseif($key == 1) print '<i class="fas fa-sync-alt"></i> ';
-                    elseif($key == 2) print '<i class="fas fa-calendar-star"></i> ';
-                    print $value.'</a>';
-                }
-                ?>
-            </div>
+            <h1>Unisciti alla Community</h1>
+            <p>Entra nel nostro server Discord ufficiale e chatta con altri giocatori!</p>
         </div>
     </div>
 
-    <!-- Alerts -->
-    <?php if($offline): ?>
-    <div class="alert-modern server-offline">
-        <i class="fas fa-exclamation-triangle"></i>
-        <strong><?php print $lang['server-offline']; ?></strong>
-    </div>
-    <?php endif; ?>
-
-    <?php if (version_compare($php_version = phpversion(), '5.6.0', '<')): ?>
-    <div class="alert-modern">
-        <i class="fas fa-exclamation-circle"></i>
-        <span>Metin2CMS works with a PHP version >= 5.6.0. At this time, the server is running version <?php print $php_version; ?>.</span>
-    </div>
-    <?php endif; ?>
-
-    <!-- Main Content Layout -->
-    <div class="news-layout">
-        <!-- News Content -->
-        <div class="news-main">
-            <?php
-            // Admin add news form
-            if(!$offline && $database->is_loggedin()) {
-                if($web_admin >= $jsondataPrivileges['news']) {
-                    include 'include/functions/add-news.php';
-                }
-            }
-
-            // News display
-            $query = "SELECT * FROM news ORDER BY id DESC";
-            if($cat) {
-                $query = "SELECT * FROM news WHERE category = ".$cat." ORDER BY id DESC";
-            }
-            $records_per_page = intval(getJsonSettings("news"));
-
-            $newquery = $paginate->paging($query, $records_per_page);
-            $paginate->dataview($newquery, $lang['sure?'], $web_admin, $jsondataPrivileges['news'], $site_url, $lang['read-more']);
-            ?>
-
-            <div class="pagination-wrapper">
-                <?php
-                $paginate->paginglink($query, $records_per_page, $lang['first-page'], $lang['last-page'], $site_url, $cat);
-                ?>
+    <!-- Info Cards -->
+    <div class="discord-content">
+        <div class="discord-info-card">
+            <div class="info-card-icon">
+                <i class="fas fa-users"></i>
             </div>
+            <h3>Community Attiva</h3>
+            <p>Unisciti a centinaia di giocatori appassionati di Metin2. Condividi strategie, fai nuove amicizie e partecipa alle discussioni della community.</p>
         </div>
 
-        <!-- Discord Widget Sidebar -->
-        <div class="discord-sidebar">
-            <div class="discord-widget-container">
-                <div class="discord-widget-header">
-                    <div class="discord-icon">
-                        <i class="fab fa-discord"></i>
-                    </div>
-                    <div class="discord-widget-title">
-                        <h3>Join Our Discord</h3>
-                        <p>Chat with the community</p>
-                    </div>
-                </div>
-                <div class="discord-iframe-wrapper">
-                    <iframe
-                        src="https://discord.com/widget?id=824954226114560001&theme=dark"
-                        width="350"
-                        height="500"
-                        allowtransparency="true"
-                        frameborder="0"
-                        sandbox="allow-popups allow-popups-to-escape-sandbox allow-same-origin allow-scripts">
-                    </iframe>
-                </div>
+        <div class="discord-info-card">
+            <div class="info-card-icon">
+                <i class="fas fa-headset"></i>
             </div>
+            <h3>Supporto in Tempo Reale</h3>
+            <p>Hai bisogno di aiuto? Il nostro staff è sempre disponibile per rispondere alle tue domande e risolvere eventuali problemi rapidamente.</p>
+        </div>
+
+        <div class="discord-info-card">
+            <div class="info-card-icon">
+                <i class="fas fa-calendar-alt"></i>
+            </div>
+            <h3>Eventi Esclusivi</h3>
+            <p>Partecipa agli eventi esclusivi, tornei e giveaway riservati ai membri del server Discord. Vinci premi incredibili!</p>
+        </div>
+
+        <div class="discord-info-card">
+            <div class="info-card-icon">
+                <i class="fas fa-bullhorn"></i>
+            </div>
+            <h3>Aggiornamenti Istantanei</h3>
+            <p>Ricevi notifiche immediate su manutenzioni, update del server, nuove funzionalità e annunci importanti direttamente su Discord.</p>
+        </div>
+    </div>
+
+    <!-- Discord Widget -->
+    <div class="discord-widget-section">
+        <div class="widget-header">
+            <h2>
+                <i class="fab fa-discord"></i>
+                <span>Server Discord ONE</span>
+            </h2>
+            <p>Clicca sul widget qui sotto per unirti immediatamente</p>
+        </div>
+
+        <div class="discord-widget-frame">
+            <iframe
+                src="https://discord.com/widget?id=824954226114560001&theme=dark"
+                allowtransparency="true"
+                frameborder="0"
+                sandbox="allow-popups allow-popups-to-escape-sandbox allow-same-origin allow-scripts">
+            </iframe>
+        </div>
+    </div>
+
+    <!-- Features -->
+    <div class="discord-features">
+        <div class="feature-box">
+            <i class="fas fa-comments"></i>
+            <h4>Chat Vocale</h4>
+            <p>Canali vocali dedicati per giocare insieme</p>
+        </div>
+
+        <div class="feature-box">
+            <i class="fas fa-trophy"></i>
+            <h4>Classifiche</h4>
+            <p>Scopri i migliori giocatori del server</p>
+        </div>
+
+        <div class="feature-box">
+            <i class="fas fa-gift"></i>
+            <h4>Giveaway</h4>
+            <p>Premi e bonus esclusivi per i membri</p>
         </div>
     </div>
 </div>
