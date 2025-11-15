@@ -518,7 +518,8 @@ if(isset($item_shop) && $item_shop != "") {
     <!-- ====================================
          SCRIPTS
          ==================================== -->
-    <script src="<?php print $site_url; ?>js/jquery-3.6.0.min.js"></script>
+    <!-- jQuery from CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.4/dist/jquery.min.js" integrity="sha256-oP6HI9z1XaZNBrJURtCoUT5SUnxFr8s3BzRl+cbzUq8=" crossorigin="anonymous"></script>
     <script>var site_url = "<?php print $site_url; ?>";</script>
     <script src="<?php print $site_url; ?>js/app104.js"></script>
     <?php include 'include/functions/footer.php'; ?>
