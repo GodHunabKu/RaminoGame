@@ -62,8 +62,42 @@ if(isset($item_shop) && $item_shop != "") {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
     <title><?php print $site_title.' - '.$title; if($offline) print ' - '.$lang['server-offline']; ?></title>
+
+    <!-- SEO Meta Tags -->
     <meta name="description" content="ONE: Il nuovo server Metin2 italiano con livello max 220, gameplay FULL NEWSTYLE e oltre 1000 personalizzazioni. Shop 100% in-game!">
-    <meta name="keywords" content="metin2, server metin2, metin2 italiano, ONE server, newstyle, mmorpg">
+    <meta name="keywords" content="metin2, server metin2, metin2 italiano, ONE server, newstyle, mmorpg, metin2 privato, server privato metin2">
+    <meta name="author" content="ONE Server">
+    <meta name="robots" content="index, follow">
+    <meta name="language" content="Italian">
+    <meta name="revisit-after" content="7 days">
+
+    <!-- Open Graph / Facebook / Discord -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="<?php echo $site_url; ?>">
+    <meta property="og:title" content="<?php print $site_title.' - '.$title; ?>">
+    <meta property="og:description" content="ONE: Il nuovo server Metin2 italiano con livello max 220, gameplay FULL NEWSTYLE e oltre 1000 personalizzazioni. Shop 100% in-game!">
+    <meta property="og:image" content="<?php echo $site_url; ?>images/og-image.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:site_name" content="<?php print $site_title; ?>">
+    <meta property="og:locale" content="it_IT">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="<?php echo $site_url; ?>">
+    <meta name="twitter:title" content="<?php print $site_title.' - '.$title; ?>">
+    <meta name="twitter:description" content="ONE: Il nuovo server Metin2 italiano con livello max 220, gameplay FULL NEWSTYLE e oltre 1000 personalizzazioni. Shop 100% in-game!">
+    <meta name="twitter:image" content="<?php echo $site_url; ?>images/og-image.png">
+
+    <!-- Canonical URL -->
+    <link rel="canonical" href="<?php echo $site_url; ?>">
+
+    <!-- Theme Color -->
+    <meta name="theme-color" content="#E74C3C">
+    <meta name="msapplication-TileColor" content="#E74C3C">
+
+    <!-- Apple Touch Icon -->
+    <link rel="apple-touch-icon" sizes="180x180" href="<?php echo $site_url; ?>images/apple-touch-icon.png">
     
     <!-- Preconnect -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -77,10 +111,10 @@ if(isset($item_shop) && $item_shop != "") {
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
     
     <!-- CSS Principale -->
-    <link rel="stylesheet" href="<?php echo $site_url; ?>css/style-one-shop101.css" type="text/css">
+    <link rel="stylesheet" href="<?php echo $site_url; ?>css/style-one-shop104.css" type="text/css">
     
     <!-- Favicon -->
-    <link rel="shortcut icon" href="<?php echo $site_url; ?>images/favicon.ico">
+    <link rel="shortcut icon" href="<?php echo $site_url; ?>kebab/logo3.png">
     
     <!-- reCAPTCHA -->
     <script src="https://www.google.com/recaptcha/api.js" async defer></script>
@@ -100,10 +134,9 @@ if(isset($item_shop) && $item_shop != "") {
     <div id="preloader"></div>
 
     <div class="page-wrapper">
-        
-        <?php if (!$is_homepage) : ?>
+
         <!-- ====================================
-             HEADER (SOLO PAGINE NON-HOMEPAGE)
+             HEADER - SEMPRE VISIBILE
              ==================================== -->
         <header class="main-header">
             <a href="<?php echo $site_url; ?>" class="nav-logo" aria-label="Homepage ONE">
@@ -144,7 +177,6 @@ if(isset($item_shop) && $item_shop != "") {
             </div>
             <button id="mobile-menu-toggle" aria-label="Menu" aria-expanded="false"><i class="fas fa-bars"></i></button>
         </header>
-        <?php endif; ?>
 
         <div class="main-container">
             
@@ -236,8 +268,36 @@ if(isset($item_shop) && $item_shop != "") {
                             </div>
                         </div>
                     </div>
+
+                    <!-- CTA BUTTONS -->
+                    <div class="hero-cta-buttons">
+                        <a href="<?php echo $site_url; ?>download" class="cta-button cta-primary">
+                            <i class="fas fa-download"></i>
+                            <span class="cta-text">
+                                <strong>SCARICA IL CLIENT</strong>
+                                <small>Inizia la tua avventura</small>
+                            </span>
+                        </a>
+                        <?php if(!$database->is_loggedin()) { ?>
+                        <a href="<?php echo $site_url; ?>users/register" class="cta-button cta-secondary">
+                            <i class="fas fa-user-plus"></i>
+                            <span class="cta-text">
+                                <strong>REGISTRATI ORA</strong>
+                                <small>Gratis e senza limiti</small>
+                            </span>
+                        </a>
+                        <?php } else { ?>
+                        <a href="<?php echo $site_url; ?>user/administration" class="cta-button cta-secondary">
+                            <i class="fas fa-user-circle"></i>
+                            <span class="cta-text">
+                                <strong>IL MIO ACCOUNT</strong>
+                                <small>Gestisci il tuo profilo</small>
+                            </span>
+                        </a>
+                        <?php } ?>
+                    </div>
                 </section>
-                
+
                 <!-- CONTENT GRID: 3 BOX -->
                 <div class="content-grid">
                     
@@ -272,7 +332,7 @@ if(isset($item_shop) && $item_shop != "") {
                         
                         <div class="top-player-featured">
                             <div class="featured-badge">
-                                <img src="<?php print $site_url; ?>images/gold.png" alt="Gold">
+                                <img src="<?php print $site_url; ?>images/top1.png" alt="Gold">
                             </div>
                             <div class="featured-image">
                                 <img src="<?php print $site_url.'images/job/'.$jsondataRanking['top10backup']['players'][0]['job']; ?>.png" alt="">
@@ -298,8 +358,8 @@ if(isset($item_shop) && $item_shop != "") {
                                     <tr>
                                         <td class="rank-col">
                                             <?php 
-                                            if($i==2) print '<img src="'.$site_url.'images/silver.png" alt="Silver" />'; 
-                                            else if($i==3) print '<img src="'.$site_url.'images/bronze.png" alt="Bronze" />'; 
+                                            if($i==2) print '<img src="'.$site_url.'images/top2.png" alt="Silver" />'; 
+                                            else if($i==3) print '<img src="'.$site_url.'images/top3.png" alt="Bronze" />'; 
                                             else print '<span class="rank-number">'.$i.'</span>'; 
                                             ?>
                                         </td>
@@ -324,7 +384,7 @@ if(isset($item_shop) && $item_shop != "") {
                         
                         <div class="top-player-featured">
                             <div class="featured-badge">
-                                <img src="<?php print $site_url; ?>images/gold.png" alt="Gold">
+                                <img src="<?php print $site_url; ?>images/top1.png" alt="Gold">
                             </div>
                             <div class="featured-image">
                                 <img src="<?php print $site_url.'images/job/'.$jsondataRanking['top10backup']['guilds'][0]['master_job']; ?>.png" alt="">
@@ -350,8 +410,8 @@ if(isset($item_shop) && $item_shop != "") {
                                     <tr>
                                         <td class="rank-col">
                                             <?php 
-                                            if($i==2) print '<img src="'.$site_url.'images/silver.png" alt="Silver" />'; 
-                                            else if($i==3) print '<img src="'.$site_url.'images/bronze.png" alt="Bronze" />'; 
+                                            if($i==2) print '<img src="'.$site_url.'images/top2.png" alt="Silver" />'; 
+                                            else if($i==3) print '<img src="'.$site_url.'images/top3.png" alt="Bronze" />'; 
                                             else print '<span class="rank-number">'.$i.'</span>'; 
                                             ?>
                                         </td>
@@ -454,7 +514,7 @@ if(isset($item_shop) && $item_shop != "") {
          ==================================== -->
     <script src="<?php print $site_url; ?>js/jquery-3.6.0.min.js"></script>
     <script>var site_url = "<?php print $site_url; ?>";</script>
-    <script src="<?php print $site_url; ?>js/app101.js"></script>
+    <script src="<?php print $site_url; ?>js/app104.js"></script>
     <?php include 'include/functions/footer.php'; ?>
 </body>
 </html>
