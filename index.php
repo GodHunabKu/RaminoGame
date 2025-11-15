@@ -506,6 +506,12 @@ if(isset($item_shop) && $item_shop != "") {
     <footer class="footer-section">
         <div class="footer-content">
             <p>&copy; <?php echo date('Y'); ?> <a href="<?php echo $site_url; ?>"><?php print $site_title; ?></a> - All rights reserved.</p>
+            <div class="footer-sponsor">
+                <p>Sponsored by</p>
+                <a href="https://www.inforge.net/" target="_blank" rel="noopener noreferrer">
+                    <img src="<?php echo $site_url; ?>images/logo_inf.png" alt="Inforge" class="sponsor-logo">
+                </a>
+            </div>
         </div>
     </footer>
     
