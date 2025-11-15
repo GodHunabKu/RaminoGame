@@ -506,13 +506,20 @@ if(isset($item_shop) && $item_shop != "") {
     <footer class="footer-section">
         <div class="footer-content">
             <p>&copy; <?php echo date('Y'); ?> <a href="<?php echo $site_url; ?>"><?php print $site_title; ?></a> - All rights reserved.</p>
+            <div class="footer-sponsor">
+                <p>Sponsored by</p>
+                <a href="https://www.inforge.net/" target="_blank" rel="noopener noreferrer">
+                    <img src="<?php echo $site_url; ?>images/logo_inf.png" alt="Inforge" class="sponsor-logo">
+                </a>
+            </div>
         </div>
     </footer>
     
     <!-- ====================================
          SCRIPTS
          ==================================== -->
-    <script src="<?php print $site_url; ?>js/jquery-3.6.0.min.js"></script>
+    <!-- jQuery from CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.4/dist/jquery.min.js" integrity="sha256-oP6HI9z1XaZNBrJURtCoUT5SUnxFr8s3BzRl+cbzUq8=" crossorigin="anonymous"></script>
     <script>var site_url = "<?php print $site_url; ?>";</script>
     <script src="<?php print $site_url; ?>js/app104.js"></script>
     <?php include 'include/functions/footer.php'; ?>

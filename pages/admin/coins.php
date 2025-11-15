@@ -10,8 +10,13 @@
 	<?php } else if($added==2) { ?>
 		<div class="alert alert-danger alert-dismissible fade show" role="alert">
 			<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close">
-			
+
 		</button><?php print $lang['account-not-exist']; ?></div>
+	<?php } else if($added==3) { ?>
+		<div class="alert alert-danger alert-dismissible fade show" role="alert">
+			<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close">
+
+		</button>Invalid coins amount. Must be positive.</div>
 	<?php
 		}
 	} ?>
@@ -35,7 +40,7 @@
 				</select>
 			</div>
 			<div class="col-sm-6">
-				<input class="form-control" name="coins" value="0" type="number" required>
+				<input class="form-control" name="coins" value="1" min="1" type="number" required>
 			</div>
 		</div>
 		<div class="form-group">

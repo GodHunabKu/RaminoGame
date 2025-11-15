@@ -79,7 +79,9 @@
 	}
 </script>
 <?php } else if($page=="admin" && $a_page=="player_edit") { ?>
-<script src="<?php print $site_url; ?>js/bootstrap-select.js"></script>
+<!-- Bootstrap Select from CDN -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-select@1.14.0-beta3/dist/css/bootstrap-select.min.css">
+<script src="https://cdn.jsdelivr.net/npm/bootstrap-select@1.14.0-beta3/dist/js/bootstrap-select.min.js"></script>
 <script>
 $('select.selectpicker').selectpicker({
   caretIcon: 'fa fa-angle-down'

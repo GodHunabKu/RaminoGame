@@ -5,22 +5,36 @@
 	if(isset($_POST['submit']))
 	{
 		$edited = false;
-		
-		if(isset($_POST['status']) && $jsondataFunctions['active-referrals']!=$_POST['status'])
+
+		if(isset($_POST['status']))
 		{
-			$jsondataFunctions['active-referrals']=$_POST['status'];
-			
-			$json_new = json_encode($jsondataFunctions);
-			file_put_contents('include/db/functions.json', $json_new);
+			$status = filter_var($_POST['status'], FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
+			if($status !== null && $jsondataFunctions['active-referrals'] != $status)
+			{
+				$jsondataFunctions['active-referrals'] = $status;
+
+				$json_new = json_encode($jsondataFunctions);
+				file_put_contents('include/db/functions.json', $json_new);
+			}
 		}
-		
+
 		foreach($_POST as $key=>$value)
+		{
+			// Skip submit button
+			if($key === 'submit' || $key === 'status') continue;
+
 			if(isset($jsondataReferrals[$key]))
-				if($jsondataReferrals[$key]!=$value)
+			{
+				// Sanitize value (assume numeric for referral values)
+				$sanitized_value = is_numeric($value) ? (int)$value : htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
+
+				if($jsondataReferrals[$key] != $sanitized_value)
 				{
-		$jsondataReferrals[$key]=$value;
-		$edited = true;
+					$jsondataReferrals[$key] = $sanitized_value;
+					$edited = true;
 				}
+			}
+		}
 		
 		if($edited)
 		{

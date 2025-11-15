@@ -1949,6 +1949,95 @@ form hr {
     color: var(--color-accent);
 }
 
+.footer-sponsor {
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: 1px solid rgba(231, 76, 60, 0.15);
+}
+
+.footer-sponsor p {
+    margin: 0 0 10px 0;
+    font-size: 12px;
+    color: var(--color-text-dark);
+    opacity: 0.7;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.footer-sponsor a {
+    display: inline-block;
+    transition: transform 0.3s ease, opacity 0.3s ease;
+    opacity: 0.8;
+}
+
+.footer-sponsor a:hover {
+    transform: translateY(-3px);
+    opacity: 1;
+}
+
+.sponsor-logo {
+    max-width: 150px;
+    height: auto;
+    filter: brightness(0.9);
+    transition: filter 0.3s ease;
+}
+
+.footer-sponsor a:hover .sponsor-logo {
+    filter: brightness(1.1);
+}
+
+/* =================================
+   ADMIN PANEL
+   ================================= */
+.admin-header-icon {
+    animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.7;
+    }
+}
+
+.admin-content-wrapper .list-group {
+    box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.admin-content-wrapper .list-group-item {
+    background: rgba(30, 30, 40, 0.9);
+    border-color: rgba(231, 76, 60, 0.2);
+    transition: all 0.3s ease;
+}
+
+.admin-content-wrapper .list-group-item.active {
+    background: linear-gradient(135deg, #E74C3C 0%, #C0392B 100%);
+    border-color: #E74C3C;
+    font-weight: 600;
+}
+
+.admin-content-wrapper .list-group-item-action:hover {
+    background: rgba(231, 76, 60, 0.2);
+    border-color: rgba(231, 76, 60, 0.4);
+    transform: translateX(5px);
+}
+
+.admin-content-wrapper .list-group-item-heading {
+    margin-bottom: 5px;
+    color: #fff;
+    font-size: 16px;
+}
+
+.admin-content-wrapper .list-group-item-text {
+    color: rgba(255,255,255,0.6);
+    font-size: 13px;
+    margin: 0;
+}
+
 /* =================================
    RESPONSIVE
    ================================= */

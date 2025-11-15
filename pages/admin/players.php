@@ -1,9 +1,9 @@
 <div class="container">
-	<div class="jumbotron jumbotron-fluid" style="padding: 1rem 2rem;">
+	<div class="card bg-dark mb-3" style="padding: 1rem 2rem;">
 		<form action="" method="POST">
 			<div class="row">
 				<div class="col-lg-9">
-					<input type="text" name="search" class="form-control" placeholder="<?php print $lang['name']; ?> / IP" value="<?php if(isset($search)) print $search; ?>">
+					<input type="text" name="search" class="form-control" placeholder="<?php print $lang['name']; ?> / IP" value="<?php if(isset($search)) print htmlspecialchars($search, ENT_QUOTES, 'UTF-8'); ?>">
 				</div>
 				<div class="col-lg-3">
 					<button type="submit" class="btn btn-primary"><i class="fa fa-search fa-1" aria-hidden="true"></i> <?php print $lang['search']; ?></button>
@@ -11,9 +11,9 @@
 			</div>
 		</form>
 	</div>
-	
+
 	<table class="table table-dark table-striped">
-		<thead class="thead-inverse">
+		<thead>
 			<tr>
 				<th>#</th>
 				<th><?php print $lang['name']; ?></th>
@@ -72,7 +72,7 @@
 				<!-- Tab panes -->
 				<div class="tab-content">
 					<div class="tab-pane active" id="permanent" role="tabpanel">
-						</br>
+						<div class="mt-3"></div>
 						<form method="POST" action="">
 							<input type="hidden" name="accountID" id="accountID" value=""/>
 							<div class="form-group">
@@ -84,7 +84,7 @@
 					</div>
 					<?php if($availDt) { ?>
 					<div class="tab-pane" id="availDt" role="tabpanel">
-						</br>
+						<div class="mt-3"></div>
 						<form method="POST" action="">
 							<input type="hidden" name="accountID" id="accountID" value=""/>
 							<div class="form-group">

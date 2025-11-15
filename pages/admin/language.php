@@ -13,7 +13,7 @@
 
 	<div class="tab-content">
 		<div class="tab-pane active" id="settings" role="tabpanel">
-			</br>
+			<div class="mt-3"></div>
 			<form action="" method="post">
 				<div class="form-group row">
 					<label for="active-registrations" class="col-sm-8 col-form-label"><?php print $lang['default-language']; ?></label>
@@ -40,7 +40,7 @@
 		</div>
 		<div class="tab-pane" id="install" role="tabpanel">
 			
-			</br>
+			<div class="mt-3"></div>
 			<table class="table table-dark table-striped">
 				<thead class="thead-inverse">
 					<tr>

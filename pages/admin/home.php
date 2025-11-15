@@ -23,7 +23,7 @@
 	<?php } ?>
 </div>
 <?php } if($web_admin>=$jsondataPrivileges['functions-on-off'] || $web_admin>=$jsondataPrivileges['Vote4Coins'] || $web_admin>=$jsondataPrivileges['referrals'] || $web_admin>=$jsondataPrivileges['redeem-codes']) { ?>
-</br>
+<div class="mb-3"></div>
 <div class="list-group">
 	<li class="list-group-item active">
 		<i class="fa fa-magic fa-1" aria-hidden="true"></i> <?php print $lang['functions']; ?>
@@ -56,7 +56,7 @@
 	<?php } ?>
 </div>
 <?php } if($web_admin>=$jsondataPrivileges['donate']) { ?>
-</br>
+<div class="mb-3"></div>
 <div class="list-group">
 	<li class="list-group-item active">
 		<i class="fa fa-money fa-1" aria-hidden="true"></i> <?php print $lang['donate']; ?>
@@ -71,7 +71,7 @@
 	</a>
 </div>
 <?php } if($web_admin>=$jsondataPrivileges['player-management'] || $web_admin>=$jsondataPrivileges['Log'] || $web_admin>=$jsondataPrivileges['create-items'] || $web_admin>=$jsondataPrivileges['add-coins']) { ?>
-</br>
+<div class="mb-3"></div>
 <div class="list-group">
 	<li class="list-group-item active">
 		<i class="fa fa-cogs fa-1" aria-hidden="true"></i> <?php print $lang['game-management']; ?>
@@ -104,7 +104,7 @@
 	<?php } ?>
 </div>
 <?php } if($web_admin>=$jsondataPrivileges['cms-management']) { ?>
-</br>
+<div class="mb-3"></div>
 <div class="list-group">
 	<li class="list-group-item active">
 		<i class="fa fa-cogs fa-1" aria-hidden="true"></i> <?php print $lang['cms-management']; ?>
