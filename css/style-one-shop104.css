@@ -2002,6 +2002,17 @@ form hr {
     }
 }
 
+.admin-content-wrapper a {
+    color: #fff !important;
+    cursor: pointer !important;
+    text-decoration: none;
+}
+
+.admin-content-wrapper a:hover {
+    color: #E74C3C !important;
+    text-decoration: none;
+}
+
 .admin-content-wrapper .list-group {
     box-shadow: 0 2px 10px rgba(0,0,0,0.3);
     border-radius: 8px;
@@ -2018,6 +2029,12 @@ form hr {
     background: linear-gradient(135deg, #E74C3C 0%, #C0392B 100%);
     border-color: #E74C3C;
     font-weight: 600;
+}
+
+.admin-content-wrapper .list-group-item-action {
+    color: #fff !important;
+    cursor: pointer !important;
+    pointer-events: auto !important;
 }
 
 .admin-content-wrapper .list-group-item-action:hover {
