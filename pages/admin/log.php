@@ -15,7 +15,7 @@
 	if($current_log) {
 ?>
 	<table class="table table-dark table-striped">
-		<thead class="thead-inverse">
+		<thead>
 			<tr>
 				<?php 
 					foreach($columns as $column)

@@ -2,32 +2,40 @@
 	if(isset($_POST['submit']))
 	{
 		$edited = false;
-		
+
 		foreach($_POST as $key=>$link)
+		{
+			// Skip submit button
+			if($key === 'submit') continue;
+
+			// Sanitize link value
+			$sanitized_link = filter_var($link, FILTER_SANITIZE_URL);
+
 			if(isset($jsondata['general'][$key]))
 			{
-				if($jsondata['general'][$key]!=$link)
+				if($jsondata['general'][$key] != $sanitized_link)
 				{
-		$jsondata['general'][$key]=$link;
-		$edited = true;
+					$jsondata['general'][$key] = $sanitized_link;
+					$edited = true;
 				}
 			}
 			else if(isset($jsondata['links'][$key]))
 			{
-				if($jsondata['links'][$key]!=$link)
+				if($jsondata['links'][$key] != $sanitized_link)
 				{
-		$jsondata['links'][$key]=$link;
-		$edited = true;
+					$jsondata['links'][$key] = $sanitized_link;
+					$edited = true;
 				}
 			}
 			else if(isset($jsondata['social-links'][$key]))
 			{
-				if($jsondata['social-links'][$key]!=$link)
+				if($jsondata['social-links'][$key] != $sanitized_link)
 				{
-		$jsondata['social-links'][$key]=$link;		
-		$edited = true;
+					$jsondata['social-links'][$key] = $sanitized_link;
+					$edited = true;
 				}
 			}
+		}
 		if($edited)
 		{
 			$json_new = json_encode($jsondata);
