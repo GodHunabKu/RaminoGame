@@ -29,7 +29,7 @@
 	
 	<?php if(count($jsondataDonate)) { ?>
 	<table class="table table-dark table-striped">
-		<thead class="thead-inverse">
+		<thead>
 			<tr>
 				<th style="width: 15%">#</th>
 				<th style="width: 70%"><?php print $lang['name']; ?></th>

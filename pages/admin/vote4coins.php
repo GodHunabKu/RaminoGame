@@ -36,7 +36,7 @@
 	
 	<?php if(count($jsondataVote4Coins)) { ?>
 	<table class="table table-dark table-striped">
-		<thead class="thead-inverse">
+		<thead class="">
 			<tr>
 				<th>#</th>
 				<th>Site</th>

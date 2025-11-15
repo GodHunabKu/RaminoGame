@@ -18,7 +18,7 @@
 	
 	<?php if(count($jsondataDownload)) { ?>
 	<table class="table table-dark table-striped">
-		<thead class="thead-inverse">
+		<thead class="">
 			<tr>
 				<th style="width: 15%">#</th>
 				<th style="width: 70%">Server</th>

@@ -40,7 +40,7 @@
 	</form>
 	<hr>
 	<table class="table table-dark table-striped">
-		<thead class="thead-inverse">
+		<thead class="">
 			<tr>
 				<th>#</th>
 				<th><?php print $lang['code']; ?></th>
