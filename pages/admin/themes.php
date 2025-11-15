@@ -2,7 +2,7 @@
 	if(isset($_POST['install']))
 	{
 ?>
-		<center><img src="<?php print $site_url; ?>images/site/updating.gif"></center></br>
+		<center><img src="<?php print $site_url; ?>images/site/updating.gif"></center><div class="mt-3"></div>
 <?php
 		$file = 'update.zip';
 		

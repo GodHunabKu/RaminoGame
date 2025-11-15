@@ -27,7 +27,7 @@
 
 	<div class="tab-content">
 		<div class="tab-pane active" id="player" role="tabpanel">
-			</br>
+			<div class="mt-3"></div>
 			<form action="" method="post">
 				<div class="form-group row">
 					<div class="col-sm-3">
@@ -77,7 +77,7 @@
 			</form>
 		</div>
 		<div class="tab-pane" id="players" role="tabpanel">
-			</br>
+			<div class="mt-3"></div>
 			<form action="" method="post">
 				<div class="form-group">
 					<label class="control-label" for="vnum">vNum</label>
