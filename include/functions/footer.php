@@ -7,37 +7,16 @@
 			var no_special_chars = "'.$lang['no-special-chars'].'";
 			var no_password_r = "'.$lang['no-password-r'].'";
 		</script>';
-		print '<script src="'.$site_url.'js/register-v2025.js?v='.time().'"></script>';
+		print '<script src="'.$site_url.'js/register.js?v='.time().'"></script>';
 	} else if($page=="news" || $page=="read")
 	{
 		if($database->is_loggedin())
 			if($web_admin>=$jsondataPrivileges['news'])
 				print '<script src="https://cdn.ckeditor.com/4.8.0/full/ckeditor.js"></script>';
 	}
-	else if($page=="admin" && $a_page=="players")
+	else if($page=="referrals" || ($page=="admin" && $a_page=="redeem"))
 	{
 ?>
-	<script type="text/javascript">
-		$(document).ready(function() {
-			$("body").tooltip({ selector: '[data-bs-toggle=tooltip]' });
-		});
-
-		$(document).on("click", ".open-accountID", function () {
-			 var account_id = $(this).data('id');
-			 // FIX: Usa la classe per targetizzare tutti gli input accountID nei modal
-			 $(".modal-accountID").val( account_id );
-
-			 // Imposta i titoli dei modal
-			 var accountName = document.getElementById(account_id) ? document.getElementById(account_id).innerText : '';
-			 if (document.getElementById("banModal")) {
-			 	document.getElementById("banModal").innerText = "<?php print $lang['ban']; ?> - " + accountName;
-			 }
-			 if (document.getElementById("unBanModal")) {
-			 	document.getElementById("unBanModal").innerText = "<?php print $lang['unban']; ?> - " + accountName;
-			 }
-		});
-	</script>
-<?php } else if($page=="referrals" || ($page=="admin" && $a_page=="redeem")) { ?>
 <script>
 	document.getElementById("copyButton").addEventListener("click", function() {
 		copyToClipboard(document.getElementById("share"));

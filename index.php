@@ -114,10 +114,10 @@ if(isset($item_shop) && $item_shop != "") {
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
 
     <!-- CSS Principale -->
-    <link rel="stylesheet" href="<?php echo $site_url; ?>css/styles-v2025.css?v=<?php echo time(); ?>" type="text/css">
+    <link rel="stylesheet" href="<?php echo $site_url; ?>css/main.css?v=<?php echo time(); ?>" type="text/css">
 
     <?php if($page != 'admin') { ?>
-    <!-- Modern Design System 2025 (escluso dal pannello admin) -->
+    <!-- Modern Design System (escluso dal pannello admin) -->
     <link rel="stylesheet" href="<?php echo $site_url; ?>css/design-system.css?v=<?php echo time(); ?>" type="text/css">
     <?php } ?>
 
@@ -542,9 +542,9 @@ if(isset($item_shop) && $item_shop != "") {
     <script>var site_url = "<?php print $site_url; ?>";</script>
 
     <?php if($page != 'admin') { ?>
-    <!-- JavaScript del sito (esclusi dal pannello admin per evitare conflitti con event listeners) -->
-    <script src="<?php print $site_url; ?>js/app-v2025.js?v=<?php echo time(); ?>"></script>
-    <script src="<?php print $site_url; ?>js/modern-features-v2025.js?v=<?php echo time(); ?>"></script>
+    <!-- JavaScript del sito (esclusi dal pannello admin) -->
+    <script src="<?php print $site_url; ?>js/app.js?v=<?php echo time(); ?>"></script>
+    <script src="<?php print $site_url; ?>js/features.js?v=<?php echo time(); ?>"></script>
     <?php } ?>
 
     <?php include 'include/functions/footer.php'; ?>

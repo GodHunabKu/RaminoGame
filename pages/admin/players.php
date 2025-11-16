@@ -15,18 +15,16 @@
 	<table class="table table-dark table-striped">
 		<thead>
 			<tr>
-				<th>#</th>
-				<th><?php print $lang['name']; ?></th>
 				<th><?php print $lang['account']; ?></th>
-				<th class="level-table">IP</th>
+				<th><?php print $lang['name']; ?></th>
+				<th>IP</th>
 				<th><?php print $lang['status']; ?></th>
-				<th class="exp-table"><?php print $lang['actions']; ?></th>
 			</tr>
 		</thead>
 		<tbody>
-			<?php 
+			<?php
 				$records_per_page=10;
-				
+
 				if(isset($search))
 				{
 					if(!filter_var($search, FILTER_VALIDATE_IP) === false)
@@ -34,11 +32,11 @@
 					else
 						$query = "SELECT id, name, account_id, level, ip FROM player WHERE name LIKE :search ORDER BY level DESC, exp DESC, playtime DESC, name ASC";
 					$newquery = $paginate->paging($query,$records_per_page);
-					$paginate->dataview($newquery, $search, $lang['ban'], $lang['unban'], $lang['edit-player-info']);
+					$paginate->dataview($newquery, $search);
 				} else {
 					$query = "SELECT id, name, account_id, level, ip FROM player ORDER BY level DESC, exp DESC, playtime DESC, name ASC";
 					$newquery = $paginate->paging($query,$records_per_page);
-					$paginate->dataview($newquery, null, $lang['ban'], $lang['unban'], $lang['edit-player-info']);
+					$paginate->dataview($newquery);
 				}
 			?>
 		</tbody>
@@ -49,102 +47,4 @@
 		else
 			$paginate->paginglink($query,$records_per_page,$lang['first-page'],$lang['last-page'],$site_url);
 	?>
-</div>
-
-<div class="modal fade" id="ban" tabindex="-1" role="dialog" aria-labelledby="Ban" aria-hidden="true">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="banModal">Title</h5>
-            </div>
-            <div class="modal-body">
-				<ul class="nav nav-tabs" role="tablist">
-					<li class="nav-item">
-						<a class="nav-link active" data-bs-toggle="tab" href="#permanent" role="tab"><?php print $lang['permanent-ban']; ?></a>
-					</li>
-					<?php if($availDt = check_account_column('availDt')) { ?>
-					<li class="nav-item">
-						<a class="nav-link" data-bs-toggle="tab" href="#availDt" role="tab"><?php print $lang['temporary-ban']; ?></a>
-					</li>
-					<?php } ?>
-				</ul>
-
-				<!-- Tab panes -->
-				<div class="tab-content">
-					<div class="tab-pane active" id="permanent" role="tabpanel">
-						<div class="mt-3"></div>
-						<form method="POST" action="">
-							<input type="hidden" name="accountID" class="modal-accountID" id="accountID-permanent" value=""/>
-							<div class="form-group">
-								<label for="reason"><?php print $lang['reason'].' - '.$lang['permanent-ban']; ?></label>
-								<textarea class="form-control" id="permanent" name="permanent" rows="3"></textarea>
-							</div>
-							<button type="submit" class="btn btn-primary"><?php print $lang['ban']; ?></button>
-						</form>
-					</div>
-					<?php if($availDt) { ?>
-					<div class="tab-pane" id="availDt" role="tabpanel">
-						<div class="mt-3"></div>
-						<form method="POST" action="">
-							<input type="hidden" name="accountID" class="modal-accountID" id="accountID-temporary" value=""/>
-							<div class="form-group">
-								<label for="reason"><?php print $lang['time']; ?></label>
-								<hr>
-								<div class="row">
-									<div class="col-lg-3">
-										<label for="months"><?php print ucfirst($lang['months']); ?></label>
-										<input class="form-control" type="number" value="0" id="months" name="months">
-									</div>
-									<div class="col-lg-3">
-										<label for="days"><?php print ucfirst($lang['days']); ?></label>
-										<input class="form-control" type="number" value="0" id="days" name="days">
-									</div>
-									<div class="col-lg-3">
-										<label for="hours"><?php print ucfirst($lang['hours']); ?></label>
-										<input class="form-control" type="number" value="0" id="hours" name="hours">
-									</div>
-									<div class="col-lg-3">
-										<label for="reason"><?php print ucfirst($lang['minutes']); ?></label>
-										<input class="form-control" type="number" value="0" id="minutes" name="minutes">
-									</div>
-								</div>
-							</div>
-							<div class="form-group">
-								<label for="reason"><?php print $lang['reason'].' - '.$lang['temporary-ban']; ?></label>
-								<textarea class="form-control" id="temporary" name="temporary" rows="3"></textarea>
-							</div>
-							<button type="submit" class="btn btn-primary"><?php print $lang['ban']; ?></button>
-						</form>
-					</div>
-					<?php } ?>
-				</div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><?php print $lang['close']; ?></button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div class="modal fade" id="unban" tabindex="-1" role="dialog" aria-labelledby="unBan" aria-hidden="true">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="unBanModal">Title</h5>
-            </div>
-            <div class="modal-body">
-				<form method="POST" action="">
-					<input type="hidden" name="accountID" class="modal-accountID" id="accountID-unban" value=""/>
-					<input type="hidden" name="unban" id="unban" value=""/>
-					<div class="form-group">
-						<label for="reason"><?php print $lang['unban-check']; ?></label>
-					</div>
-					<button type="submit" class="btn btn-primary"><?php print $lang['unban']; ?></button>
-				</form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><?php print $lang['close']; ?></button>
-            </div>
-        </div>
-    </div>
 </div>
