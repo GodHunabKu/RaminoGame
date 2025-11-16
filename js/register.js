@@ -9,10 +9,6 @@ $(window).on('load', function() {
 			$("#checkpassword").html("");
 	}
 
-	$(document).ready(function () {
-	   $("#rpassword").keyup(checkPasswordMatch);
-	});
-	
 	function checkUsername() {
 		var name = $("#username").val();
 		var regex = /^[0-9a-zA-Z]*$/;
@@ -23,47 +19,49 @@ $(window).on('load', function() {
 			$("#checkname").html("");
 	}
 
-	$(document).ready(function () {
-	   $("#username").keyup(checkUsername);
-	});	
-	
 	function checkUsername2() {
 		var name = $("#username").val();
 		var n = name.length;
 		var type = 1;
-		
+
 		if(n>=5 && n<=16)
 		{
-			$.post(site_url + "checkusername.php", { type:type, username:name },  
-				function(result){  
+			$.post(site_url + "checkusername.php", { type:type, username:name })
+				.done(function(result){
 					if(result == 1)
-						$('#checkname2').html(name + ' ' + not_available);  
+						$('#checkname2').html(name + ' ' + not_available);
 					else
-						$('#checkname2').html("");  
-			});
+						$('#checkname2').html("");
+				})
+				.fail(function() {
+					$('#checkname2').html('<span style="color: #dc3545;">Connection error</span>');
+				});
 		}
 	}
 
-	$(document).ready(function () {
-	   $("#username").keyup(checkUsername2);
-	});
-	
 	function checkUserEmail() {
 		var email = $("#email").val();
 		var type = 2;
 		if (email.indexOf("@") >= 0)
 		{
-			$.post(site_url + "checkusername.php", { type:type, email:email },  
-				function(result){  
+			$.post(site_url + "checkusername.php", { type:type, email:email })
+				.done(function(result){
 					if(result == 1)
-						$('#checkemail').html(email + ' ' + not_available);  
+						$('#checkemail').html(email + ' ' + not_available);
 					else
-						$('#checkemail').html("");  
-			});  
+						$('#checkemail').html("");
+				})
+				.fail(function() {
+					$('#checkemail').html('<span style="color: #dc3545;">Connection error</span>');
+				});
 		}
 	}
 
-	$(document).ready(function () {
-	   $("#email").keyup(checkUserEmail);
-	});	
+	// Register event listeners (no need for $(document).ready since we're already in window.load)
+	$("#rpassword").keyup(checkPasswordMatch);
+	$("#username").keyup(function() {
+		checkUsername();
+		checkUsername2();
+	});
+	$("#email").keyup(checkUserEmail);
 });

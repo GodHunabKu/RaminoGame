@@ -10,9 +10,13 @@
 			if($verifyResponse !== false) {
 				$responseData = json_decode($verifyResponse);
 
-				if($responseData && $responseData->success)
+				if($responseData && $responseData->success) {
 				   $login_info = $database->doLogin($username,$password);
-				else $login_info = array(6);
+				   // Security: Regenerate session ID to prevent session fixation attacks
+				   if(isset($login_info[0]) && $login_info[0] == 1) {
+					   session_regenerate_id(true);
+				   }
+				} else $login_info = array(6);
 			} else {
 				$login_info = array(6);
 			}

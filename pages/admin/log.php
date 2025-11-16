@@ -19,7 +19,7 @@
 			<tr>
 				<?php 
 					foreach($columns as $column)
-						print '<th>'. $column .'</th>';
+						print '<th>'. htmlspecialchars($column, ENT_QUOTES, 'UTF-8') .'</th>';
 				?>
 			</tr>
 		</thead>
