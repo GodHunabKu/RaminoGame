@@ -474,7 +474,7 @@ if(isset($item_shop) && $item_shop != "") {
                     <?php if(!$offline) { ?>
                     <div class="form-group">
                         <div class="recaptcha-wrapper">
-                            <div class="g-recaptcha" data-sitekey="<?php print $site_key; ?>" data-theme="dark"></div>
+                            <div class="g-recaptcha" data-sitekey="<?php print $site_key; ?>" data-theme="dark" data-size="compact"></div>
                         </div>
                     </div>
                     <?php } ?>

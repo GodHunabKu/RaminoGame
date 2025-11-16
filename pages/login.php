@@ -122,7 +122,7 @@
                             Verifica di Sicurezza
                         </label>
                         <div class="recaptcha-wrapper">
-                            <div class="g-recaptcha" data-theme="dark" data-sitekey="<?php print $site_key; ?>"></div>
+                            <div class="g-recaptcha" data-theme="dark" data-sitekey="<?php print $site_key; ?>" data-size="compact"></div>
                         </div>
                     </div>
                 </div>
