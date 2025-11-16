@@ -29,10 +29,16 @@ RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule ^(.+)/$ /$1 [R=301,L]
 
 # Prevent access to sensitive files
-<FilesMatch "\.(json|txt|log|bak|sql|sh)$">
+<FilesMatch "\.(json|txt|log|bak|sql|sh|env)$">
     Order allow,deny
     Deny from all
 </FilesMatch>
+
+# Extra protection for .env file
+<Files ".env">
+    Order allow,deny
+    Deny from all
+</Files>
 
 # Security headers
 <IfModule mod_headers.c>
