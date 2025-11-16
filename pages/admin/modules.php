@@ -1,30 +1,54 @@
 <?php
-	if(isset($_POST['uninstall']) && is_dir($_POST['uninstall']))
+	if(isset($_POST['uninstall']) && !empty($_POST['uninstall']))
 	{
-		rmdir($_POST['uninstall']);
-		print '<div class="alert alert-success alert-dismissible fade show" role="alert">
-			 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close">
-			
-			</button>'.$lang['uninstall-info'].'</div>';
-	} else if(isset($_POST['install']))
+		// Security: Validate directory path to prevent directory traversal
+		$uninstall_dir = basename($_POST['uninstall']); // Remove any path traversal attempts
+		$full_path = 'modules/' . $uninstall_dir;
+
+		// Only allow deletion of directories inside 'modules' folder
+		if(is_dir($full_path) && strpos(realpath($full_path), realpath('modules/')) === 0)
+		{
+			rmdir($full_path);
+			print '<div class="alert alert-success alert-dismissible fade show" role="alert">
+				 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close">
+
+				</button>'.$lang['uninstall-info'].'</div>';
+		} else {
+			print '<div class="alert alert-danger alert-dismissible fade show" role="alert">
+				 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close">
+
+				</button>Invalid module directory</div>';
+		}
+	} else if(isset($_POST['install']) && !empty($_POST['install']))
 	{
+		// Security: Validate module name (alphanumeric, dash, underscore only)
+		$module_name = preg_replace('/[^a-zA-Z0-9_-]/', '', $_POST['install']);
+
+		if($module_name === $_POST['install']) // Only proceed if no sanitization was needed
+		{
 ?>
 		<center><img src="<?php print $site_url; ?>images/site/updating.gif"></center><div class="mt-3"></div>
 <?php
-		$file = 'update.zip';
-		
-		$download = file_get_contents_curl('https://new.metin2cms.cf/v2/modules/'.$_POST['install'].'.zip', 2, 10);
-		file_put_contents($file, $download);
+			$file = 'update.zip';
 
-		if(file_exists($file)) {
-			$tryUpdate = ZipExtractUpdate();
-			if($tryUpdate[0])
-				print "<script>top.location='".$site_url."admin/modules'</script>";
-			else
-			{
-				if(isset($tryUpdate[1]))
-					print $tryUpdate[1];
+			$download = file_get_contents_curl('https://new.metin2cms.cf/v2/modules/'.$module_name.'.zip', 2, 10);
+			file_put_contents($file, $download);
+
+			if(file_exists($file)) {
+				$tryUpdate = ZipExtractUpdate();
+				if($tryUpdate[0])
+					print "<script>top.location='".$site_url."admin/modules'</script>";
+				else
+				{
+					if(isset($tryUpdate[1]))
+						print $tryUpdate[1];
+				}
 			}
+		} else {
+			print '<div class="alert alert-danger alert-dismissible fade show" role="alert">
+				 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close">
+
+				</button>Invalid module name</div>';
 		}
 	}
 		

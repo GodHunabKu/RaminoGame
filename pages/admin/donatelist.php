@@ -2,7 +2,7 @@
 	
 	<?php if(count($jsondataDonate)) { ?>
 	<table class="table table-dark table-striped">
-		<thead class="thead-inverse">
+		<thead class="">
 			<tr>
 				<th><?php print $lang['name']; ?></th>
 				<th><?php print $lang['code']; ?></th>

@@ -56,7 +56,8 @@
 		
 		if($database->is_loggedin())
 		{
-			if(($_SESSION['fingerprint']!=md5($_SERVER['HTTP_USER_AGENT'].'x'.$_SERVER['REMOTE_ADDR'])) || ($_SESSION['password']!=securityPassword(getAccountPassword($_SESSION['id']))) || !checkStatus($_SESSION['id']))
+			$user_agent = isset($_SERVER['HTTP_USER_AGENT']) ? $_SERVER['HTTP_USER_AGENT'] : '';
+		if((!isset($_SESSION['fingerprint']) || $_SESSION['fingerprint']!=md5($user_agent.'x'.$_SERVER['REMOTE_ADDR'])) || (!isset($_SESSION['password']) || $_SESSION['password']!=securityPassword(getAccountPassword($_SESSION['id']))) || !checkStatus($_SESSION['id']))
 			{
 				$database->doLogout();
 				header("Location: ".$site_url);
@@ -125,7 +126,7 @@
 				$top[0]['master_job'] = $data['job'];
 			}
 			foreach($top as &$guild)
-				$guild['empire'] = get_player_empire(getAccountID($row['master']));
+				$guild['empire'] = get_player_empire(getAccountID($guild['master']));
 			$jsondataRanking['top10backup']['guilds'] = $top;
 
 			file_put_contents('include/db/ranking.json', json_encode($jsondataRanking));

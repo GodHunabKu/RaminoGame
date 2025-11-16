@@ -29,7 +29,7 @@
 	
 	<?php if(count($jsondataDonate)) { ?>
 	<table class="table table-dark table-striped">
-		<thead class="thead-inverse">
+		<thead>
 			<tr>
 				<th style="width: 15%">#</th>
 				<th style="width: 70%"><?php print $lang['name']; ?></th>
@@ -41,7 +41,7 @@
 			<tr>
 				<th scope="row"><?php print $i++; ?></th>
 				<td><?php print $donate['name']; ?></td>
-				<td><a href="<?php print $site_url.'admin/donate/'.$key; ?>" class="btn btn-primary btn-sm"><?php print $lang['delete']; ?></a></td>
+				<td><a href="<?php print $site_url.'admin/donate?del='.$key; ?>" class="btn btn-primary btn-sm"><?php print $lang['delete']; ?></a></td>
 			</tr>
 		<?php } ?>
 		</tbody>

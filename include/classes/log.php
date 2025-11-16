@@ -16,32 +16,6 @@ class paginate {
     public function paging($query, $rp) {
         global $database;
 
-        // Get table from query (for determining which DB to use)
-        $table_pattern = '/FROM\s+(\w+)/i';
-        preg_match($table_pattern, $query, $matches);
-        $table = isset($matches[1]) ? $matches[1] : '';
-
-        // Determine which database connection to use
-        $log_tables = getLogTables();
-        if (in_array($table, $log_tables)) {
-            $conn = $database->getConnectionLog();
-        } else {
-            $conn = $database->getConnectionAccount();
-        }
-
-        // Count total records
-        $count_query = preg_replace('/SELECT\s+\*\s+FROM/i', 'SELECT COUNT(*) as total FROM', $query);
-        $count_query = preg_replace('/ORDER BY.*$/i', '', $count_query);
-
-        try {
-            $stmt = $conn->prepare($count_query);
-            $stmt->execute();
-            $row = $stmt->fetch(PDO::FETCH_ASSOC);
-            $this->total_records = $row['total'] ?? 0;
-        } catch(PDOException $e) {
-            $this->total_records = 0;
-        }
-
         // Get current page
         $this->page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
         if ($this->page < 1) $this->page = 1;
@@ -56,71 +30,55 @@ class paginate {
     }
 
     /**
-     * Display data in table format
+     * Display data in table format for PLAYERS page (characters)
      */
-    public function dataview($query, $columns_or_search = null, $ban_text = null, $unban_text = null, $edit_text = null) {
+    public function dataview($query, $search = null, $ban_text = null, $unban_text = null, $edit_text = null) {
         global $database, $site_url;
 
-        // Determine which type of dataview this is
-        if (is_array($columns_or_search)) {
-            // Log view
-            $this->dataviewLog($query, $columns_or_search);
-        } else {
-            // Players view
-            $this->dataviewPlayers($query, $columns_or_search, $ban_text, $unban_text, $edit_text);
-        }
-    }
-
-    /**
-     * Display log data
-     */
-    private function dataviewLog($query, $columns) {
-        global $database;
-
         try {
-            $stmt = $database->runQueryLog($query);
-            $stmt->execute();
+            $stmt = $database->runQueryPlayer($query);
 
-            while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-                echo '<tr>';
-                foreach ($columns as $column) {
-                    echo '<td>' . htmlspecialchars($row[$column] ?? '', ENT_QUOTES, 'UTF-8') . '</td>';
+            // Bind parameters if search is provided
+            if($search !== null) {
+                if(!filter_var($search, FILTER_VALIDATE_IP) === false) {
+                    $stmt->bindParam(':ip', $search, PDO::PARAM_STR);
+                } else {
+                    $search_param = '%' . $search . '%';
+                    $stmt->bindParam(':search', $search_param, PDO::PARAM_STR);
                 }
-                echo '</tr>';
             }
-        } catch(PDOException $e) {
-            echo '<tr><td colspan="' . count($columns) . '" class="text-center text-danger">Error loading data</td></tr>';
-        }
-    }
 
-    /**
-     * Display players data
-     */
-    private function dataviewPlayers($query, $search, $ban_text, $unban_text, $edit_text) {
-        global $database, $site_url;
-
-        try {
-            $stmt = $database->runQueryAccount($query);
             $stmt->execute();
+            $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            $this->total_records = count($results);
 
-            while ($account = $stmt->fetch(PDO::FETCH_ASSOC)) {
-                $status_class = $account['status'] == 'OK' ? 'success' : 'danger';
-                $status_action = $account['status'] == 'OK' ? $ban_text : $unban_text;
-                $modal_target = $account['status'] == 'OK' ? 'banModal' : 'unBanModal';
+            foreach($results as $player) {
+                // Get account info for this player
+                $account_id = $player['account_id'];
+                $account_stmt = $database->runQueryAccount("SELECT login, status FROM account WHERE id = :id");
+                $account_stmt->bindParam(':id', $account_id, PDO::PARAM_INT);
+                $account_stmt->execute();
+                $account = $account_stmt->fetch(PDO::FETCH_ASSOC);
+
+                $status_class = ($account && $account['status'] == 'OK') ? 'success' : 'danger';
+                $status_text = $account ? $account['status'] : 'UNKNOWN';
+                $status_action = ($account && $account['status'] == 'OK') ? $ban_text : $unban_text;
+                $modal_target = ($account && $account['status'] == 'OK') ? '#ban' : '#unban';
+                $account_login = $account ? $account['login'] : 'N/A';
 
                 echo '<tr>';
-                echo '<td id="' . (int)$account['id'] . '">' . htmlspecialchars($account['login'], ENT_QUOTES, 'UTF-8') . '</td>';
-                echo '<td>' . htmlspecialchars($account['email'], ENT_QUOTES, 'UTF-8') . '</td>';
-                echo '<td>' . htmlspecialchars($account['create_time'], ENT_QUOTES, 'UTF-8') . '</td>';
-                echo '<td><span class="badge bg-' . $status_class . '">' . htmlspecialchars($account['status'], ENT_QUOTES, 'UTF-8') . '</span></td>';
+                echo '<td id="' . (int)$account_id . '">' . htmlspecialchars($account_login, ENT_QUOTES, 'UTF-8') . '</td>';
+                echo '<td>' . htmlspecialchars($player['name'], ENT_QUOTES, 'UTF-8') . '</td>';
+                echo '<td>' . htmlspecialchars($player['ip'] ?? 'N/A', ENT_QUOTES, 'UTF-8') . '</td>';
+                echo '<td><span class="badge bg-' . $status_class . '">' . htmlspecialchars($status_text, ENT_QUOTES, 'UTF-8') . '</span></td>';
                 echo '<td>';
-                echo '<button type="button" class="btn btn-sm btn-' . $status_class . ' open-accountID" data-bs-toggle="modal" data-bs-target="#' . $modal_target . '" data-id="' . (int)$account['id'] . '">' . htmlspecialchars($status_action, ENT_QUOTES, 'UTF-8') . '</button> ';
-                echo '<a class="btn btn-sm btn-warning" href="' . htmlspecialchars($site_url, ENT_QUOTES, 'UTF-8') . 'admin/player_edit/' . (int)$account['id'] . '">' . htmlspecialchars($edit_text, ENT_QUOTES, 'UTF-8') . '</a>';
+                echo '<button type="button" class="btn btn-sm btn-' . $status_class . ' open-accountID" data-bs-toggle="modal" data-bs-target="' . $modal_target . '" data-id="' . (int)$account_id . '">' . htmlspecialchars($status_action, ENT_QUOTES, 'UTF-8') . '</button> ';
+                echo '<a class="btn btn-sm btn-warning" href="' . htmlspecialchars($site_url, ENT_QUOTES, 'UTF-8') . 'admin/player_edit/' . (int)$account_id . '">' . htmlspecialchars($edit_text, ENT_QUOTES, 'UTF-8') . '</a>';
                 echo '</td>';
                 echo '</tr>';
             }
         } catch(PDOException $e) {
-            echo '<tr><td colspan="5" class="text-center text-danger">Error loading data</td></tr>';
+            echo '<tr><td colspan="5" class="text-center text-danger">Error: ' . htmlspecialchars($e->getMessage(), ENT_QUOTES, 'UTF-8') . '</td></tr>';
         }
     }
 

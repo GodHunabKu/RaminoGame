@@ -885,11 +885,16 @@
 	function getColumnsLog($table)
 	{
 		global $database;
-		
+
+		// Security: Validate table name to prevent SQL injection (alphanumeric and underscore only)
+		if (!preg_match('/^[a-zA-Z0-9_]+$/', $table)) {
+			return array();
+		}
+
 		$stmt = $database->runQueryLog("DESCRIBE ".$table);
 		$stmt->execute();
 		$result = $stmt->fetchAll(PDO::FETCH_COLUMN);
-		
+
 		return $result;
 	}
 	
@@ -1510,18 +1515,20 @@
 		foreach($columns as $column)
 			if(isset($_POST[$column['name']]) && $old[$column['name']] != $_POST[$column['name']])
 			{
-				$new_data[$column['name']] = $_POST[$column['name']];
-				$query = $query.$column['name'].'=:'.$column['name'].', ';
+				// Security: Validate column name to prevent SQL injection (alphanumeric and underscore only)
+				if (preg_match('/^[a-zA-Z0-9_]+$/', $column['name'])) {
+					$new_data[$column['name']] = $_POST[$column['name']];
+					$query = $query.$column['name'].'=:'.$column['name'].', ';
+				}
 			}
-				
+
 		if(strlen($query))
 		{
 			$query=rtrim($query,", ");
 			$new_data['id_player'] = $id;
-			
+
 			$stmt = $database->runQueryPlayer("UPDATE player SET ".$query." WHERE id=:id_player");
-			$stmt->execute($new_data);
-			$stmt->execute();
+			$stmt->execute($new_data); // Fixed: removed duplicate execute()
 		}
 	}
 	
@@ -1601,8 +1608,14 @@
 
 		if($result['map_index']!= $mapindex || $result['x']!= $x || $result['y']!= $y || $result['exit_map_index']!= $mapindex)
 		{
-			$stmt = $database->runQueryPlayer("UPDATE player SET map_index=".$mapindex.", x=".$x.", y=".$y.", exit_x=0, exit_y=0, exit_map_index=".$mapindex.", horse_riding=0 WHERE id=".$id);
-			$stmt->execute();	
+			// Fixed: Using prepared statements to prevent SQL injection
+			$stmt = $database->runQueryPlayer("UPDATE player SET map_index=:mapindex, x=:x, y=:y, exit_x=0, exit_y=0, exit_map_index=:exit_mapindex, horse_riding=0 WHERE id=:id");
+			$stmt->bindParam(':mapindex', $mapindex, PDO::PARAM_INT);
+			$stmt->bindParam(':x', $x, PDO::PARAM_INT);
+			$stmt->bindParam(':y', $y, PDO::PARAM_INT);
+			$stmt->bindParam(':exit_mapindex', $mapindex, PDO::PARAM_INT);
+			$stmt->bindParam(':id', $id, PDO::PARAM_INT);
+			$stmt->execute();
 		}
 	}
 	

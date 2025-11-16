@@ -109,10 +109,18 @@ if(isset($item_shop) && $item_shop != "") {
     
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
-    
+
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
+
     <!-- CSS Principale -->
-    <link rel="stylesheet" href="<?php echo $site_url; ?>css/style-one-shop104.css" type="text/css">
-    
+    <link rel="stylesheet" href="<?php echo $site_url; ?>css/styles-v2025.css?v=<?php echo time(); ?>" type="text/css">
+
+    <?php if($page != 'admin') { ?>
+    <!-- Modern Design System 2025 (escluso dal pannello admin) -->
+    <link rel="stylesheet" href="<?php echo $site_url; ?>css/design-system.css?v=<?php echo time(); ?>" type="text/css">
+    <?php } ?>
+
     <!-- Favicon -->
     <link rel="shortcut icon" href="<?php echo $site_url; ?>kebab/logo3.png">
     
@@ -120,9 +128,10 @@ if(isset($item_shop) && $item_shop != "") {
     <script src="https://www.google.com/recaptcha/api.js" async defer></script>
 </head>
 <body class="<?php if($is_homepage) echo 'homepage-style'; ?>">
-    
+
+    <?php if($page != 'admin') { ?>
     <!-- ====================================
-         SFONDO ANIMATO
+         SFONDO ANIMATO (escluso dal pannello admin)
          ==================================== -->
     <div class="animated-bg">
         <div class="bg-gradient"></div>
@@ -130,8 +139,9 @@ if(isset($item_shop) && $item_shop != "") {
         <div class="bg-glow"></div>
     </div>
     <div class="background-fog"></div>
-    
+
     <div id="preloader"></div>
+    <?php } ?>
 
     <div class="page-wrapper">
 
@@ -520,8 +530,18 @@ if(isset($item_shop) && $item_shop != "") {
          ==================================== -->
     <!-- jQuery from CDN -->
     <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.4/dist/jquery.min.js" integrity="sha256-oP6HI9z1XaZNBrJURtCoUT5SUnxFr8s3BzRl+cbzUq8=" crossorigin="anonymous"></script>
+
+    <!-- Bootstrap 5 Bundle (includes Popper.js) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz" crossorigin="anonymous"></script>
+
     <script>var site_url = "<?php print $site_url; ?>";</script>
-    <script src="<?php print $site_url; ?>js/app104.js"></script>
+
+    <?php if($page != 'admin') { ?>
+    <!-- JavaScript del sito (esclusi dal pannello admin per evitare conflitti con event listeners) -->
+    <script src="<?php print $site_url; ?>js/app-v2025.js?v=<?php echo time(); ?>"></script>
+    <script src="<?php print $site_url; ?>js/modern-features-v2025.js?v=<?php echo time(); ?>"></script>
+    <?php } ?>
+
     <?php include 'include/functions/footer.php'; ?>
 </body>
 </html>
