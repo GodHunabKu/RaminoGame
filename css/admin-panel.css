@@ -10,75 +10,78 @@ body.admin-page {
     overflow-x: hidden !important;
 }
 
-.admin-content-wrapper,
-.admin-content-wrapper * {
+.admin-page .admin-content-wrapper,
+.admin-page .admin-content-wrapper * {
     position: relative !important;
-    z-index: 10000 !important;
     pointer-events: auto !important;
 }
 
-/* === MODAL BOOTSTRAP - Z-INDEX === */
-.modal-backdrop {
-    z-index: 100000 !important;
+/* === MODAL BOOTSTRAP - Z-INDEX CORRETTO === */
+/* Il backdrop DEVE stare SOTTO il modal per non bloccare i click */
+.admin-page .modal-backdrop {
+    z-index: 1050 !important;
     background-color: rgba(0, 0, 0, 0.7) !important;
+    pointer-events: auto !important; /* Blocca click sul contenuto sotto */
 }
 
-.modal {
-    z-index: 100001 !important;
-    pointer-events: auto !important;
+.admin-page .modal {
+    z-index: 1055 !important;
+    pointer-events: none !important; /* Permette ai click di passare al contenuto interno */
 }
 
-.modal.show {
+.admin-page .modal.show {
     display: block !important;
 }
 
-.modal-dialog {
-    z-index: 100002 !important;
-    pointer-events: auto !important;
+.admin-page .modal-dialog {
+    z-index: 1056 !important;
+    pointer-events: auto !important; /* Blocca click e li gestisce */
     margin: 30px auto !important;
+    position: relative !important; /* Crea nuovo stacking context */
 }
 
-.modal-content {
-    z-index: 100003 !important;
+.admin-page .modal-content {
+    z-index: 1057 !important;
     background: #ffffff !important;
     border-radius: 8px !important;
     box-shadow: 0 5px 15px rgba(0,0,0,0.5) !important;
     pointer-events: auto !important;
+    position: relative !important; /* Assicura che sia sopra tutto */
 }
 
-.modal-header {
+.admin-page .modal-header {
     background-color: #f8f9fa !important;
     border-bottom: 1px solid #dee2e6 !important;
     padding: 15px 20px !important;
 }
 
-.modal-header h5,
-.modal-title {
+.admin-page .modal-header h5,
+.admin-page .modal-title {
     color: #000000 !important;
     font-size: 18px !important;
     font-weight: 600 !important;
     margin: 0 !important;
 }
 
-.modal-body {
+.admin-page .modal-body {
     padding: 20px !important;
     background: #ffffff !important;
     pointer-events: auto !important;
 }
 
-.modal-footer {
+.admin-page .modal-footer {
     background-color: #f8f9fa !important;
     border-top: 1px solid #dee2e6 !important;
     padding: 15px 20px !important;
 }
 
 /* === TABS NEL MODAL === */
-.modal .nav-tabs {
+.admin-page .modal .nav-tabs {
     border-bottom: 1px solid #dee2e6 !important;
     margin-bottom: 15px !important;
 }
 
-.modal .nav-link {
+.admin-page .modal .nav-link {
     color: #495057 !important;
     border: 1px solid transparent !important;
     cursor: pointer !important;
@@ -86,38 +89,38 @@ body.admin-page {
     padding: 8px 16px !important;
 }
 
-.modal .nav-link.active {
+.admin-page .modal .nav-link.active {
     color: #495057 !important;
     background-color: #fff !important;
     border-color: #dee2e6 #dee2e6 #fff !important;
 }
 
-.modal .tab-content {
+.admin-page .modal .tab-content {
     pointer-events: auto !important;
 }
 
-.modal .tab-pane {
+.admin-page .modal .tab-pane {
     pointer-events: auto !important;
 }
 
 /* === FIX ULTRA AGGRESSIVO PER TUTTI GLI INPUT === */
-.modal input,
-.modal textarea,
-.modal select,
-.modal input[type="text"],
-.modal input[type="email"],
-.modal input[type="password"],
-.modal input[type="number"],
-.modal input[type="date"],
-.modal input[type="datetime-local"],
-.modal input[type="hidden"],
-.modal textarea#permanent,
-.modal textarea#temporary,
-.modal input#months,
-.modal input#days,
-.modal input#hours,
-.modal input#minutes,
-.modal .form-control {
+.admin-page .modal input,
+.admin-page .modal textarea,
+.admin-page .modal select,
+.admin-page .modal input[type="text"],
+.admin-page .modal input[type="email"],
+.admin-page .modal input[type="password"],
+.admin-page .modal input[type="number"],
+.admin-page .modal input[type="date"],
+.admin-page .modal input[type="datetime-local"],
+.admin-page .modal input[type="hidden"],
+.admin-page .modal textarea#permanent,
+.admin-page .modal textarea#temporary,
+.admin-page .modal input#months,
+.admin-page .modal input#days,
+.admin-page .modal input#hours,
+.admin-page .modal input#minutes,
+.admin-page .modal .form-control {
     background: #ffffff !important;
     background-color: #ffffff !important;
     color: #000000 !important;
@@ -126,7 +129,8 @@ body.admin-page {
     font-size: 14px !important;
     border-radius: 4px !important;
     width: 100% !important;
-    z-index: 100010 !important;
+    position: relative !important;
+    z-index: 1 !important; /* Non serve z-index alto, usa position: relative */
     pointer-events: auto !important;
     cursor: text !important;
     opacity: 1 !important;
@@ -140,13 +144,13 @@ body.admin-page {
 }
 
 /* Hidden inputs devono rimanere invisibili ma funzionanti */
-.modal input[type="hidden"] {
+.admin-page .modal input[type="hidden"] {
     display: none !important;
     background: transparent !important;
 }
 
 /* Forza textarea a essere editabile */
-.modal textarea {
+.admin-page .modal textarea {
     min-height: 100px !important;
     resize: vertical !important;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
@@ -155,10 +159,10 @@ body.admin-page {
 }
 
 /* Stato focus */
-.modal input:focus,
-.modal textarea:focus,
-.modal select:focus,
-.modal .form-control:focus {
+.admin-page .modal input:focus,
+.admin-page .modal textarea:focus,
+.admin-page .modal select:focus,
+.admin-page .modal .form-control:focus {
     background: #ffffff !important;
     background-color: #ffffff !important;
     color: #000000 !important;
@@ -168,14 +172,14 @@ body.admin-page {
 }
 
 /* Placeholder */
-.modal input::placeholder,
-.modal textarea::placeholder {
+.admin-page .modal input::placeholder,
+.admin-page .modal textarea::placeholder {
     color: #6c757d !important;
     opacity: 0.7 !important;
 }
 
 /* Label */
-.modal label {
+.admin-page .modal label {
     display: block !important;
     margin-bottom: 8px !important;
     color: #000000 !important;
@@ -184,52 +188,53 @@ body.admin-page {
     pointer-events: auto !important;
 }
 
-.modal .form-group {
+.admin-page .modal .form-group {
     margin-bottom: 20px !important;
     pointer-events: auto !important;
 }
 
 /* === BOTTONI === */
-.modal .btn,
-.modal button {
+.admin-page .modal .btn,
+.admin-page .modal button {
     padding: 10px 20px !important;
     font-size: 14px !important;
     border-radius: 4px !important;
     cursor: pointer !important;
     pointer-events: auto !important;
-    z-index: 100020 !important;
+    position: relative !important;
+    z-index: 1 !important;
     border: 1px solid transparent !important;
     opacity: 1 !important;
     font-weight: 400 !important;
 }
 
-.modal .btn-primary,
-.modal button[type="submit"] {
+.admin-page .modal .btn-primary,
+.admin-page .modal button[type="submit"] {
     background-color: #007bff !important;
     border-color: #007bff !important;
     color: #ffffff !important;
 }
 
-.modal .btn-primary:hover,
-.modal button[type="submit"]:hover {
+.admin-page .modal .btn-primary:hover,
+.admin-page .modal button[type="submit"]:hover {
     background-color: #0056b3 !important;
     border-color: #0056b3 !important;
 }
 
-.modal .btn-secondary,
-.modal button[data-bs-dismiss="modal"] {
+.admin-page .modal .btn-secondary,
+.admin-page .modal button[data-bs-dismiss="modal"] {
     background-color: #6c757d !important;
     border-color: #6c757d !important;
     color: #ffffff !important;
 }
 
-.modal .btn-secondary:hover {
+.admin-page .modal .btn-secondary:hover {
     background-color: #545b62 !important;
     border-color: #545b62 !important;
 }
 
-.modal .close,
-.modal .btn-close {
+.admin-page .modal .close,
+.admin-page .modal .btn-close {
     position: absolute !important;
     right: 15px !important;
     top: 15px !important;
@@ -241,40 +246,40 @@ body.admin-page {
     background: transparent !important;
     border: none !important;
     padding: 0 !important;
-    z-index: 100030 !important;
+    z-index: 1 !important;
 }
 
-.modal .close:hover,
-.modal .btn-close:hover {
+.admin-page .modal .close:hover,
+.admin-page .modal .btn-close:hover {
     opacity: 0.75 !important;
 }
 
 /* === FIX LAYOUT === */
-.modal .row {
+.admin-page .modal .row {
     pointer-events: auto !important;
 }
 
-.modal .col-lg-3 {
+.admin-page .modal .col-lg-3 {
     pointer-events: auto !important;
 }
 
-.modal hr {
+.admin-page .modal hr {
     border-top: 1px solid rgba(0,0,0,0.1) !important;
     margin: 15px 0 !important;
 }
 
 /* === RIMUOVI OVERLAY === */
-body.modal-open {
+.admin-page.modal-open {
     overflow: auto !important;
     padding-right: 0 !important;
 }
 
-.modal::before,
-.modal::after,
-.modal-content::before,
-.modal-content::after,
-.modal-body::before,
-.modal-body::after {
+.admin-page .modal::before,
+.admin-page .modal::after,
+.admin-page .modal-content::before,
+.admin-page .modal-content::after,
+.admin-page .modal-body::before,
+.admin-page .modal-body::after {
     display: none !important;
     content: none !important;
 }
@@ -300,56 +305,56 @@ body.modal-open {
 }
 
 /* Permetti transizioni nei modal */
-.modal,
-.modal-dialog {
+.admin-page .modal,
+.admin-page .modal-dialog {
     transition: transform 0.3s ease-out !important;
 }
 
 /* === FIX GENERICI ADMIN === */
-.admin-content-wrapper input,
-.admin-content-wrapper select,
-.admin-content-wrapper textarea {
+.admin-page .admin-content-wrapper input,
+.admin-page .admin-content-wrapper select,
+.admin-page .admin-content-wrapper textarea {
     background: #fff !important;
     color: #000 !important;
     border: 1px solid #ddd !important;
 }
 
-.admin-content-wrapper button,
-.admin-content-wrapper .btn {
+.admin-page .admin-content-wrapper button,
+.admin-page .admin-content-wrapper .btn {
     cursor: pointer !important;
     pointer-events: auto !important;
 }
 
 /* === FIX TABELLE === */
-.admin-content-wrapper table,
-.admin-content-wrapper tbody,
-.admin-content-wrapper tr,
-.admin-content-wrapper td,
-.admin-content-wrapper th {
+.admin-page .admin-content-wrapper table,
+.admin-page .admin-content-wrapper tbody,
+.admin-page .admin-content-wrapper tr,
+.admin-page .admin-content-wrapper td,
+.admin-page .admin-content-wrapper th {
     pointer-events: auto !important;
 }
 
 /* === FIX SPECIFICO PER FORM NEL MODAL === */
-.modal form {
+.admin-page .modal form {
     background: transparent !important;
     pointer-events: auto !important;
 }
 
 /* Forza tutti gli elementi form a essere interattivi */
-.modal form * {
+.admin-page .modal form * {
     pointer-events: auto !important;
 }
 
 /* === OVERRIDE BOOTSTRAP === */
-.modal .form-control:disabled,
-.modal .form-control[readonly] {
+.admin-page .modal .form-control:disabled,
+.admin-page .modal .form-control[readonly] {
     background-color: #e9ecef !important;
     opacity: 1 !important;
 }
 
 /* Assicura che readonly non venga applicato */
-.modal input:not([readonly]),
-.modal textarea:not([readonly]) {
+.admin-page .modal input:not([readonly]),
+.admin-page .modal textarea:not([readonly]) {
     -webkit-user-modify: read-write !important;
     -moz-user-modify: read-write !important;
 }
