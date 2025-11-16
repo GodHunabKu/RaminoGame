@@ -144,10 +144,11 @@
                 loader = document.createElement('div');
                 loader.id = 'page-loader';
                 loader.innerHTML = '<div class="spinner"></div>';
-                loader.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 9999;';
+                loader.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 9999; pointer-events: auto;';
                 document.body.appendChild(loader);
             }
             loader.style.display = 'flex';
+            loader.style.pointerEvents = 'auto';
         },
 
         // Hide full page loader
@@ -155,6 +156,7 @@
             const loader = document.getElementById('page-loader');
             if (loader) {
                 loader.style.display = 'none';
+                loader.style.pointerEvents = 'none';  // FIX: Non blocca più i click quando nascosto
             }
         }
     };

@@ -21,13 +21,20 @@
 		$(document).ready(function() {
 			$("body").tooltip({ selector: '[data-bs-toggle=tooltip]' });
 		});
-		
+
 		$(document).on("click", ".open-accountID", function () {
 			 var account_id = $(this).data('id');
-			 $(".modal-body #accountID").val( account_id );
+			 // FIX: Usa la classe per targetizzare tutti gli input accountID nei modal
+			 $(".modal-accountID").val( account_id );
 
-			 document.getElementById("banModal").innerText = "<?php print $lang['ban']; ?> - " + document.getElementById(account_id).innerText;
-			 document.getElementById("unBanModal").innerText = "<?php print $lang['unban']; ?> - " + document.getElementById(account_id).innerText;
+			 // Imposta i titoli dei modal
+			 var accountName = document.getElementById(account_id) ? document.getElementById(account_id).innerText : '';
+			 if (document.getElementById("banModal")) {
+			 	document.getElementById("banModal").innerText = "<?php print $lang['ban']; ?> - " + accountName;
+			 }
+			 if (document.getElementById("unBanModal")) {
+			 	document.getElementById("unBanModal").innerText = "<?php print $lang['unban']; ?> - " + accountName;
+			 }
 		});
 	</script>
 <?php } else if($page=="referrals" || ($page=="admin" && $a_page=="redeem")) { ?>

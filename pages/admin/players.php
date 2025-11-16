@@ -74,7 +74,7 @@
 					<div class="tab-pane active" id="permanent" role="tabpanel">
 						<div class="mt-3"></div>
 						<form method="POST" action="">
-							<input type="hidden" name="accountID" id="accountID" value=""/>
+							<input type="hidden" name="accountID" class="modal-accountID" id="accountID-permanent" value=""/>
 							<div class="form-group">
 								<label for="reason"><?php print $lang['reason'].' - '.$lang['permanent-ban']; ?></label>
 								<textarea class="form-control" id="permanent" name="permanent" rows="3"></textarea>
@@ -86,7 +86,7 @@
 					<div class="tab-pane" id="availDt" role="tabpanel">
 						<div class="mt-3"></div>
 						<form method="POST" action="">
-							<input type="hidden" name="accountID" id="accountID" value=""/>
+							<input type="hidden" name="accountID" class="modal-accountID" id="accountID-temporary" value=""/>
 							<div class="form-group">
 								<label for="reason"><?php print $lang['time']; ?></label>
 								<hr>
@@ -134,7 +134,7 @@
             </div>
             <div class="modal-body">
 				<form method="POST" action="">
-					<input type="hidden" name="accountID" id="accountID" value=""/>
+					<input type="hidden" name="accountID" class="modal-accountID" id="accountID-unban" value=""/>
 					<input type="hidden" name="unban" id="unban" value=""/>
 					<div class="form-group">
 						<label for="reason"><?php print $lang['unban-check']; ?></label>
