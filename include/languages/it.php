@@ -27,7 +27,6 @@ $lang = array(
 	'rpassword' => 'Ripeti Password',
 	'email-address' => 'E-mail',
 	'new-email-address' => 'Nuova e-mail',
-	'captcha-code' => 'Codice di sicurezza',
 	'not-available' => 'Non è disponibile.',
 	'no-special-chars' => 'I caratteri speciali non sono consentiti.',
 	'no-password-r' => 'Le password non corrispondono.',

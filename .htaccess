@@ -1,70 +1,320 @@
+# ==============================================================================
+# RAMINOGAME - .HTACCESS CONFIGURATION
+# Ottimizzato per sicurezza, performance e SEO
+# ==============================================================================
+
 # Enable Rewrite Engine
-RewriteEngine On
-RewriteBase /
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /
 
-# Prevent direct access to include directory
-RewriteRule ^include/ - [F,L]
+    # Force HTTPS (uncomment if you have SSL certificate)
+    # RewriteCond %{HTTPS} off
+    # RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 
-# Admin panel routing - /admin/page -> index.php?p=admin&a=page
-RewriteRule ^admin/([a-zA-Z0-9_-]+)(/([0-9]+))?(/(.*))?$ index.php?p=admin&a=$1&page_no=$3&player_name=$5 [QSA,L]
-RewriteRule ^admin/?$ index.php?p=admin [QSA,L]
+    # Remove www (or add www - choose one)
+    # RewriteCond %{HTTP_HOST} ^www\.(.*)$ [NC]
+    # RewriteRule ^(.*)$ https://%1/$1 [R=301,L]
 
-# User panel routing - /user/page -> index.php?p=page
-RewriteRule ^user/([a-zA-Z0-9_-]+)(/(.*))?$ index.php?p=$1&param=$3 [QSA,L]
-RewriteRule ^users/([a-zA-Z0-9_-]+)$ index.php?p=$1 [QSA,L]
+    # ==============================================================================
+    # SECURITY: Prevent directory access
+    # ==============================================================================
 
-# Ranking routing - /ranking/type/page_no/player_name -> index.php?p=type&page_no=X&player_name=Y
-RewriteRule ^ranking/([a-zA-Z0-9_-]+)/([0-9]+)/(.+)$ index.php?p=$1&page_no=$2&player_name=$3 [QSA,L]
-RewriteRule ^ranking/([a-zA-Z0-9_-]+)/([0-9]+)$ index.php?p=$1&page_no=$2 [QSA,L]
-RewriteRule ^ranking/([a-zA-Z0-9_-]+)$ index.php?p=$1 [QSA,L]
+    # Block access to include directory
+    RewriteRule ^include/ - [F,L]
 
-# News routing - /news/ and /news/read/id
-RewriteRule ^news/?$ index.php?p=news [QSA,L]
-RewriteRule ^news/read/([0-9]+)$ index.php?p=read&n=$1 [QSA,L]
+    # Block access to hidden files and directories
+    RewriteCond %{SCRIPT_FILENAME} -d [OR]
+    RewriteCond %{SCRIPT_FILENAME} -f
+    RewriteRule "(^|/)\." - [F]
 
-# General page routing - /page -> index.php?p=page
-RewriteRule ^([a-zA-Z0-9_-]+)/?$ index.php?p=$1 [QSA,L]
+    # ==============================================================================
+    # ROUTING RULES
+    # ==============================================================================
 
-# Remove trailing slashes (optional, for clean URLs)
-RewriteCond %{REQUEST_FILENAME} !-f
-RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule ^(.+)/$ /$1 [R=301,L]
+    # Admin panel routing - /admin/page/page_no/player_name
+    RewriteRule ^admin/([a-zA-Z0-9_-]+)/([0-9]+)/(.+)$ index.php?p=admin&a=$1&page_no=$2&player_name=$3 [QSA,L]
+    RewriteRule ^admin/([a-zA-Z0-9_-]+)/([0-9]+)$ index.php?p=admin&a=$1&page_no=$2 [QSA,L]
+    RewriteRule ^admin/([a-zA-Z0-9_-]+)$ index.php?p=admin&a=$1 [QSA,L]
+    RewriteRule ^admin/?$ index.php?p=admin [QSA,L]
 
-# Prevent access to sensitive files
-<FilesMatch "\.(json|txt|log|bak|sql|sh|env)$">
-    Order allow,deny
-    Deny from all
+    # User panel routing - /user/page/param
+    RewriteRule ^user/([a-zA-Z0-9_-]+)/(.+)$ index.php?p=$1&param=$2 [QSA,L]
+    RewriteRule ^user/([a-zA-Z0-9_-]+)$ index.php?p=$1 [QSA,L]
+    RewriteRule ^users/([a-zA-Z0-9_-]+)$ index.php?p=$1 [QSA,L]
+
+    # Ranking routing - /ranking/type/page_no/search
+    # Important: player_name parameter is used for both players and guilds search
+    RewriteRule ^ranking/([a-zA-Z0-9_-]+)/([0-9]+)/(.+)$ index.php?p=$1&page_no=$2&player_name=$3 [QSA,L]
+    RewriteRule ^ranking/([a-zA-Z0-9_-]+)/([0-9]+)$ index.php?p=$1&page_no=$2 [QSA,L]
+    RewriteRule ^ranking/([a-zA-Z0-9_-]+)$ index.php?p=$1 [QSA,L]
+
+    # News routing - /news/ and /news/read/id
+    RewriteRule ^news/?$ index.php?p=news [QSA,L]
+    RewriteRule ^news/read/([0-9]+)$ index.php?p=read&n=$1 [QSA,L]
+
+    # General page routing - /page -> index.php?p=page
+    RewriteRule ^([a-zA-Z0-9_-]+)/?$ index.php?p=$1 [QSA,L]
+
+    # Remove trailing slashes (for clean URLs)
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^(.+)/$ /$1 [R=301,L]
+</IfModule>
+
+# ==============================================================================
+# SECURITY HEADERS
+# ==============================================================================
+
+<IfModule mod_headers.c>
+    # Prevent MIME type sniffing
+    Header set X-Content-Type-Options "nosniff"
+
+    # Prevent clickjacking
+    Header set X-Frame-Options "SAMEORIGIN"
+
+    # XSS Protection
+    Header set X-XSS-Protection "1; mode=block"
+
+    # Referrer Policy
+    Header set Referrer-Policy "strict-origin-when-cross-origin"
+
+    # Permissions Policy (formerly Feature Policy)
+    Header set Permissions-Policy "geolocation=(), microphone=(), camera=()"
+
+    # Remove server information
+    Header unset Server
+    Header unset X-Powered-By
+</IfModule>
+
+# ==============================================================================
+# FILE ACCESS PROTECTION
+# ==============================================================================
+
+# Protect sensitive files
+<FilesMatch "\.(json|txt|log|bak|sql|sh|env|ini|conf|yml|yaml)$">
+    <IfVersion >= 2.4>
+        Require all denied
+    </IfVersion>
+    <IfVersion < 2.4>
+        Order allow,deny
+        Deny from all
+    </IfVersion>
 </FilesMatch>
 
 # Extra protection for .env file
 <Files ".env">
-    Order allow,deny
-    Deny from all
+    <IfVersion >= 2.4>
+        Require all denied
+    </IfVersion>
+    <IfVersion < 2.4>
+        Order allow,deny
+        Deny from all
+    </IfVersion>
 </Files>
 
-# Security headers
-<IfModule mod_headers.c>
-    Header set X-Content-Type-Options "nosniff"
-    Header set X-Frame-Options "SAMEORIGIN"
-    Header set X-XSS-Protection "1; mode=block"
-</IfModule>
+# Protect .htaccess and .htpasswd
+<Files ~ "^\.ht">
+    <IfVersion >= 2.4>
+        Require all denied
+    </IfVersion>
+    <IfVersion < 2.4>
+        Order allow,deny
+        Deny from all
+    </IfVersion>
+</Files>
 
-# Compression
+# Block access to backup and source files
+<FilesMatch "(\.(bak|config|dist|fla|inc|ini|log|psd|sh|sql|swp)|~)$">
+    <IfVersion >= 2.4>
+        Require all denied
+    </IfVersion>
+    <IfVersion < 2.4>
+        Order allow,deny
+        Deny from all
+    </IfVersion>
+</FilesMatch>
+
+# ==============================================================================
+# COMPRESSION (GZIP)
+# ==============================================================================
+
 <IfModule mod_deflate.c>
-    AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css text/javascript application/javascript application/json
+    # Compress HTML, CSS, JavaScript, Text, XML and fonts
+    AddOutputFilterByType DEFLATE application/javascript
+    AddOutputFilterByType DEFLATE application/json
+    AddOutputFilterByType DEFLATE application/rss+xml
+    AddOutputFilterByType DEFLATE application/vnd.ms-fontobject
+    AddOutputFilterByType DEFLATE application/x-font-opentype
+    AddOutputFilterByType DEFLATE application/x-font-truetype
+    AddOutputFilterByType DEFLATE application/x-font-ttf
+    AddOutputFilterByType DEFLATE application/x-javascript
+    AddOutputFilterByType DEFLATE application/xhtml+xml
+    AddOutputFilterByType DEFLATE application/xml
+    AddOutputFilterByType DEFLATE font/eot
+    AddOutputFilterByType DEFLATE font/opentype
+    AddOutputFilterByType DEFLATE font/otf
+    AddOutputFilterByType DEFLATE font/ttf
+    AddOutputFilterByType DEFLATE image/svg+xml
+    AddOutputFilterByType DEFLATE image/x-icon
+    AddOutputFilterByType DEFLATE text/css
+    AddOutputFilterByType DEFLATE text/html
+    AddOutputFilterByType DEFLATE text/javascript
+    AddOutputFilterByType DEFLATE text/plain
+    AddOutputFilterByType DEFLATE text/xml
+
+    # Remove browser bugs (only needed for really old browsers)
+    BrowserMatch ^Mozilla/4 gzip-only-text/html
+    BrowserMatch ^Mozilla/4\.0[678] no-gzip
+    BrowserMatch \bMSIE !no-gzip !gzip-only-text/html
+    Header append Vary User-Agent
 </IfModule>
 
-# Browser caching
+# ==============================================================================
+# BROWSER CACHING
+# ==============================================================================
+
 <IfModule mod_expires.c>
     ExpiresActive On
+    ExpiresDefault "access plus 1 week"
+
+    # Images
     ExpiresByType image/jpg "access plus 1 year"
     ExpiresByType image/jpeg "access plus 1 year"
     ExpiresByType image/gif "access plus 1 year"
     ExpiresByType image/png "access plus 1 year"
     ExpiresByType image/webp "access plus 1 year"
     ExpiresByType image/svg+xml "access plus 1 year"
+    ExpiresByType image/x-icon "access plus 1 year"
+
+    # Video
+    ExpiresByType video/mp4 "access plus 1 year"
+    ExpiresByType video/mpeg "access plus 1 year"
+
+    # CSS, JavaScript
     ExpiresByType text/css "access plus 1 month"
+    ExpiresByType text/javascript "access plus 1 month"
     ExpiresByType application/javascript "access plus 1 month"
-    ExpiresByType application/pdf "access plus 1 month"
     ExpiresByType application/x-javascript "access plus 1 month"
+
+    # Web fonts
+    ExpiresByType font/ttf "access plus 1 year"
+    ExpiresByType font/otf "access plus 1 year"
+    ExpiresByType font/woff "access plus 1 year"
+    ExpiresByType font/woff2 "access plus 1 year"
+    ExpiresByType application/font-woff "access plus 1 year"
+
+    # Others
+    ExpiresByType application/pdf "access plus 1 month"
+    ExpiresByType application/xml "access plus 0 seconds"
+    ExpiresByType text/xml "access plus 0 seconds"
+    ExpiresByType application/json "access plus 0 seconds"
+    ExpiresByType text/html "access plus 0 seconds"
 </IfModule>
+
+# ==============================================================================
+# ETags
+# ==============================================================================
+
+<IfModule mod_headers.c>
+    # Remove ETags
+    Header unset ETag
+</IfModule>
+FileETag None
+
+# ==============================================================================
+# CHARACTER ENCODING
+# ==============================================================================
+
+# Set UTF-8 as default character encoding
+AddDefaultCharset UTF-8
+<IfModule mod_mime.c>
+    AddCharset UTF-8 .html .css .js .xml .json .rss .atom
+</IfModule>
+
+# ==============================================================================
+# MIME TYPES
+# ==============================================================================
+
+<IfModule mod_mime.c>
+    # JavaScript
+    AddType application/javascript js jsonp
+    AddType application/json json
+
+    # Web fonts
+    AddType font/woff woff
+    AddType font/woff2 woff2
+    AddType application/vnd.ms-fontobject eot
+    AddType font/ttf ttf
+    AddType font/otf otf
+
+    # Images
+    AddType image/svg+xml svg svgz
+    AddType image/webp webp
+</IfModule>
+
+# ==============================================================================
+# PHP SETTINGS (if mod_php is enabled)
+# ==============================================================================
+
+<IfModule mod_php7.c>
+    # Security
+    php_flag display_errors Off
+    php_flag log_errors On
+    php_flag expose_php Off
+
+    # Performance
+    php_value max_execution_time 300
+    php_value max_input_time 300
+    php_value memory_limit 256M
+    php_value post_max_size 20M
+    php_value upload_max_filesize 20M
+
+    # Session
+    php_value session.cookie_httponly 1
+    php_value session.cookie_secure 0
+    php_value session.use_strict_mode 1
+</IfModule>
+
+# ==============================================================================
+# DIRECTORY INDEX
+# ==============================================================================
+
+DirectoryIndex index.php index.html
+
+# ==============================================================================
+# ERROR PAGES
+# ==============================================================================
+
+# Custom error pages (uncomment and customize as needed)
+# ErrorDocument 400 /error.php?code=400
+# ErrorDocument 401 /error.php?code=401
+# ErrorDocument 403 /error.php?code=403
+# ErrorDocument 404 /error.php?code=404
+# ErrorDocument 500 /error.php?code=500
+
+# ==============================================================================
+# HOTLINK PROTECTION (uncomment to enable)
+# ==============================================================================
+
+# <IfModule mod_rewrite.c>
+#     RewriteCond %{HTTP_REFERER} !^$
+#     RewriteCond %{HTTP_REFERER} !^https?://(www\.)?yourdomain\.com [NC]
+#     RewriteRule \.(jpg|jpeg|png|gif|webp|svg)$ - [F,NC]
+# </IfModule>
+
+# ==============================================================================
+# BLOCK BAD BOTS (uncomment to enable)
+# ==============================================================================
+
+# <IfModule mod_rewrite.c>
+#     SetEnvIfNoCase User-Agent "^libwww-perl" block_bad_bots
+#     SetEnvIfNoCase User-Agent "^EmailCollector" block_bad_bots
+#     SetEnvIfNoCase User-Agent "^EmailSiphon" block_bad_bots
+#     SetEnvIfNoCase User-Agent "^EmailWolf" block_bad_bots
+#     Deny from env=block_bad_bots
+# </IfModule>
+
+# ==============================================================================
+# END OF CONFIGURATION
+# ==============================================================================
