@@ -23,19 +23,29 @@
 		} else {
 			$message = 6;
 		}
-	} else if(isset($_POST['username']) && isset($_POST['email']) && isset($_POST['captcha']) && isset($_SESSION['captcha_lost']['code']))
+	} else if(isset($_POST['username']) && isset($_POST['email']))
 	{
-		if($_POST['captcha'] == $_SESSION['captcha_lost']['code'])
-		{
-			$username = strip_tags($_POST['username']);
-			$email = $_POST['email'];
+		// Validate reCAPTCHA
+		if(isset($_POST['g-recaptcha-response']) && !empty($_POST['g-recaptcha-response'])) {
+			$verifyResponse = @file_get_contents('https://www.google.com/recaptcha/api/siteverify?secret='.$secret_key.'&response='.$_POST['g-recaptcha-response']);
+			if($verifyResponse !== false) {
+				$responseData = json_decode($verifyResponse);
+				if($responseData && $responseData->success) {
+					$username = strip_tags($_POST['username']);
+					$email = $_POST['email'];
 
-			if(isValidEmail($email))
-			{
-				$message = $database->Lost($username,$email);
-			} else $message = 4;
-
+					if(isValidEmail($email))
+					{
+						$message = $database->Lost($username,$email);
+					} else $message = 4;
+				} else {
+					$message = 5;
+				}
+			} else {
+				$message = 5;
+			}
+		} else {
+			$message = 5;
 		}
-		else $message = 5;
 	}
 ?>

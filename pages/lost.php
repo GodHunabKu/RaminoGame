@@ -100,8 +100,6 @@
                             }
                         }
                     }
-                    require 'include/captcha/simple.php';
-                    $_SESSION['captcha_lost'] = simple_php_captcha();
 
                 if($message!=11) {
                 ?>
@@ -198,25 +196,13 @@
                     </div>
 
                     <div class="form-group-modern">
-                        <label for="captcha">
+                        <label>
                             <i class="fas fa-shield-alt"></i>
                             Verifica di Sicurezza
                         </label>
-                        <div class="captcha-wrapper">
-                            <?php print '<img src="'.$site_url.'include/captcha/simple.php'.$_SESSION['captcha_lost']['image_src'].'" alt="Captcha">'; ?>
+                        <div class="recaptcha-wrapper">
+                            <div class="g-recaptcha" data-sitekey="<?php print $site_key; ?>" data-theme="dark"></div>
                         </div>
-                        <input
-                            class="form-control-modern"
-                            name="captcha"
-                            id="captcha"
-                            pattern=".{4,6}"
-                            maxlength="5"
-                            placeholder="<?php print htmlspecialchars($lang['captcha-code'], ENT_QUOTES, 'UTF-8'); ?>"
-                            required
-                            type="text"
-                            style="margin-top: 15px; text-align: center; font-size: 24px; letter-spacing: 5px;"
-                        >
-                        <div class="input-border"></div>
                     </div>
                     <?php } ?>
                 </div>

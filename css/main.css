@@ -243,22 +243,6 @@ body.loaded #preloader {
     z-index: 10000 !important;
 }
 
-/* Captcha custom PHP - sempre visibile */
-.captcha-container,
-.captcha-image,
-.captcha-image img {
-    position: relative !important;
-    z-index: 10000 !important;
-    visibility: visible !important;
-    opacity: 1 !important;
-}
-
-.captcha-image img {
-    display: block !important;
-    max-width: 100% !important;
-    height: auto !important;
-}
-
 /* =================================
    PAGE WRAPPER
    ================================= */
@@ -1111,13 +1095,6 @@ body.homepage-style .main-header {
     background: rgba(0,0,0,0.5);
 }
 
-.login-form .captcha-group {
-    display: flex;
-    justify-content: center;
-    position: relative;
-    z-index: 100;
-}
-
 /* Assicura che il reCAPTCHA sia sempre visibile */
 .g-recaptcha,
 .g-recaptcha > div,
@@ -1602,14 +1579,6 @@ form table td img {
     border-radius: 6px;
     border: 2px solid rgba(231, 76, 60, 0.2);
     height: 70px;
-}
-
-form input[name="captcha"] {
-    height: 70px !important;
-    font-size: 28px !important;
-    text-align: center;
-    letter-spacing: 5px;
-    font-weight: 700;
 }
 
 form hr {
@@ -2542,12 +2511,6 @@ form hr {
 
 .toggle-password i {
     font-size: 18px;
-}
-
-.captcha-wrapper {
-    display: flex;
-    justify-content: center;
-    margin-top: 10px;
 }
 
 .btn-submit-modern {
