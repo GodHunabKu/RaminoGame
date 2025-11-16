@@ -277,8 +277,8 @@ body.loaded #preloader {
     background: rgba(0, 0, 0, 0.5);
 }
 
-/* Nascondi header nella homepage per un design più pulito */
-body.homepage-style .main-header {
+/* Nascondi header su tutte le pagine per un design più pulito */
+.main-header {
     display: none !important;
 }
 

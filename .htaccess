@@ -13,7 +13,9 @@ RewriteRule ^admin/?$ index.php?p=admin [QSA,L]
 RewriteRule ^user/([a-zA-Z0-9_-]+)(/(.*))?$ index.php?p=$1&param=$3 [QSA,L]
 RewriteRule ^users/([a-zA-Z0-9_-]+)$ index.php?p=$1 [QSA,L]
 
-# Ranking routing - /ranking/type -> index.php?p=type
+# Ranking routing - /ranking/type/page_no/search -> index.php?p=type&page_no=X&search=Y
+RewriteRule ^ranking/([a-zA-Z0-9_-]+)/([0-9]+)/(.+)$ index.php?p=$1&page_no=$2&search=$3 [QSA,L]
+RewriteRule ^ranking/([a-zA-Z0-9_-]+)/([0-9]+)$ index.php?p=$1&page_no=$2 [QSA,L]
 RewriteRule ^ranking/([a-zA-Z0-9_-]+)$ index.php?p=$1 [QSA,L]
 
 # News routing - /news/ and /news/read/id

@@ -650,7 +650,7 @@
     box-shadow: 0 6px 20px rgba(231, 76, 60, 0.5);
 }
 
-/* Error Messages */
+/* Error Messages - mostra icona SOLO quando c'è un errore */
 .text-danger {
     font-size: 13px;
     color: var(--color-primary) !important;
@@ -661,10 +661,27 @@
     gap: 6px;
 }
 
-.text-danger::before {
+.text-danger:not(:empty)::before {
     content: '\f071';
     font-family: 'Font Awesome 6 Free';
     font-weight: 900;
+}
+
+/* Input validi - bordo verde quando tutto va bene */
+.form-control-modern:valid:not(:placeholder-shown) {
+    border-color: #28a745 !important;
+    box-shadow: 0 0 0 2px rgba(40, 167, 69, 0.1);
+}
+
+.form-control-modern:valid:not(:placeholder-shown):focus {
+    border-color: #28a745 !important;
+    box-shadow: 0 0 0 3px rgba(40, 167, 69, 0.2);
+}
+
+/* Input con errori - bordo rosso */
+.form-control-modern:invalid:not(:placeholder-shown):not(:focus) {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 2px rgba(231, 76, 60, 0.1);
 }
 
 /* Responsive */
