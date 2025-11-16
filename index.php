@@ -457,7 +457,6 @@ if(isset($item_shop) && $item_shop != "") {
             <!-- ====================================
                  SIDEBAR DESTRA (LOGIN)
                  ==================================== -->
-            <?php if ($is_homepage) : ?>
             <aside class="sidebar-right">
                 <h3><i class="fas fa-sign-in-alt"></i> LOGIN</h3>
                 
@@ -510,8 +509,7 @@ if(isset($item_shop) && $item_shop != "") {
                 </div>
                 <?php } ?>
             </aside>
-            <?php endif; ?>
-            
+
         </div>
     </div>
 
