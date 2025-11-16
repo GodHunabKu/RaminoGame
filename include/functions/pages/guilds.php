@@ -9,9 +9,9 @@
 		die();
 	}
 	
-	if(isset($_GET['guild_name']))
+	if(isset($_GET['player_name']))
 	{
-		$new_search = strip_tags($_GET['guild_name']);
+		$new_search = strip_tags($_GET['player_name']);
 		if(strlen($new_search)>=3)
 			$search = $new_search;
 	}

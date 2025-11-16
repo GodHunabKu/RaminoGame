@@ -53,7 +53,7 @@
                                       </button>
                                   </div>';
                         }
-                    } else if(isset($_POST['username']) && isset($_POST['email']) && isset($_POST['captcha']))
+                    } else if(isset($_POST['username']) && isset($_POST['email']))
                     {
                         $alert_type = 'danger';
                         $alert_icon = 'fa-exclamation-circle';

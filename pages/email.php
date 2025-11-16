@@ -13,7 +13,7 @@
         <div class="login-form-wrapper">
             <form role="form" method="post" action="" class="modern-login-form">
                 <?php
-                    if(isset($_POST['email']) && isset($_POST['captcha']))
+                    if(isset($_POST['email']))
                     {
                         $alert_type = 'danger';
                         $alert_icon = 'fa-exclamation-circle';
