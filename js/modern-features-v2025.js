@@ -9,8 +9,8 @@
     // ==================== THEME MANAGEMENT ====================
     const ThemeManager = {
         init: function() {
-            // Get saved theme or default to light
-            const savedTheme = localStorage.getItem('theme') || 'light';
+            // Get saved theme or default to DARK (mantiene il design scuro del sito)
+            const savedTheme = localStorage.getItem('theme') || 'dark';
             this.setTheme(savedTheme);
             this.createToggleButton();
         },
@@ -22,13 +22,13 @@
         },
 
         toggleTheme: function() {
-            const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
-            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+            const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
             this.setTheme(newTheme);
 
             // Show toast notification
             ToastManager.show(
-                newTheme === 'dark' ? '🌙 Dark mode enabled' : '☀️ Light mode enabled',
+                newTheme === 'light' ? '☀️ Light mode attivata' : '🌙 Dark mode attivata',
                 'success'
             );
         },
@@ -36,18 +36,20 @@
         createToggleButton: function() {
             const button = document.createElement('button');
             button.className = 'theme-toggle';
-            button.setAttribute('aria-label', 'Toggle dark mode');
-            button.innerHTML = '<span class="theme-icon">🌙</span>';
+            button.setAttribute('aria-label', 'Cambia tema chiaro/scuro');
+            button.innerHTML = '<span class="theme-icon">☀️</span>';
             button.addEventListener('click', () => this.toggleTheme());
             document.body.appendChild(button);
 
-            const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+            const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
             this.updateToggleIcon(currentTheme);
         },
 
         updateToggleIcon: function(theme) {
             const icon = document.querySelector('.theme-icon');
             if (icon) {
+                // Dark mode: mostra sole (per switchare a light)
+                // Light mode: mostra luna (per switchare a dark)
                 icon.textContent = theme === 'dark' ? '☀️' : '🌙';
             }
         }
