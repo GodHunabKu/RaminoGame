@@ -128,9 +128,10 @@ if(isset($item_shop) && $item_shop != "") {
     <script src="https://www.google.com/recaptcha/api.js" async defer></script>
 </head>
 <body class="<?php if($is_homepage) echo 'homepage-style'; ?>">
-    
+
+    <?php if($page != 'admin') { ?>
     <!-- ====================================
-         SFONDO ANIMATO
+         SFONDO ANIMATO (escluso dal pannello admin)
          ==================================== -->
     <div class="animated-bg">
         <div class="bg-gradient"></div>
@@ -138,8 +139,9 @@ if(isset($item_shop) && $item_shop != "") {
         <div class="bg-glow"></div>
     </div>
     <div class="background-fog"></div>
-    
+
     <div id="preloader"></div>
+    <?php } ?>
 
     <div class="page-wrapper">
 
