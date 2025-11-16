@@ -238,6 +238,11 @@ body.loaded #preloader {
     pointer-events: none;
 }
 
+/* Non coprire mai il captcha */
+.g-recaptcha {
+    z-index: 10000 !important;
+}
+
 /* =================================
    PAGE WRAPPER
    ================================= */
@@ -1093,6 +1098,19 @@ body.homepage-style .main-header {
 .login-form .captcha-group {
     display: flex;
     justify-content: center;
+    position: relative;
+    z-index: 100;
+}
+
+/* Assicura che il reCAPTCHA sia sempre visibile */
+.g-recaptcha,
+.g-recaptcha > div,
+.g-recaptcha iframe {
+    position: relative !important;
+    z-index: 100 !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
 }
 
 .login-form .form-footer {
