@@ -7,7 +7,7 @@
 			var no_special_chars = "'.$lang['no-special-chars'].'";
 			var no_password_r = "'.$lang['no-password-r'].'";
 		</script>';
-		print '<script src="'.$site_url.'js/register.js"></script>';
+		print '<script src="'.$site_url.'js/register-v2025.js?v='.time().'"></script>';
 	} else if($page=="news" || $page=="read")
 	{
 		if($database->is_loggedin())

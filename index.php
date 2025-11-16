@@ -114,7 +114,7 @@ if(isset($item_shop) && $item_shop != "") {
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
 
     <!-- CSS Principale -->
-    <link rel="stylesheet" href="<?php echo $site_url; ?>css/style-one-shop104.css" type="text/css">
+    <link rel="stylesheet" href="<?php echo $site_url; ?>css/styles-v2025.css?v=<?php echo time(); ?>" type="text/css">
     
     <!-- Favicon -->
     <link rel="shortcut icon" href="<?php echo $site_url; ?>kebab/logo3.png">
@@ -528,7 +528,7 @@ if(isset($item_shop) && $item_shop != "") {
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz" crossorigin="anonymous"></script>
 
     <script>var site_url = "<?php print $site_url; ?>";</script>
-    <script src="<?php print $site_url; ?>js/app104.js"></script>
+    <script src="<?php print $site_url; ?>js/app-v2025.js?v=<?php echo time(); ?>"></script>
     <?php include 'include/functions/footer.php'; ?>
 </body>
 </html>
