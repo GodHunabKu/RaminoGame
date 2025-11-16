@@ -67,7 +67,7 @@
             const preloader = document.getElementById('preloader');
             if (!preloader) return;
 
-            // Nasconde il preloader quando la pagina è completamente caricata
+            // Nasconde il preloader quando la pagina ï¿½ completamente caricata
             window.addEventListener('load', () => {
                 setTimeout(() => {
                     preloader.classList.add('loaded');
@@ -132,7 +132,7 @@
             document.body.classList.toggle('sidebar-open');
             const isOpen = document.body.classList.contains('sidebar-open');
 
-            // Previeni scroll del body quando il menu è aperto
+            // Previeni scroll del body quando il menu ï¿½ aperto
             if (isOpen) {
                 document.body.style.overflow = 'hidden';
             } else {
@@ -422,12 +422,12 @@
                 'text-shadow: 2px 2px 0px #C0392B'
             ].join(';');
 
-            console.log('%c?? ONE SERVER ??', styles);
-            console.log('%c? Sito caricato con successo!', 'color: #27AE60; font-size: 14px;');
-            console.log('%cVersion: 3.0 - Ottimizzato & Professionale', 'color: #95A5A6; font-size: 12px;');
+            // console.log('%c?? ONE SERVER ??', styles);
+            // console.log('%c? Sito caricato con successo!', 'color: #27AE60; font-size: 14px;');
+            // console.log('%cVersion: 3.0 - Ottimizzato & Professionale', 'color: #95A5A6; font-size: 12px;');
 
             // Easter egg
-            console.log('%c?? Curioso? Unisciti al nostro team!', 'color: #3498DB; font-size: 12px;');
+            // console.log('%c?? Curioso? Unisciti al nostro team!', 'color: #3498DB; font-size: 12px;');
         }
     };
 
@@ -442,13 +442,13 @@
                     const pageLoadTime = perfData.loadEventEnd - perfData.navigationStart;
                     const connectTime = perfData.responseEnd - perfData.requestStart;
 
-                    console.log(`? Page Load Time: ${pageLoadTime}ms`);
-                    console.log(`?? Server Response: ${connectTime}ms`);
+                    // console.log(`? Page Load Time: ${pageLoadTime}ms`);
+                    // console.log(`?? Server Response: ${connectTime}ms`);
 
-                    // Alert se il caricamento è lento
-                    if (pageLoadTime > 3000) {
-                        console.warn('?? Caricamento lento rilevato. Considera ottimizzazioni.');
-                    }
+                    // Alert se il caricamento ï¿½ lento
+                    // if (pageLoadTime > 3000) {
+                    //     console.warn('?? Caricamento lento rilevato. Considera ottimizzazioni.');
+                    // }
                 }, 0);
             });
         }
@@ -672,7 +672,7 @@
             CounterAnimationModule.init();
             TypingEffectModule.init();
 
-            console.log('? Tutti i moduli inizializzati correttamente');
+            // console.log('? Tutti i moduli inizializzati correttamente');
         } catch (error) {
             console.error('? Errore durante l\'inizializzazione:', error);
         }
@@ -683,7 +683,7 @@
     window.addEventListener('resize', () => {
         clearTimeout(resizeTimer);
         resizeTimer = setTimeout(() => {
-            console.log('?? Viewport ridimensionato');
+            // console.log('?? Viewport ridimensionato');
         }, 250);
     });
 

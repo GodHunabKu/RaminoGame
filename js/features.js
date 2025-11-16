@@ -326,7 +326,7 @@
         }
 
         function init() {
-            console.log('🚀 Modern Features 2025 - Initializing...');
+            // console.log('🚀 Modern Features 2025 - Initializing...');
 
             ToastManager.init();
             SmoothScroll.init();
@@ -336,7 +336,7 @@
             AjaxEnhancer.init();
             PerformanceOptimizer.init();
 
-            console.log('✓ Modern Features 2025 - Ready!');
+            // console.log('✓ Modern Features 2025 - Ready!');
         }
     }
 

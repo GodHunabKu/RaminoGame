@@ -472,8 +472,10 @@ if(isset($item_shop) && $item_shop != "") {
                         <input name="password" type="password" placeholder="<?php print $lang['password']; ?>" required>
                     </div>
                     <?php if(!$offline) { ?>
-                    <div class="form-group captcha-group">
-                        <div class="g-recaptcha" data-theme="dark" data-size="compact" data-sitekey="<?php print $site_key; ?>"></div>
+                    <div class="form-group">
+                        <div class="recaptcha-wrapper">
+                            <div class="g-recaptcha" data-sitekey="<?php print $site_key; ?>" data-theme="dark"></div>
+                        </div>
                     </div>
                     <?php } ?>
                     <div class="form-footer">

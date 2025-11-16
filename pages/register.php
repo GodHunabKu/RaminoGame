@@ -709,12 +709,7 @@
     .register-form-wrapper {
         padding: 25px;
     }
-    
-    .captcha-container {
-        grid-template-columns: 1fr;
-        gap: 20px;
-    }
-    
+
     .register-info {
         grid-template-columns: 1fr;
     }
