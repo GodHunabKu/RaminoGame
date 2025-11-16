@@ -272,6 +272,11 @@ body.loaded #preloader {
     background: rgba(0, 0, 0, 0.5);
 }
 
+/* Nascondi header nella homepage per un design più pulito */
+body.homepage-style .main-header {
+    display: none !important;
+}
+
 .nav-logo {
     height: 70px;
     margin-right: 40px;
