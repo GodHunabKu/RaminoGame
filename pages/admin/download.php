@@ -30,7 +30,7 @@
 			<tr>
 				<th scope="row"><?php print $i++; ?></th>
 				<td><?php print $download['name']; ?></td>
-				<td><a href="<?php print $site_url.'admin/download/'.$key; ?>" class="btn btn-primary btn-sm"><?php print $lang['delete']; ?></a></td>
+				<td><a href="<?php print $site_url.'admin/download?del='.$key; ?>" class="btn btn-primary btn-sm"><?php print $lang['delete']; ?></a></td>
 			</tr>
 		<?php } ?>
 		</tbody>

@@ -54,7 +54,7 @@
 				<td><?php if($vote4coins['type']==1) print 'MD'; else print 'JD'; ?></td>
 				<td><?php print $vote4coins['value']; ?></td>
 				<td><?php print $vote4coins['time'].' '.$lang['hours']; ?></td>
-				<td><a href="<?php print $site_url.'admin/vote4coins/'.$key; ?>" class="btn btn-primary btn-sm"><?php print $lang['delete']; ?></a></td>
+				<td><a href="<?php print $site_url.'admin/vote4coins?del='.$key; ?>" class="btn btn-primary btn-sm"><?php print $lang['delete']; ?></a></td>
 			</tr>
 		<?php } ?>
 		</tbody>
