@@ -243,6 +243,22 @@ body.loaded #preloader {
     z-index: 10000 !important;
 }
 
+/* Captcha custom PHP - sempre visibile */
+.captcha-container,
+.captcha-image,
+.captcha-image img {
+    position: relative !important;
+    z-index: 10000 !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+.captcha-image img {
+    display: block !important;
+    max-width: 100% !important;
+    height: auto !important;
+}
+
 /* =================================
    PAGE WRAPPER
    ================================= */
