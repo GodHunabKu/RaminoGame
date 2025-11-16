@@ -535,10 +535,10 @@ if(isset($item_shop) && $item_shop != "") {
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz" crossorigin="anonymous"></script>
 
     <script>var site_url = "<?php print $site_url; ?>";</script>
-    <script src="<?php print $site_url; ?>js/app-v2025.js?v=<?php echo time(); ?>"></script>
 
     <?php if($page != 'admin') { ?>
-    <!-- Modern Features 2025 (Theme Toggle, Toasts, Loading States) - escluso dal pannello admin -->
+    <!-- JavaScript del sito (esclusi dal pannello admin per evitare conflitti con event listeners) -->
+    <script src="<?php print $site_url; ?>js/app-v2025.js?v=<?php echo time(); ?>"></script>
     <script src="<?php print $site_url; ?>js/modern-features-v2025.js?v=<?php echo time(); ?>"></script>
     <?php } ?>
 
