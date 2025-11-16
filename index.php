@@ -115,7 +115,10 @@ if(isset($item_shop) && $item_shop != "") {
 
     <!-- CSS Principale -->
     <link rel="stylesheet" href="<?php echo $site_url; ?>css/styles-v2025.css?v=<?php echo time(); ?>" type="text/css">
-    
+
+    <!-- Modern Design System 2025 -->
+    <link rel="stylesheet" href="<?php echo $site_url; ?>css/design-system.css?v=<?php echo time(); ?>" type="text/css">
+
     <!-- Favicon -->
     <link rel="shortcut icon" href="<?php echo $site_url; ?>kebab/logo3.png">
     
@@ -529,6 +532,10 @@ if(isset($item_shop) && $item_shop != "") {
 
     <script>var site_url = "<?php print $site_url; ?>";</script>
     <script src="<?php print $site_url; ?>js/app-v2025.js?v=<?php echo time(); ?>"></script>
+
+    <!-- Modern Features 2025 (Theme Toggle, Toasts, Loading States) -->
+    <script src="<?php print $site_url; ?>js/modern-features-v2025.js?v=<?php echo time(); ?>"></script>
+
     <?php include 'include/functions/footer.php'; ?>
 </body>
 </html>
