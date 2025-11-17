@@ -11,7 +11,7 @@
     // ==================== CONFIGURAZIONE ====================
     const CONFIG = {
         particles: {
-            count: 50,
+            count: 0, // DISABILITATO - lucine fuoco rimosse
             colors: ['#FFD700', '#FFA500', '#FFED4E', '#B8860B'],
             speed: { min: 1, max: 3 },
             size: { min: 2, max: 6 }
