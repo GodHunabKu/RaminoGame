@@ -1,0 +1,438 @@
+
+
+@media (max-width: 1399px) {
+    .hero-section-inner {
+        height: 600px;
+        display: flex;
+        flex-direction: column;
+    }
+
+
+
+    .hero-cont1 {
+        padding: 0 0 0 110px;
+        margin-bottom: 150px;
+    }
+    .hero-cont1 .single-cont .image img {
+        width: 80px;
+    }
+    .hero-cont1 .single-cont .txt-c h4 {
+        font-size: 14px;
+    }
+    .hero-cont1 .single-cont .txt-c h3 {
+        font-size: 14px;
+    }
+
+
+    .main-section-inner {
+        margin-top: -54px;
+    }
+    .st-img-button {
+        margin: 0 0 21px;
+    }
+    
+
+
+    .s-box-title h3 {
+        font-size: 12.6px;
+    }
+    .table-st1 table td {
+        
+    }
+    .table-st1-str1 {
+        
+    }
+    .n-offer-row {
+        --inner-space: 13px;
+        --item: 5;
+    }
+    .content-xy {
+        padding: 18px;
+    }
+    .content-xy .xy-title .left h4 {
+        font-size: 14px;
+    }
+    .content-xy .xy-title .right ul.xy li {
+        font-size: 10px;
+        margin-right: 12px;
+        padding-right: 10px;
+    }
+    .content-xy .xy-title {
+        padding: 12px 8px 12px 12px;
+    }
+    .content-xy .xy-title .left h3 {
+        font-size: 15px;
+    }
+    .xy-text-cont p {
+        margin: 0 0 13px;
+        font-size: 12px;
+    }
+    .xy-news-header {
+        padding: 0px 2px;
+    }
+    .xy-nh-ul li {
+        padding: 0 15px;
+    }
+    .xy-nh-ul li a {
+        padding: 20px 3px;
+    }
+
+
+    .table-sm-st td {
+        padding: 5px 5px;
+        font-size: 12px;
+    }
+    .table-update-time {
+        font-size: 11px;
+    }
+
+    .table-str2 table td:nth-child(1) {
+        width: 6%;
+        padding-left: 4px;
+        padding-right: 0px !important;
+        white-space: nowrap;
+    }
+    .table-st1 table td {
+        padding: 7px 1px;
+    }
+    .bt-button-sde {
+        margin: 7px 0 0;
+    }
+    .bt-button-sde a {
+        font-size: 12px;
+    }
+
+
+
+    .card-d .txt-cont h3 {
+        margin: 0 0 4px;
+        font-size: 17px;
+    }
+    .card-d {
+        height: 210px;
+    }
+    .card-d-section {
+        padding: 60px 0;
+    }
+
+    .footer-menu ul {
+        padding-left: 75px;
+    }
+    .footer-menu ul li a {
+        font-size: 14px;
+    }
+    .footer-menu ul li {
+        margin: 0 75px 12px 0;
+    }
+    .fm-menu {
+        margin: 0 0 0 90px;
+    }
+    .footer-b-middle {
+        padding: 0 50px;
+    }
+    .footer-b-right .tuora {
+        margin: 0 30px;
+    }
+    .footer-top {
+        padding: 30px 0 18px;
+    }
+    .footer-bottom {
+        
+    }
+
+
+
+    .download-game .download-button {
+        display: inline-flex;
+        width: 225px;
+    }
+}
+
+
+@media (max-width: 1199px) {
+    .header-section {
+        padding: 15px 0;
+    }
+    .h-lan-dropdown {
+        margin: 0 0px 0 0;
+    }
+    .header-logo {
+        margin-right: 34px;
+    }
+    .header-logo {
+        width: 100px;
+    }
+
+
+
+    .hero-section-inner {
+        height: 490px;
+    }
+    .hero-cont1 {
+        padding: 0 0 0 40px;
+        margin-bottom: 90px;
+    }
+    
+
+
+
+    .main-section-inner {
+        margin-top: -30px;
+        flex-wrap: wrap;
+        justify-content: space-evenly;
+    }
+    .m-main-part {
+        order: -3;
+        width: 100%;
+        margin-bottom: 50px;
+    }
+    .m-sidebar-left {
+        margin-top: 0;
+    }
+    .m-sidebar-right {
+        margin: 50px 0 0;
+    }
+    .m-sidebar {
+        width: 290px;
+    }
+    .m-sidebar-right {
+        margin: 0px 0 0;
+    }
+
+
+
+   
+
+    .m-box-full-height {
+        height: initial;
+        padding-bottom: 60px;
+      }
+}
+
+
+@media (min-width: 1200px) {
+.lan-select {
+  margin-left: 65px;
+}
+}
+
+@media (max-width: 991px) {
+    .hero-section-inner {
+        height: 400px;
+    }
+    .hero-cont1 {
+        padding: 0 0 0 0px;
+        margin-bottom: 70px;
+    }
+    .header-logo {
+        width: 80px;
+    }
+
+
+
+    .card-d-row {
+        --item: 2;
+    }
+}
+
+
+@media (max-width: 768px) {
+    .hero-section-inner {
+        height: 300px;
+    }
+    .hero-cont1 {
+        margin-bottom: 40px;
+    }
+    .hero-cont1 .single-cont {
+        display: flex;
+        align-items: center;
+        margin-right: 10px;
+        padding-right: 30px;
+        position: relative;
+    }
+
+
+    .n-offer-row {
+        --inner-space: 13px;
+        --item: 3;
+    }
+
+
+    .main-section-inner {
+        flex-direction: column;
+        align-items: center;
+    }
+
+
+    .card-d-row {
+        --item: 1;
+    }
+    .card-d {
+        background-size: cover !important;
+        background-position: center 10% !important;
+    }
+
+
+
+
+
+    .download-game .download-button {
+        display: inline-flex;
+        width: 170px;
+    }
+}
+
+
+@media (max-width: 575px) {
+    .header-section {
+        padding: 12px 0;
+        background: #240303;
+        position: relative;
+    }
+    .header-logo {
+        margin-left: 0 !important;
+    }
+
+
+    .hero-section {
+        margin: 0 0 100px;
+    }
+    .hero-cont1 {
+        margin-bottom: -80px;
+    }
+    .hero-section-inner {
+        height: 200px;
+    }
+
+    .main-section-inner {
+        margin-top: 10px;
+    }
+
+    
+
+
+    .content-ud-cont .left-side h3 {
+        font-size: 15px;
+        margin: 0 0 1px;
+    }
+    .content-ud-cont {
+        padding: 15px 17px;
+    }
+
+
+    .table-str3 {
+        padding: 0 10px;
+    }
+
+    .download-game {
+        padding: 50px 30px 40px;
+    }
+
+
+    .create-account {
+        padding: 70px 15px 0px;
+    }
+    .account-form {
+        margin: 0 auto 40px;
+    }
+    .account-form-row1 {
+        margin: 0 0 27px;
+    }
+
+
+    .xy-news-header {
+        flex-direction: column;
+        gap: 8px;
+        padding-top: 25px;
+    }
+    .xy-nh-ul li:last-child {
+        padding-right: 15px;
+    }
+    .content-xy .xy-title {
+        flex-direction: column;
+        gap: 10px;
+    }
+    .section-wrapper1 {
+        padding: 0 0 30px;
+    }
+}
+
+
+@media (max-width: 460px) {
+    .hero-cont1 {
+        /* margin-bottom: -153px; */
+        /* flex-direction: column; */
+        padding: 0 0 0 00px;
+        justify-content: center;
+    }
+    .hero-cont1 .single-cont .image {
+        width: 40px;
+    }
+    .hero-section {
+        margin-bottom: 70px;
+    }
+    .hero-cont1 {
+        margin-bottom: -63px;
+    }
+    .hero-section .single-cont {
+        padding: 0;
+        /* margin: 0 0 15px; */
+        margin-right: 20px;
+    }
+    .hero-cont1 .single-cont::after {
+        display: none;
+    }
+
+    .m-box-design1 {
+        height: 200px;
+    }
+
+
+    .content-ud-cont {
+        flex-wrap: wrap;
+    }
+    .content-ud-cont .left-side {
+        width: 100%;
+    }
+    .content-ud-cont .right-side {
+        margin: 10px 0 0;
+        width: 100%;
+        display: flex;
+        justify-content: flex-end;
+    }
+
+
+    .download-game .download-button {
+        width: 130px;
+    }
+    .download-game-requirement {
+        padding: 0;
+    }
+}
+
+@media (max-width: 390px) {
+    .n-offer-row {
+        --inner-space: 13px;
+        --item: 2;
+    }
+
+
+    .hero-section-inner {
+        height: 160px;
+    }
+
+
+    .download-game {
+        padding: 50px 20px 40px;
+    }
+    .download-game .download-button {
+        width: 120px;
+    }
+    .download-game-requirement table td {
+        font-size: 12px;
+    }
+
+    .m-sidebar {
+        width: 285px;
+    }
+}

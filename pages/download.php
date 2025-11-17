@@ -139,7 +139,7 @@
             <i class="fas fa-exclamation-triangle"></i>
         </div>
         <h3>Nessun Download Disponibile</h3>
-        <p>Al momento non ci sono link di download disponibili. Riprova più tardi.</p>
+        <p>Al momento non ci sono link di download disponibili. Riprova piu' tardi.</p>
     </div>
     <?php } ?>
 </div>

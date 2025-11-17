@@ -6,7 +6,7 @@
                 <i class="fab fa-discord"></i>
             </div>
             <h1>Unisciti alla Community</h1>
-            <p>Entra nel nostro server Discord ufficiale e chatta con altri giocatori!</p>
+            <p>Entra nel nostro server Discord ufficiale!</p>
         </div>
     </div>
 

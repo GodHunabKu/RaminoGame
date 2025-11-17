@@ -117,12 +117,12 @@
                     </div>
 
                     <div class="form-group-modern">
-                        <label for="captcha">
+                        <label>
                             <i class="fas fa-shield-alt"></i>
                             Verifica di Sicurezza
                         </label>
-                        <div class="captcha-wrapper">
-                            <div class="g-recaptcha" data-theme="dark" data-sitekey="<?php print $site_key; ?>"></div>
+                        <div class="recaptcha-wrapper">
+                            <div class="g-recaptcha" data-theme="dark" data-sitekey="<?php print $site_key; ?>" data-size="compact"></div>
                         </div>
                     </div>
                 </div>

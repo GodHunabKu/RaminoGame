@@ -13,12 +13,8 @@
     <div class="register-container">
         <div class="register-form-wrapper">
             <form role="form" method="post" action="" class="modern-register-form">
-                <?php
-                    include 'include/functions/register.php';
-                    require 'include/captcha/simple.php';
-                    $_SESSION['captcha'] = simple_php_captcha();
-                ?>
-                
+                <?php include 'include/functions/register.php'; ?>
+
                 <div class="form-section">
                     <h3 class="section-title">
                         <i class="fas fa-user-circle"></i>
@@ -123,30 +119,9 @@
                         <i class="fas fa-shield-alt"></i>
                         Verifica di Sicurezza
                     </h3>
-                    
-                    <div class="captcha-container">
-                        <div class="captcha-image">
-                            <?php print '<img src='.$site_url.'include/captcha/simple.php'.$_SESSION['captcha']['image_src'].' alt="Captcha">'; ?>
-                        </div>
-                        <div class="captcha-input-group">
-                            <label for="captcha">
-                                <i class="fas fa-keyboard"></i>
-                                Codice di Verifica
-                            </label>
-                            <input 
-                                class="form-control-modern captcha-input" 
-                                name="captcha" 
-                                id="captcha"
-                                pattern=".{4,6}" 
-                                maxlength="5" 
-                                placeholder="Inserisci il codice" 
-                                required 
-                                type="text"
-                            >
-                            <div class="field-requirements">
-                                <span><i class="fas fa-info-circle"></i> Inserisci i caratteri che vedi nell'immagine</span>
-                            </div>
-                        </div>
+
+                    <div class="recaptcha-wrapper">
+                        <div class="g-recaptcha" data-sitekey="<?php print $site_key; ?>" data-theme="dark"></div>
                     </div>
                 </div>
                 
@@ -158,7 +133,7 @@
                     </button>
                     
                     <div class="form-footer-text">
-                        <p>Hai già un account? <a href="<?php echo $site_url; ?>users/login">Accedi qui</a></p>
+                        <p>Hai giï¿½ un account? <a href="<?php echo $site_url; ?>users/login">Accedi qui</a></p>
                     </div>
                 </div>
             </form>
@@ -432,42 +407,20 @@
     color: var(--color-text-dark);
 }
 
-/* Captcha Container */
-.captcha-container {
-    display: grid;
-    grid-template-columns: 200px 1fr;
-    gap: 25px;
+/* reCAPTCHA Container */
+.recaptcha-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
     padding: 25px;
     background: rgba(0, 0, 0, 0.3);
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 12px;
 }
 
-.captcha-image {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.captcha-image img {
-    border-radius: 8px;
-    border: 2px solid rgba(255, 255, 255, 0.2);
-    width: 100%;
-    height: auto;
-}
-
-.captcha-input-group {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-.captcha-input {
-    font-size: 24px !important;
-    text-align: center;
-    letter-spacing: 8px;
-    font-weight: 700;
-    padding: 12px !important;
+.recaptcha-wrapper .g-recaptcha {
+    transform: scale(0.95);
+    transform-origin: center;
 }
 
 /* Form Actions */
@@ -697,7 +650,7 @@
     box-shadow: 0 6px 20px rgba(231, 76, 60, 0.5);
 }
 
-/* Error Messages */
+/* Error Messages - mostra icona SOLO quando c'Ã¨ un errore */
 .text-danger {
     font-size: 13px;
     color: var(--color-primary) !important;
@@ -708,10 +661,27 @@
     gap: 6px;
 }
 
-.text-danger::before {
+.text-danger:not(:empty)::before {
     content: '\f071';
     font-family: 'Font Awesome 6 Free';
     font-weight: 900;
+}
+
+/* Input validi - bordo verde quando tutto va bene */
+.form-control-modern:valid:not(:placeholder-shown) {
+    border-color: #28a745 !important;
+    box-shadow: 0 0 0 2px rgba(40, 167, 69, 0.1);
+}
+
+.form-control-modern:valid:not(:placeholder-shown):focus {
+    border-color: #28a745 !important;
+    box-shadow: 0 0 0 3px rgba(40, 167, 69, 0.2);
+}
+
+/* Input con errori - bordo rosso */
+.form-control-modern:invalid:not(:placeholder-shown):not(:focus) {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 2px rgba(231, 76, 60, 0.1);
 }
 
 /* Responsive */
@@ -739,12 +709,7 @@
     .register-form-wrapper {
         padding: 25px;
     }
-    
-    .captcha-container {
-        grid-template-columns: 1fr;
-        gap: 20px;
-    }
-    
+
     .register-info {
         grid-template-columns: 1fr;
     }

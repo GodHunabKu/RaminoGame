@@ -114,10 +114,16 @@ if(isset($item_shop) && $item_shop != "") {
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
 
     <!-- CSS Principale -->
-    <link rel="stylesheet" href="<?php echo $site_url; ?>css/styles-v2025.css?v=<?php echo time(); ?>" type="text/css">
+    <link rel="stylesheet" href="<?php echo $site_url; ?>css/main2.css?v=<?php echo time(); ?>" type="text/css">
+<?php if($page == 'ranking/players' || $page == 'ranking/guilds') { ?>
+<link rel="stylesheet" href="<?php echo $site_url; ?>css/ranking-animations.css?v=<?php echo time(); ?>">
+<?php } ?>
+<?php if($page == 'ranking/players' || $page == 'ranking/guilds') { ?>
+<link rel="stylesheet" href="<?php echo $site_url; ?>css/ranking-advanced.css?v=<?php echo time(); ?>">
+<?php } ?>
 
     <?php if($page != 'admin') { ?>
-    <!-- Modern Design System 2025 (escluso dal pannello admin) -->
+    <!-- Modern Design System (escluso dal pannello admin) -->
     <link rel="stylesheet" href="<?php echo $site_url; ?>css/design-system.css?v=<?php echo time(); ?>" type="text/css">
     <?php } ?>
 
@@ -127,359 +133,10 @@ if(isset($item_shop) && $item_shop != "") {
     <!-- reCAPTCHA -->
     <script src="https://www.google.com/recaptcha/api.js" async defer></script>
 
-<?php if($page == 'admin') { ?>
-<style>
-/* === FIX COMPLETO PANNELLO ADMIN === */
-body.admin-page {
-    overflow-y: auto !important;
-    overflow-x: hidden !important;
-}
-
-.admin-content-wrapper,
-.admin-content-wrapper * {
-    position: relative !important;
-    z-index: 10000 !important;
-    pointer-events: auto !important;
-}
-
-/* === MODAL BOOTSTRAP - Z-INDEX === */
-.modal-backdrop {
-    z-index: 100000 !important;
-    background-color: rgba(0, 0, 0, 0.7) !important;
-}
-
-.modal {
-    z-index: 100001 !important;
-    pointer-events: auto !important;
-}
-
-.modal.show {
-    display: block !important;
-}
-
-.modal-dialog {
-    z-index: 100002 !important;
-    pointer-events: auto !important;
-    margin: 30px auto !important;
-}
-
-.modal-content {
-    z-index: 100003 !important;
-    background: #ffffff !important;
-    border-radius: 8px !important;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.5) !important;
-    pointer-events: auto !important;
-}
-
-.modal-header {
-    background-color: #f8f9fa !important;
-    border-bottom: 1px solid #dee2e6 !important;
-    padding: 15px 20px !important;
-}
-
-.modal-header h5,
-.modal-title {
-    color: #000000 !important;
-    font-size: 18px !important;
-    font-weight: 600 !important;
-    margin: 0 !important;
-}
-
-.modal-body {
-    padding: 20px !important;
-    background: #ffffff !important;
-    pointer-events: auto !important;
-}
-
-.modal-footer {
-    background-color: #f8f9fa !important;
-    border-top: 1px solid #dee2e6 !important;
-    padding: 15px 20px !important;
-}
-
-/* === TABS NEL MODAL === */
-.modal .nav-tabs {
-    border-bottom: 1px solid #dee2e6 !important;
-    margin-bottom: 15px !important;
-}
-
-.modal .nav-link {
-    color: #495057 !important;
-    border: 1px solid transparent !important;
-    cursor: pointer !important;
-    pointer-events: auto !important;
-    padding: 8px 16px !important;
-}
-
-.modal .nav-link.active {
-    color: #495057 !important;
-    background-color: #fff !important;
-    border-color: #dee2e6 #dee2e6 #fff !important;
-}
-
-.modal .tab-content {
-    pointer-events: auto !important;
-}
-
-.modal .tab-pane {
-    pointer-events: auto !important;
-}
-
-/* === FIX ULTRA AGGRESSIVO PER TUTTI GLI INPUT === */
-.modal input,
-.modal textarea,
-.modal select,
-.modal input[type="text"],
-.modal input[type="email"],
-.modal input[type="password"],
-.modal input[type="number"],
-.modal input[type="date"],
-.modal input[type="datetime-local"],
-.modal input[type="hidden"],
-.modal textarea#permanent,
-.modal textarea#temporary,
-.modal input#months,
-.modal input#days,
-.modal input#hours,
-.modal input#minutes,
-.modal .form-control {
-    background: #ffffff !important;
-    background-color: #ffffff !important;
-    color: #000000 !important;
-    border: 1px solid #ced4da !important;
-    padding: 8px 12px !important;
-    font-size: 14px !important;
-    border-radius: 4px !important;
-    width: 100% !important;
-    z-index: 100010 !important;
-    pointer-events: auto !important;
-    cursor: text !important;
-    opacity: 1 !important;
-    -webkit-appearance: none !important;
-    -moz-appearance: none !important;
-    appearance: none !important;
-    -webkit-user-select: text !important;
-    -moz-user-select: text !important;
-    user-select: text !important;
-    -webkit-touch-callout: text !important;
-}
-
-/* Hidden inputs devono rimanere invisibili ma funzionanti */
-.modal input[type="hidden"] {
-    display: none !important;
-    background: transparent !important;
-}
-
-/* Forza textarea a essere editabile */
-.modal textarea {
-    min-height: 100px !important;
-    resize: vertical !important;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
-    line-height: 1.5 !important;
-    overflow: auto !important;
-}
-
-/* Stato focus */
-.modal input:focus,
-.modal textarea:focus,
-.modal select:focus,
-.modal .form-control:focus {
-    background: #ffffff !important;
-    background-color: #ffffff !important;
-    color: #000000 !important;
-    border-color: #007bff !important;
-    outline: none !important;
-    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25) !important;
-}
-
-/* Placeholder */
-.modal input::placeholder,
-.modal textarea::placeholder {
-    color: #6c757d !important;
-    opacity: 0.7 !important;
-}
-
-/* Label */
-.modal label {
-    display: block !important;
-    margin-bottom: 8px !important;
-    color: #000000 !important;
-    font-weight: 600 !important;
-    font-size: 14px !important;
-    pointer-events: auto !important;
-}
-
-.modal .form-group {
-    margin-bottom: 20px !important;
-    pointer-events: auto !important;
-}
-
-/* === BOTTONI === */
-.modal .btn,
-.modal button {
-    padding: 10px 20px !important;
-    font-size: 14px !important;
-    border-radius: 4px !important;
-    cursor: pointer !important;
-    pointer-events: auto !important;
-    z-index: 100020 !important;
-    border: 1px solid transparent !important;
-    opacity: 1 !important;
-    font-weight: 400 !important;
-}
-
-.modal .btn-primary,
-.modal button[type="submit"] {
-    background-color: #007bff !important;
-    border-color: #007bff !important;
-    color: #ffffff !important;
-}
-
-.modal .btn-primary:hover,
-.modal button[type="submit"]:hover {
-    background-color: #0056b3 !important;
-    border-color: #0056b3 !important;
-}
-
-.modal .btn-secondary,
-.modal button[data-bs-dismiss="modal"] {
-    background-color: #6c757d !important;
-    border-color: #6c757d !important;
-    color: #ffffff !important;
-}
-
-.modal .btn-secondary:hover {
-    background-color: #545b62 !important;
-    border-color: #545b62 !important;
-}
-
-.modal .close,
-.modal .btn-close {
-    position: absolute !important;
-    right: 15px !important;
-    top: 15px !important;
-    font-size: 28px !important;
-    line-height: 1 !important;
-    color: #000 !important;
-    opacity: 1 !important;
-    cursor: pointer !important;
-    background: transparent !important;
-    border: none !important;
-    padding: 0 !important;
-    z-index: 100030 !important;
-}
-
-.modal .close:hover,
-.modal .btn-close:hover {
-    opacity: 0.75 !important;
-}
-
-/* === FIX LAYOUT === */
-.modal .row {
-    pointer-events: auto !important;
-}
-
-.modal .col-lg-3 {
-    pointer-events: auto !important;
-}
-
-.modal hr {
-    border-top: 1px solid rgba(0,0,0,0.1) !important;
-    margin: 15px 0 !important;
-}
-
-/* === RIMUOVI OVERLAY === */
-body.modal-open {
-    overflow: auto !important;
-    padding-right: 0 !important;
-}
-
-.modal::before,
-.modal::after,
-.modal-content::before,
-.modal-content::after,
-.modal-body::before,
-.modal-body::after {
-    display: none !important;
-    content: none !important;
-}
-
-/* === DISABILITA SFONDI ANIMATI === */
-.admin-page .animated-bg,
-.admin-page .background-fog,
-.admin-page #preloader,
-.admin-page::before,
-.admin-page::after,
-.admin-page .page-wrapper::before,
-.admin-page .page-wrapper::after,
-.admin-page .main-container::before,
-.admin-page .main-container::after {
-    display: none !important;
-    pointer-events: none !important;
-}
-
-.admin-page *,
-.admin-page *::before,
-.admin-page *::after {
-    animation: none !important;
-}
-
-/* Permetti transizioni nei modal */
-.modal,
-.modal-dialog {
-    transition: transform 0.3s ease-out !important;
-}
-
-/* === FIX GENERICI ADMIN === */
-.admin-content-wrapper input,
-.admin-content-wrapper select,
-.admin-content-wrapper textarea {
-    background: #fff !important;
-    color: #000 !important;
-    border: 1px solid #ddd !important;
-}
-
-.admin-content-wrapper button,
-.admin-content-wrapper .btn {
-    cursor: pointer !important;
-    pointer-events: auto !important;
-}
-
-/* === FIX TABELLE === */
-.admin-content-wrapper table,
-.admin-content-wrapper tbody,
-.admin-content-wrapper tr,
-.admin-content-wrapper td,
-.admin-content-wrapper th {
-    pointer-events: auto !important;
-}
-
-/* === FIX SPECIFICO PER FORM NEL MODAL === */
-.modal form {
-    background: transparent !important;
-    pointer-events: auto !important;
-}
-
-/* Forza tutti gli elementi form a essere interattivi */
-.modal form * {
-    pointer-events: auto !important;
-}
-
-/* === OVERRIDE BOOTSTRAP === */
-.modal .form-control:disabled,
-.modal .form-control[readonly] {
-    background-color: #e9ecef !important;
-    opacity: 1 !important;
-}
-
-/* Assicura che readonly non venga applicato */
-.modal input:not([readonly]),
-.modal textarea:not([readonly]) {
-    -webkit-user-modify: read-write !important;
-    -moz-user-modify: read-write !important;
-}
-</style>
-<?php } ?>
+    <?php if($page == 'admin') { ?>
+    <!-- Admin Panel Styles -->
+    <link rel="stylesheet" href="<?php echo $site_url; ?>css/admin-panel.css?v=<?php echo time(); ?>" type="text/css">
+    <?php } ?>
 </head>
 <body class="<?php if($is_homepage) echo 'homepage-style'; if($page == 'admin') echo ' admin-page'; ?>">
 
@@ -610,7 +267,7 @@ body.modal-open {
                         </div>
                         <div class="video-wrapper">
                             <iframe 
-                                src="https://www.youtube.com/embed/9NuEAOttCvE?si=x9tC_2kAVCJgIDwD&rel=0&modestbranding=1" 
+                                src="https://player.vimeo.com/video/1133246945?badge=0&amp;autopause=0&amp;player_id=0&amp;app_id=58479" 
                                 title="ONE Server - Trailer Ufficiale" 
                                 frameborder="0" 
                                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
@@ -806,7 +463,6 @@ body.modal-open {
             <!-- ====================================
                  SIDEBAR DESTRA (LOGIN)
                  ==================================== -->
-            <?php if ($is_homepage) : ?>
             <aside class="sidebar-right">
                 <h3><i class="fas fa-sign-in-alt"></i> LOGIN</h3>
                 
@@ -822,8 +478,10 @@ body.modal-open {
                         <input name="password" type="password" placeholder="<?php print $lang['password']; ?>" required>
                     </div>
                     <?php if(!$offline) { ?>
-                    <div class="form-group captcha-group">
-                        <div class="g-recaptcha" data-theme="dark" data-size="compact" data-sitekey="<?php print $site_key; ?>"></div>
+                    <div class="form-group">
+                        <div class="recaptcha-wrapper">
+                            <div class="g-recaptcha" data-sitekey="<?php print $site_key; ?>" data-theme="dark" data-size="compact"></div>
+                        </div>
                     </div>
                     <?php } ?>
                     <div class="form-footer">
@@ -859,8 +517,7 @@ body.modal-open {
                 </div>
                 <?php } ?>
             </aside>
-            <?php endif; ?>
-            
+
         </div>
     </div>
 
@@ -891,9 +548,9 @@ body.modal-open {
     <script>var site_url = "<?php print $site_url; ?>";</script>
 
     <?php if($page != 'admin') { ?>
-    <!-- JavaScript del sito (esclusi dal pannello admin per evitare conflitti con event listeners) -->
-    <script src="<?php print $site_url; ?>js/app-v2025.js?v=<?php echo time(); ?>"></script>
-    <script src="<?php print $site_url; ?>js/modern-features-v2025.js?v=<?php echo time(); ?>"></script>
+    <!-- JavaScript del sito (esclusi dal pannello admin) -->
+    <script src="<?php print $site_url; ?>js/app.js?v=<?php echo time(); ?>"></script>
+    <script src="<?php print $site_url; ?>js/features.js?v=<?php echo time(); ?>"></script>
     <?php } ?>
 
     <?php include 'include/functions/footer.php'; ?>
