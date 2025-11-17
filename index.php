@@ -127,6 +127,14 @@ if(isset($item_shop) && $item_shop != "") {
     <link rel="stylesheet" href="<?php echo $site_url; ?>css/variables.css?v=<?php echo time(); ?>" type="text/css">
     <?php } ?>
 
+    <!-- Sidebar Gold Button (ItemShop Premium) -->
+    <link rel="stylesheet" href="<?php echo $site_url; ?>css/sidebar-gold-button.css?v=<?php echo time(); ?>" type="text/css">
+
+    <?php if($is_homepage) { ?>
+    <!-- Homepage Premium 2025 - Solo Homepage -->
+    <link rel="stylesheet" href="<?php echo $site_url; ?>css/homepage-premium.css?v=<?php echo time(); ?>" type="text/css">
+    <?php } ?>
+
     <!-- Favicon -->
     <link rel="shortcut icon" href="<?php echo $site_url; ?>kebab/logo3.png">
     
@@ -213,7 +221,16 @@ if(isset($item_shop) && $item_shop != "") {
                         <li><a href="<?php echo $site_url; ?>download"><i class="fas fa-download"></i> <?php echo $lang['download']; ?></a></li>
                         <li><a href="<?php echo $site_url; ?>users/register"><i class="fas fa-user-plus"></i> <?php echo $lang['register']; ?></a></li>
                         <?php if($shop_url && $shop_url != '#') { ?>
-                        <li><a href="<?php print $shop_url; ?>" target="_blank"><i class="fas fa-shopping-cart"></i> Item Shop</a></li>
+                        <li class="itemshop-premium">
+                            <a href="<?php print $shop_url; ?>" target="_blank">
+                                <i class="fas fa-shopping-cart"></i> <?php echo $lang['item-shop']; ?>
+                                <span class="badge-hot">HOT</span>
+                            </a>
+                            <span class="sparkle"></span>
+                            <span class="sparkle"></span>
+                            <span class="sparkle"></span>
+                            <span class="sparkle"></span>
+                        </li>
                         <?php } ?>
                         <?php if(isset($social_links['discord']) && $social_links['discord']) { ?>
                         <li><a href="<?php print $social_links['discord']; ?>" target="_blank"><i class="fab fa-discord"></i> Discord</a></li>
@@ -507,8 +524,8 @@ if(isset($item_shop) && $item_shop != "") {
                         <i class="fa fa-users"></i> <?php print $lang['chars-list']; ?>
                     </a>
                     <?php if($shop_url && $shop_url != '#') { ?>
-                    <a href="<?php print $shop_url; ?>" target="_blank">
-                        <i class="fa fa-shopping-cart"></i> <?php print $lang['item-shop']; ?>
+                    <a href="<?php print $shop_url; ?>" target="_blank" class="gold-premium-link">
+                        <i class="fas fa-shopping-cart"></i> <?php print $lang['item-shop']; ?>
                     </a>
                     <?php } ?>
                     <a class="logout-link" href="<?php print $site_url; ?>users/logout">
@@ -551,6 +568,11 @@ if(isset($item_shop) && $item_shop != "") {
     <!-- JavaScript del sito (esclusi dal pannello admin) -->
     <script src="<?php print $site_url; ?>js/app.js?v=<?php echo time(); ?>"></script>
     <script src="<?php print $site_url; ?>js/features.js?v=<?php echo time(); ?>"></script>
+    <?php } ?>
+
+    <?php if($is_homepage) { ?>
+    <!-- Homepage Premium 2025 JavaScript - Solo Homepage -->
+    <script src="<?php print $site_url; ?>js/homepage-premium.js?v=<?php echo time(); ?>"></script>
     <?php } ?>
 
     <?php include 'include/functions/footer.php'; ?>
