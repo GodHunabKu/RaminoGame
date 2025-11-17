@@ -11,26 +11,36 @@
 		} else {
 			$message = 5;
 		}
-	} else if(isset($_POST['email']) && isset($_POST['captcha']) && isset($_SESSION['captcha_email']['code']))
+	} else if(isset($_POST['email']))
 	{
-		if($_POST['captcha'] == $_SESSION['captcha_email']['code'])
-		{
-			$email = $_POST['email'];
+		// Validate reCAPTCHA
+		if(isset($_POST['g-recaptcha-response']) && !empty($_POST['g-recaptcha-response'])) {
+			$verifyResponse = @file_get_contents('https://www.google.com/recaptcha/api/siteverify?secret='.$secret_key.'&response='.$_POST['g-recaptcha-response']);
+			if($verifyResponse !== false) {
+				$responseData = json_decode($verifyResponse);
+				if($responseData && $responseData->success) {
+					$email = $_POST['email'];
 
-			if(isValidEmail($email))
-			{
-				if(!$database->checkUserEmail($email))
-				{
-					$code = generateSocialID(32);
-					update_email_token($_SESSION['id'], $code);
-					update_new_email($_SESSION['id'], $email);
-					$message = 4;
-				} else $message = 1;
-				
-			} else $message = 2;
+					if(isValidEmail($email))
+					{
+						if(!$database->checkUserEmail($email))
+						{
+							$code = generateSocialID(32);
+							update_email_token($_SESSION['id'], $code);
+							update_new_email($_SESSION['id'], $email);
+							$message = 4;
+						} else $message = 1;
 
+					} else $message = 2;
+				} else {
+					$message = 3;
+				}
+			} else {
+				$message = 3;
+			}
+		} else {
+			$message = 3;
 		}
-		else $message = 3;
 	}
 
 ?>

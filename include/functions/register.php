@@ -1,9 +1,22 @@
 <?php
-	if(isset($_POST['captcha']) && isset($_POST['username']) && isset($_POST['password']) && isset($_POST['rpassword']) && isset($_POST['email']) && isset($_SESSION['captcha']['code']))
+	if(isset($_POST['username']) && isset($_POST['password']) && isset($_POST['rpassword']) && isset($_POST['email']))
 	{
 		$errors = array();
-		if($_POST['captcha'] != $_SESSION['captcha']['code'])
+
+		// Validate reCAPTCHA
+		if(isset($_POST['g-recaptcha-response']) && !empty($_POST['g-recaptcha-response'])) {
+			$verifyResponse = @file_get_contents('https://www.google.com/recaptcha/api/siteverify?secret='.$secret_key.'&response='.$_POST['g-recaptcha-response']);
+			if($verifyResponse !== false) {
+				$responseData = json_decode($verifyResponse);
+				if(!$responseData || !$responseData->success) {
+					$errors[]=$lang['incorrect-security'];
+				}
+			} else {
+				$errors[]=$lang['incorrect-security'];
+			}
+		} else {
 			$errors[]=$lang['incorrect-security'];
+		}
 		if(!isValidUserName($_POST['username']))
 			$errors[]=$lang['incorrect-usermane'];
 		if(!isValidUserPassword($_POST['password']))

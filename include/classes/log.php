@@ -32,8 +32,8 @@ class paginate {
     /**
      * Display data in table format for PLAYERS page (characters)
      */
-    public function dataview($query, $search = null, $ban_text = null, $unban_text = null, $edit_text = null) {
-        global $database, $site_url;
+    public function dataview($query, $search = null) {
+        global $database;
 
         try {
             $stmt = $database->runQueryPlayer($query);
@@ -62,23 +62,17 @@ class paginate {
 
                 $status_class = ($account && $account['status'] == 'OK') ? 'success' : 'danger';
                 $status_text = $account ? $account['status'] : 'UNKNOWN';
-                $status_action = ($account && $account['status'] == 'OK') ? $ban_text : $unban_text;
-                $modal_target = ($account && $account['status'] == 'OK') ? '#ban' : '#unban';
                 $account_login = $account ? $account['login'] : 'N/A';
 
                 echo '<tr>';
-                echo '<td id="' . (int)$account_id . '">' . htmlspecialchars($account_login, ENT_QUOTES, 'UTF-8') . '</td>';
+                echo '<td>' . htmlspecialchars($account_login, ENT_QUOTES, 'UTF-8') . '</td>';
                 echo '<td>' . htmlspecialchars($player['name'], ENT_QUOTES, 'UTF-8') . '</td>';
                 echo '<td>' . htmlspecialchars($player['ip'] ?? 'N/A', ENT_QUOTES, 'UTF-8') . '</td>';
                 echo '<td><span class="badge bg-' . $status_class . '">' . htmlspecialchars($status_text, ENT_QUOTES, 'UTF-8') . '</span></td>';
-                echo '<td>';
-                echo '<button type="button" class="btn btn-sm btn-' . $status_class . ' open-accountID" data-bs-toggle="modal" data-bs-target="' . $modal_target . '" data-id="' . (int)$account_id . '">' . htmlspecialchars($status_action, ENT_QUOTES, 'UTF-8') . '</button> ';
-                echo '<a class="btn btn-sm btn-warning" href="' . htmlspecialchars($site_url, ENT_QUOTES, 'UTF-8') . 'admin/player_edit/' . (int)$account_id . '">' . htmlspecialchars($edit_text, ENT_QUOTES, 'UTF-8') . '</a>';
-                echo '</td>';
                 echo '</tr>';
             }
         } catch(PDOException $e) {
-            echo '<tr><td colspan="5" class="text-center text-danger">Error: ' . htmlspecialchars($e->getMessage(), ENT_QUOTES, 'UTF-8') . '</td></tr>';
+            echo '<tr><td colspan="4" class="text-center text-danger">Error: ' . htmlspecialchars($e->getMessage(), ENT_QUOTES, 'UTF-8') . '</td></tr>';
         }
     }
 
