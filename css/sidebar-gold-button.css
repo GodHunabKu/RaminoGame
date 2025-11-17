@@ -44,7 +44,7 @@
     padding: 18px 20px !important;
     border-radius: 12px;
     position: relative;
-    overflow: visible;  /* Cambiato da hidden per mostrare badge */
+    overflow: hidden;  /* Contiene shimmer effect - badge è sul parent li */
     box-shadow: var(--gold-glow);
     border: 2px solid var(--gold-premium);
     transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
