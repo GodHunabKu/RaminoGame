@@ -114,7 +114,7 @@ if(isset($item_shop) && $item_shop != "") {
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
 
     <!-- CSS Principale -->
-    <link rel="stylesheet" href="<?php echo $site_url; ?>css/main2.css?v=<?php echo time(); ?>" type="text/css">
+    <link rel="stylesheet" href="<?php echo $site_url; ?>css/styles.css?v=<?php echo time(); ?>" type="text/css">
 <?php if($page == 'ranking/players' || $page == 'ranking/guilds') { ?>
 <link rel="stylesheet" href="<?php echo $site_url; ?>css/ranking-animations.css?v=<?php echo time(); ?>">
 <?php } ?>
@@ -124,7 +124,7 @@ if(isset($item_shop) && $item_shop != "") {
 
     <?php if($page != 'admin') { ?>
     <!-- Modern Design System (escluso dal pannello admin) -->
-    <link rel="stylesheet" href="<?php echo $site_url; ?>css/design-system.css?v=<?php echo time(); ?>" type="text/css">
+    <link rel="stylesheet" href="<?php echo $site_url; ?>css/variables.css?v=<?php echo time(); ?>" type="text/css">
     <?php } ?>
 
     <!-- Favicon -->
@@ -135,7 +135,7 @@ if(isset($item_shop) && $item_shop != "") {
 
     <?php if($page == 'admin') { ?>
     <!-- Admin Panel Styles -->
-    <link rel="stylesheet" href="<?php echo $site_url; ?>css/admin-panel.css?v=<?php echo time(); ?>" type="text/css">
+    <link rel="stylesheet" href="<?php echo $site_url; ?>css/admin.css?v=<?php echo time(); ?>" type="text/css">
     <?php } ?>
 </head>
 <body class="<?php if($is_homepage) echo 'homepage-style'; if($page == 'admin') echo ' admin-page'; ?>">

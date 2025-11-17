@@ -58,7 +58,7 @@ ul {
 }
 
 img {
-    max-width: 100%;
+    max-width: 150%;
     height: auto;
     display: block;
 }
@@ -227,15 +227,16 @@ img {
     animation: spin 1s linear infinite;
 }
 
-@keyframes spin {
-    to { transform: rotate(360deg); }
-}
-
 #preloader.loaded,
 body.loaded #preloader {
     opacity: 0;
     visibility: hidden;
     pointer-events: none;
+}
+
+/* Non coprire mai il captcha */
+.g-recaptcha {
+    z-index: 10000 !important;
 }
 
 /* =================================
@@ -270,6 +271,11 @@ body.loaded #preloader {
 .main-header:hover {
     border-bottom-color: rgba(231, 76, 60, 0.4);
     background: rgba(0, 0, 0, 0.5);
+}
+
+/* Nascondi header su tutte le pagine per un design più pulito */
+.main-header {
+    display: none !important;
 }
 
 .nav-logo {
@@ -591,11 +597,6 @@ body.loaded #preloader {
 .sidebar-right h3 i {
     font-size: 22px;
     animation: pulse 2s ease-in-out infinite;
-}
-
-@keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.6; }
 }
 
 /* =================================
@@ -1033,17 +1034,6 @@ body.loaded #preloader {
     font-size: 22px;
 }
 
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(30px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
 /* =================================
    LOGIN FORM - MIGLIORATO
    ================================= */
@@ -1085,9 +1075,15 @@ body.loaded #preloader {
     background: rgba(0,0,0,0.5);
 }
 
-.login-form .captcha-group {
-    display: flex;
-    justify-content: center;
+/* Assicura che il reCAPTCHA sia sempre visibile */
+.g-recaptcha,
+.g-recaptcha > div,
+.g-recaptcha iframe {
+    position: relative !important;
+    z-index: 100 !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
 }
 
 .login-form .form-footer {
@@ -1379,8 +1375,8 @@ body.loaded #preloader {
 }
 
 .ranking-table .rank-col img {
-    width: 24px;
-    height: 24px;
+    width: 48px;
+    height: 48px;
     margin: 0 auto;
     transition: var(--transition-smooth);
 }
@@ -1563,14 +1559,6 @@ form table td img {
     border-radius: 6px;
     border: 2px solid rgba(231, 76, 60, 0.2);
     height: 70px;
-}
-
-form input[name="captcha"] {
-    height: 70px !important;
-    font-size: 28px !important;
-    text-align: center;
-    letter-spacing: 5px;
-    font-weight: 700;
 }
 
 form hr {
@@ -1993,15 +1981,6 @@ form hr {
     animation: pulse 2s ease-in-out infinite;
 }
 
-@keyframes pulse {
-    0%, 100% {
-        opacity: 1;
-    }
-    50% {
-        opacity: 0.7;
-    }
-}
-
 .admin-content-wrapper a {
     color: #fff !important;
     cursor: pointer !important;
@@ -2161,6 +2140,16 @@ form hr {
         background: rgba(0, 0, 0, 0.8);
         z-index: 999;
         backdrop-filter: blur(5px);
+        pointer-events: auto; /* Permette click per chiudere sidebar */
+    }
+
+    /* FIX: Assicura che i modal Bootstrap siano sopra sidebar overlay */
+    .modal {
+        z-index: 1060 !important;
+    }
+
+    .modal-backdrop {
+        z-index: 1055 !important;
     }
 
     .sidebar-right {
@@ -2493,12 +2482,6 @@ form hr {
 
 .toggle-password i {
     font-size: 18px;
-}
-
-.captcha-wrapper {
-    display: flex;
-    justify-content: center;
-    margin-top: 10px;
 }
 
 .btn-submit-modern {
