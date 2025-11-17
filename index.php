@@ -573,6 +573,7 @@ if(isset($item_shop) && $item_shop != "") {
     <?php if($is_homepage) { ?>
     <!-- Homepage Premium 2025 JavaScript - Solo Homepage -->
     <script src="<?php print $site_url; ?>js/homepage-premium.js?v=<?php echo time(); ?>"></script>
+    <script src="<?php print $site_url; ?>js/wow-effects-premium.js?v=<?php echo time(); ?>"></script>
     <?php } ?>
 
     <?php include 'include/functions/footer.php'; ?>
