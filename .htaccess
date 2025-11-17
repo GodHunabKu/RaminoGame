@@ -13,8 +13,8 @@ RewriteRule ^admin/?$ index.php?p=admin [QSA,L]
 RewriteRule ^user/([a-zA-Z0-9_-]+)(/(.*))?$ index.php?p=$1&param=$3 [QSA,L]
 RewriteRule ^users/([a-zA-Z0-9_-]+)$ index.php?p=$1 [QSA,L]
 
-# Ranking routing - /ranking/type -> index.php?p=type
-RewriteRule ^ranking/([a-zA-Z0-9_-]+)$ index.php?p=$1 [QSA,L]
+# Ranking routing - /ranking/type(/page) -> index.php?p=type&page_no=page
+RewriteRule ^ranking/([a-zA-Z0-9_-]+)(/([0-9]+))?/?$ index.php?p=$1&page_no=$3 [QSA,L]
 
 # News routing - /news/ and /news/read/id
 RewriteRule ^news/?$ index.php?p=news [QSA,L]
