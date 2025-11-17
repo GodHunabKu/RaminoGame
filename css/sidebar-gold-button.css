@@ -1,0 +1,350 @@
+/**
+ * ==========================================
+ * SIDEBAR GOLD BUTTON - ITEMSHOP PREMIUM
+ * Pulsante Oro Premium per ItemShop/Emporio
+ * ==========================================
+ */
+
+/* ==================== VARIABILI ORO ==================== */
+:root {
+    --gold-premium: #FFD700;
+    --gold-shine: #FFF4CC;
+    --gold-dark: #B8860B;
+    --gold-metallic: linear-gradient(135deg, #FFD700 0%, #FFA500 25%, #FFD700 50%, #FFED4E 75%, #FFD700 100%);
+    --gold-glow: 0 0 30px rgba(255, 215, 0, 0.8), 0 0 60px rgba(255, 215, 0, 0.5), 0 0 90px rgba(255, 215, 0, 0.3);
+}
+
+/* ==================== PULSANTE ORO ITEMSHOP ==================== */
+.sidebar-nav ul li.itemshop-premium {
+    position: relative;
+    margin: 15px 0;
+    padding: 5px;  /* Spazio per il badge */
+    animation: goldEntrance 1s cubic-bezier(0.34, 1.56, 0.64, 1) 0.5s backwards;
+}
+
+@keyframes goldEntrance {
+    from {
+        opacity: 0;
+        transform: translateX(-50px) rotateY(-90deg);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0) rotateY(0deg);
+    }
+}
+
+.sidebar-nav ul li.itemshop-premium a {
+    background: var(--gold-metallic);
+    background-size: 200% auto;
+    color: #000 !important;
+    font-weight: 900 !important;
+    font-size: 15px !important;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 18px 20px !important;
+    border-radius: 12px;
+    position: relative;
+    overflow: hidden;  /* Contiene shimmer effect - badge è sul parent li */
+    box-shadow: var(--gold-glow);
+    border: 2px solid var(--gold-premium);
+    transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+    transform-style: preserve-3d;
+    animation: goldPulse 3s ease-in-out infinite;
+    display: block;
+}
+
+@keyframes goldPulse {
+    0%, 100% {
+        box-shadow:
+            0 0 20px rgba(255, 215, 0, 0.6),
+            0 0 40px rgba(255, 215, 0, 0.4),
+            0 0 60px rgba(255, 215, 0, 0.2),
+            inset 0 0 20px rgba(255, 215, 0, 0.2);
+        transform: scale(1);
+    }
+    50% {
+        box-shadow:
+            0 0 30px rgba(255, 215, 0, 0.8),
+            0 0 60px rgba(255, 215, 0, 0.6),
+            0 0 90px rgba(255, 215, 0, 0.4),
+            inset 0 0 30px rgba(255, 215, 0, 0.3);
+        transform: scale(1.02);
+    }
+}
+
+/* Shimmer effect */
+.sidebar-nav ul li.itemshop-premium a::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(255, 255, 255, 0.6) 50%,
+        transparent 100%
+    );
+    animation: goldShimmer 3s infinite;
+    pointer-events: none;
+    border-radius: 12px;  /* Mantiene il shimmer dentro i bordi */
+}
+
+@keyframes goldShimmer {
+    0% {
+        left: -100%;
+    }
+    100% {
+        left: 200%;
+    }
+}
+
+/* Glow particles */
+.sidebar-nav ul li.itemshop-premium a::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle, rgba(255, 215, 0, 0.3) 0%, transparent 70%);
+    transform: translate(-50%, -50%);
+    animation: goldGlow 2s ease-in-out infinite;
+    pointer-events: none;
+}
+
+@keyframes goldGlow {
+    0%, 100% {
+        opacity: 0.3;
+        transform: translate(-50%, -50%) scale(0.8);
+    }
+    50% {
+        opacity: 0.6;
+        transform: translate(-50%, -50%) scale(1.2);
+    }
+}
+
+/* Icona premium */
+.sidebar-nav ul li.itemshop-premium a i {
+    color: #000 !important;
+    font-size: 20px !important;
+    margin-right: 12px;
+    text-shadow:
+        0 0 10px rgba(255, 215, 0, 0.8),
+        0 0 20px rgba(255, 215, 0, 0.5),
+        0 2px 4px rgba(0, 0, 0, 0.3);
+    animation: iconSpin 8s linear infinite;
+    display: inline-block;
+    position: relative;
+    z-index: 1;
+}
+
+@keyframes iconSpin {
+    0%, 90%, 100% {
+        transform: rotate(0deg) scale(1);
+    }
+    95% {
+        transform: rotate(360deg) scale(1.2);
+    }
+}
+
+/* Hover effects */
+.sidebar-nav ul li.itemshop-premium a:hover {
+    background-position: 200% center;
+    transform: translateX(8px) scale(1.05) translateZ(10px);
+    box-shadow:
+        0 0 40px rgba(255, 215, 0, 1),
+        0 0 80px rgba(255, 215, 0, 0.7),
+        0 0 120px rgba(255, 215, 0, 0.5),
+        inset 0 0 40px rgba(255, 255, 255, 0.3);
+    border-color: var(--gold-shine);
+}
+
+.sidebar-nav ul li.itemshop-premium a:hover i {
+    transform: rotate(360deg) scale(1.3);
+    text-shadow:
+        0 0 15px rgba(255, 215, 0, 1),
+        0 0 30px rgba(255, 215, 0, 0.8),
+        0 2px 6px rgba(0, 0, 0, 0.4);
+}
+
+/* Active state */
+.sidebar-nav ul li.itemshop-premium a:active {
+    transform: translateX(8px) scale(0.98);
+    box-shadow:
+        0 0 20px rgba(255, 215, 0, 0.8),
+        0 0 40px rgba(255, 215, 0, 0.6),
+        inset 0 0 20px rgba(0, 0, 0, 0.2);
+}
+
+/* Badge "NEW" o "HOT" */
+.sidebar-nav ul li.itemshop-premium .badge-hot {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background: linear-gradient(135deg, #E74C3C 0%, #C0392B 100%);
+    color: white;
+    font-size: 11px;
+    font-weight: 900;
+    padding: 5px 10px;
+    border-radius: 10px;
+    z-index: 100;
+    box-shadow:
+        0 4px 15px rgba(231, 76, 60, 0.6),
+        0 0 20px rgba(231, 76, 60, 0.4);
+    animation: badgePulse 1.5s ease-in-out infinite;
+    letter-spacing: 1px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    white-space: nowrap;
+}
+
+@keyframes badgePulse {
+    0%, 100% {
+        transform: scale(1);
+        box-shadow:
+            0 4px 15px rgba(231, 76, 60, 0.6),
+            0 0 20px rgba(231, 76, 60, 0.4);
+    }
+    50% {
+        transform: scale(1.1);
+        box-shadow:
+            0 6px 20px rgba(231, 76, 60, 0.8),
+            0 0 30px rgba(231, 76, 60, 0.6);
+    }
+}
+
+/* ==================== PULSANTE ORO SIDEBAR-RIGHT (LOGIN AREA) ==================== */
+.sidebar-right .gold-premium-link {
+    display: block;
+    margin: 20px 0;
+    padding: 18px 25px;
+    background: var(--gold-metallic);
+    background-size: 200% auto;
+    color: #000 !important;
+    font-weight: 900;
+    font-size: 16px;
+    text-align: center;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    border-radius: 12px;
+    text-decoration: none;
+    position: relative;
+    overflow: hidden;
+    box-shadow: var(--gold-glow);
+    border: 2px solid var(--gold-premium);
+    transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+    animation: goldPulse 3s ease-in-out infinite;
+}
+
+.sidebar-right .gold-premium-link::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(
+        45deg,
+        transparent 30%,
+        rgba(255, 255, 255, 0.6) 50%,
+        transparent 70%
+    );
+    animation: goldShimmer 3s infinite;
+    pointer-events: none;
+}
+
+.sidebar-right .gold-premium-link i {
+    margin-right: 10px;
+    font-size: 18px;
+    animation: iconSpin 8s linear infinite;
+}
+
+.sidebar-right .gold-premium-link:hover {
+    background-position: 200% center;
+    transform: translateY(-5px) scale(1.05);
+    box-shadow:
+        0 0 40px rgba(255, 215, 0, 1),
+        0 0 80px rgba(255, 215, 0, 0.7),
+        0 0 120px rgba(255, 215, 0, 0.5),
+        inset 0 0 40px rgba(255, 255, 255, 0.3);
+    color: #000 !important;
+}
+
+/* ==================== SPARKLES DECORATIVE ==================== */
+.sidebar-nav ul li.itemshop-premium .sparkle {
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    background: var(--gold-shine);
+    border-radius: 50%;
+    box-shadow: 0 0 8px var(--gold-premium);
+    animation: sparkle 2s infinite;
+    pointer-events: none;
+}
+
+.sidebar-nav ul li.itemshop-premium .sparkle:nth-child(1) {
+    top: 10%;
+    left: 10%;
+    animation-delay: 0s;
+}
+
+.sidebar-nav ul li.itemshop-premium .sparkle:nth-child(2) {
+    top: 20%;
+    right: 15%;
+    animation-delay: 0.5s;
+}
+
+.sidebar-nav ul li.itemshop-premium .sparkle:nth-child(3) {
+    bottom: 15%;
+    left: 20%;
+    animation-delay: 1s;
+}
+
+.sidebar-nav ul li.itemshop-premium .sparkle:nth-child(4) {
+    bottom: 10%;
+    right: 10%;
+    animation-delay: 1.5s;
+}
+
+@keyframes sparkle {
+    0%, 100% {
+        opacity: 0;
+        transform: scale(0);
+    }
+    50% {
+        opacity: 1;
+        transform: scale(1.5);
+    }
+}
+
+/* ==================== MOBILE RESPONSIVE ==================== */
+@media (max-width: 768px) {
+    .sidebar-nav ul li.itemshop-premium a {
+        font-size: 14px !important;
+        padding: 16px 18px !important;
+    }
+
+    .sidebar-nav ul li.itemshop-premium a i {
+        font-size: 18px !important;
+        margin-right: 10px;
+    }
+
+    .badge-hot {
+        font-size: 9px;
+        padding: 3px 6px;
+    }
+}
+
+/* ==================== PERFORMANCE ==================== */
+@media (prefers-reduced-motion: reduce) {
+    .sidebar-nav ul li.itemshop-premium a,
+    .sidebar-nav ul li.itemshop-premium a::before,
+    .sidebar-nav ul li.itemshop-premium a::after,
+    .sidebar-nav ul li.itemshop-premium a i,
+    .badge-hot,
+    .sparkle {
+        animation: none !important;
+    }
+}
