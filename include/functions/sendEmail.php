@@ -29,9 +29,20 @@
 
 	$mail->AddAddress($sendEmail, $sendName);
 
-	if(!$mail->Send()) {
-		print '<div class="alert alert-danger alert-dismissible fade show" role="alert">
-			<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close">
-			
-			</button>Please contact an administrator!</br>'.$mail->ErrorInfo.'</div>';
+	// Variabile globale per controllare se l'invio è riuscito
+	$email_sent_successfully = $mail->Send();
+
+	if(!$email_sent_successfully) {
+		print '<div class="alert-modern alert-danger">
+			<div class="alert-icon"><i class="fas fa-exclamation-circle"></i></div>
+			<div class="alert-content">
+				<strong>Errore Invio Email!</strong>
+				<p>Impossibile inviare l\'email. Contatta un amministratore.</p>
+				<small style="color: #721c24; font-size: 11px;">Errore: '.$mail->ErrorInfo.'</small>
+			</div>
+			<button type="button" class="alert-close" onclick="this.parentElement.remove()">
+				<i class="fas fa-times"></i>
+			</button>
+		</div>';
 	}
+?>

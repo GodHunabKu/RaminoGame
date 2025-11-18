@@ -23,16 +23,18 @@
             $html_mail = sendCode($account_name, $code);
             include 'include/functions/sendEmail.php';
 
-            print '<div class="alert-modern alert-success">
-                      <div class="alert-icon"><i class="fas fa-check-circle"></i></div>
-                      <div class="alert-content">
-                          <strong>Email Inviata!</strong>
-                          <p>'.$lang['sended-code'].'</p>
-                      </div>
-                      <button type="button" class="alert-close" onclick="this.parentElement.remove()">
-                          <i class="fas fa-times"></i>
-                      </button>
-                  </div>';
+            if($email_sent_successfully) {
+                print '<div class="alert-modern alert-success">
+                          <div class="alert-icon"><i class="fas fa-check-circle"></i></div>
+                          <div class="alert-content">
+                              <strong>Email Inviata!</strong>
+                              <p>'.$lang['sended-code'].'</p>
+                          </div>
+                          <button type="button" class="alert-close" onclick="this.parentElement.remove()">
+                              <i class="fas fa-times"></i>
+                          </button>
+                      </div>';
+            }
         }
         else if(isset($_POST['storekeeper-code']))
         {
@@ -47,16 +49,18 @@
                 $html_mail = sendCode($account_name, $code, 2);
                 include 'include/functions/sendEmail.php';
 
-                print '<div class="alert-modern alert-success">
-                          <div class="alert-icon"><i class="fas fa-check-circle"></i></div>
-                          <div class="alert-content">
-                              <strong>Email Inviata!</strong>
-                              <p>'.$lang['sended-code'].'</p>
-                          </div>
-                          <button type="button" class="alert-close" onclick="this.parentElement.remove()">
-                              <i class="fas fa-times"></i>
-                          </button>
-                      </div>';
+                if($email_sent_successfully) {
+                    print '<div class="alert-modern alert-success">
+                              <div class="alert-icon"><i class="fas fa-check-circle"></i></div>
+                              <div class="alert-content">
+                                  <strong>Email Inviata!</strong>
+                                  <p>'.$lang['sended-code'].'</p>
+                              </div>
+                              <button type="button" class="alert-close" onclick="this.parentElement.remove()">
+                                  <i class="fas fa-times"></i>
+                              </button>
+                          </div>';
+                }
             }
             else
             {
@@ -86,16 +90,18 @@
             $html_mail = sendCode($account_name, $code, 3);
             include 'include/functions/sendEmail.php';
 
-            print '<div class="alert-modern alert-success">
-                      <div class="alert-icon"><i class="fas fa-check-circle"></i></div>
-                      <div class="alert-content">
-                          <strong>Email Inviata!</strong>
-                          <p>'.$lang['sended-code'].'</p>
-                      </div>
-                      <button type="button" class="alert-close" onclick="this.parentElement.remove()">
-                          <i class="fas fa-times"></i>
-                      </button>
-                  </div>';
+            if($email_sent_successfully) {
+                print '<div class="alert-modern alert-success">
+                          <div class="alert-icon"><i class="fas fa-check-circle"></i></div>
+                          <div class="alert-content">
+                              <strong>Email Inviata!</strong>
+                              <p>'.$lang['sended-code'].'</p>
+                          </div>
+                          <button type="button" class="alert-close" onclick="this.parentElement.remove()">
+                              <i class="fas fa-times"></i>
+                          </button>
+                      </div>';
+            }
         }
         else if(isset($_POST['change-password']))
         {
@@ -111,16 +117,18 @@
             $html_mail = sendCode($account_name, $code, 4);
             include 'include/functions/sendEmail.php';
 
-            print '<div class="alert-modern alert-success">
-                      <div class="alert-icon"><i class="fas fa-check-circle"></i></div>
-                      <div class="alert-content">
-                          <strong>Email Inviata!</strong>
-                          <p>'.$lang['sended-code'].'</p>
-                      </div>
-                      <button type="button" class="alert-close" onclick="this.parentElement.remove()">
-                          <i class="fas fa-times"></i>
-                      </button>
-                  </div>';
+            if($email_sent_successfully) {
+                print '<div class="alert-modern alert-success">
+                          <div class="alert-icon"><i class="fas fa-check-circle"></i></div>
+                          <div class="alert-content">
+                              <strong>Email Inviata!</strong>
+                              <p>'.$lang['sended-code'].'</p>
+                          </div>
+                          <button type="button" class="alert-close" onclick="this.parentElement.remove()">
+                              <i class="fas fa-times"></i>
+                          </button>
+                      </div>';
+            }
         }
     ?>
 
