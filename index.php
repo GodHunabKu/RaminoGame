@@ -115,6 +115,7 @@ if(isset($item_shop) && $item_shop != "") {
 
     <!-- CSS Principale -->
     <link rel="stylesheet" href="<?php echo $site_url; ?>css/styles.css?v=<?php echo time(); ?>" type="text/css">
+    <link rel="stylesheet" href="<?php echo $site_url; ?>css/alert-modern.css?v=<?php echo time(); ?>" type="text/css">
 <?php if($page == 'ranking/players' || $page == 'ranking/guilds') { ?>
 <link rel="stylesheet" href="<?php echo $site_url; ?>css/ranking-animations.css?v=<?php echo time(); ?>">
 <?php } ?>
