@@ -9,6 +9,12 @@ require_once(__DIR__ . '/include/functions/env.php');
 loadEnv(__DIR__ . '/.env');
 require_once(__DIR__ . '/config.php');
 
+// Load PHPMailer classes
+require 'include/mailer/PHPMailer.php';
+require 'include/mailer/SMTP.php';
+require 'include/mailer/Exception.php';
+use PHPMailer\PHPMailer\PHPMailer;
+
 // Imposta email di test (MODIFICA CON LA TUA EMAIL!)
 $test_email = 'tua-email@example.com'; // <-- CAMBIA QUESTA EMAIL
 
@@ -101,11 +107,6 @@ echo '<div class="config">
 // Test invio email
 if(isset($_POST['send_test'])) {
     echo '<h2>📤 Invio Email di Test...</h2>';
-
-    require 'include/mailer/PHPMailer.php';
-    require 'include/mailer/SMTP.php';
-    require 'include/mailer/Exception.php';
-    use PHPMailer\PHPMailer\PHPMailer;
 
     $mail = new PHPMailer();
     $mail->IsSMTP();

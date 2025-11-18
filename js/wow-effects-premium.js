@@ -11,7 +11,7 @@
     // ==================== CONFIGURAZIONE WOW ====================
     const WOW_CONFIG = {
         cursorTrail: {
-            enabled: true,
+            enabled: false, // DISABILITATO - troppo invasivo
             particles: 8,
             colors: ['#FFD700', '#FFA500', '#FF6B6B', '#4ECDC4']
         },
@@ -21,12 +21,12 @@
             clickVolume: 0.5
         },
         easterEggs: {
-            enabled: true,
-            konamiCode: true,
-            secretShortcuts: true
+            enabled: false, // DISABILITATO - rainbow mode rimosso
+            konamiCode: false,
+            secretShortcuts: false
         },
         premiumEffects: {
-            cursorGlow: true,
+            cursorGlow: false, // DISABILITATO - evidenziazione mouse rimossa
             magneticButtons: true,
             textReveal: true,
             scrollMagic: true
