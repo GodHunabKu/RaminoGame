@@ -395,7 +395,6 @@ body.loaded #preloader {
     backdrop-filter: blur(15px);
     overflow: hidden;
     margin-top: 10px;
-    animation: dropdownSlide 0.3s ease;
 }
 
 @keyframes dropdownSlide {
@@ -830,7 +829,6 @@ body.loaded #preloader {
     border-radius: 10px;
     box-shadow: var(--shadow-md);
     transition: var(--transition-smooth);
-    animation: infoFadeIn 0.8s ease-out backwards;
 }
 
 .info-item:nth-child(1) { animation-delay: 0.1s; }
@@ -978,7 +976,6 @@ body.loaded #preloader {
     border-radius: 12px;
     padding: 30px;
     box-shadow: var(--shadow-lg);
-    animation: fadeIn 0.6s ease-out;
     transition: var(--transition-smooth);
     position: relative;
     overflow: hidden;
@@ -1685,7 +1682,6 @@ form hr {
     border-radius: 12px;
     padding: 30px;
     box-shadow: var(--shadow-lg);
-    animation: fadeIn 0.6s ease-out;
 }
 
 .search-box {
