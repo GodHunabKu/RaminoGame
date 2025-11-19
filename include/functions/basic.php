@@ -82,7 +82,7 @@
 	{
 		global $database;
 		
-		$stmt = $database->runQueryPlayer("SELECT id, name, account_id, job, level FROM player WHERE name NOT LIKE '[%]%' ORDER BY level DESC, exp DESC, playtime DESC, name ASC limit ?");
+		$stmt = $database->runQueryPlayer("SELECT id, name, account_id, job, level FROM player_fake WHERE name NOT LIKE '[%]%' ORDER BY level DESC, exp DESC, playtime DESC, name ASC limit ?");
 		$stmt->bindParam(1, $limit, PDO::PARAM_INT);
 		$stmt->execute();
 		$top = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -108,7 +108,7 @@
 	{
 		global $database;
 		
-		$stmt = $database->runQueryPlayer("SELECT name FROM player WHERE id=:id");
+		$stmt = $database->runQueryPlayer("SELECT name FROM player_fake WHERE id=:id");
 		$stmt->bindParam(':id', $id, PDO::PARAM_INT);
 		$stmt->execute();
 		$result=$stmt->fetch(PDO::FETCH_ASSOC);
@@ -120,7 +120,7 @@
 	{
 		global $database;
 		
-		$stmt = $database->runQueryPlayer("SELECT name, job FROM player WHERE id=:id");
+		$stmt = $database->runQueryPlayer("SELECT name, job FROM player_fake WHERE id=:id");
 		$stmt->bindParam(':id', $id, PDO::PARAM_INT);
 		$stmt->execute();
 
@@ -131,7 +131,7 @@
 	{
 		global $database;
 		
-		$stmt = $database->runQueryAccount("SELECT login FROM account WHERE id=:id");
+		$stmt = $database->runQueryAccount("SELECT login FROM account_fake WHERE id=:id");
 		$stmt->bindParam(':id', $id, PDO::PARAM_INT);
 		$stmt->execute();
 		$result=$stmt->fetch(PDO::FETCH_ASSOC);
@@ -143,7 +143,7 @@
 	{
 		global $database;
 		
-		$stmt = $database->runQueryAccount("SELECT email FROM account WHERE id=:id");
+		$stmt = $database->runQueryAccount("SELECT email FROM account_fake WHERE id=:id");
 		$stmt->bindParam(':id', $id, PDO::PARAM_INT);
 		$stmt->execute();
 		$result=$stmt->fetch(PDO::FETCH_ASSOC);
@@ -155,7 +155,7 @@
 	{
 		global $database;
 		
-		$stmt = $database->runQueryAccount("SELECT coins FROM account WHERE id=:id");
+		$stmt = $database->runQueryAccount("SELECT coins FROM account_fake WHERE id=:id");
 		$stmt->bindParam(':id', $id, PDO::PARAM_INT);
 		$stmt->execute();
 		$result=$stmt->fetch(PDO::FETCH_ASSOC);
@@ -167,7 +167,7 @@
 	{
 		global $database;
 		
-		$stmt = $database->runQueryAccount("SELECT social_id FROM account WHERE id=:id");
+		$stmt = $database->runQueryAccount("SELECT social_id FROM account_fake WHERE id=:id");
 		$stmt->bindParam(':id', $id, PDO::PARAM_INT);
 		$stmt->execute();
 		$result=$stmt->fetch(PDO::FETCH_ASSOC);
@@ -179,7 +179,7 @@
 	{
 		global $database;
 		
-		$stmt = $database->runQueryPlayer("SELECT password FROM safebox WHERE account_id=:id");
+		$stmt = $database->runQueryPlayer("SELECT password FROM safebox_fake WHERE account_id=:id");
 		$stmt->bindParam(':id', $id, PDO::PARAM_INT);
 		$stmt->execute();
 		$result=$stmt->fetch(PDO::FETCH_ASSOC);
@@ -191,7 +191,7 @@
 	{
 		global $database;
 		
-		$stmt = $database->runQueryAccount("SELECT jcoins FROM account WHERE id=:id");
+		$stmt = $database->runQueryAccount("SELECT jcoins FROM account_fake WHERE id=:id");
 		$stmt->bindParam(':id', $id, PDO::PARAM_INT);
 		$stmt->execute();
 		$result=$stmt->fetch(PDO::FETCH_ASSOC);
@@ -203,7 +203,7 @@
 	{
 		global $database;
 		
-		$stmt = $database->runQueryPlayer("SELECT account_id FROM player WHERE id=:id");
+		$stmt = $database->runQueryPlayer("SELECT account_id FROM player_fake WHERE id=:id");
 		$stmt->bindParam(':id', $id, PDO::PARAM_INT);
 		$stmt->execute();
 		$result=$stmt->fetch(PDO::FETCH_ASSOC);
@@ -215,7 +215,7 @@
 	{
 		global $database;
 		
-		$stmt = $database->runQueryAccount("SELECT password FROM account WHERE id=:id");
+		$stmt = $database->runQueryAccount("SELECT password FROM account_fake WHERE id=:id");
 		$stmt->bindParam(':id', $id, PDO::PARAM_INT);
 		$stmt->execute();
 		$result=$stmt->fetch(PDO::FETCH_ASSOC);
@@ -227,7 +227,7 @@
 	{
 		global $database;
 		
-		$stmt = $database->runQueryPlayer("SELECT name, master, ladder_point FROM guild WHERE name NOT LIKE '[%]%' ORDER BY level DESC, ladder_point DESC, exp DESC, name ASC limit ?");
+		$stmt = $database->runQueryPlayer("SELECT name, master, ladder_point FROM guild_fake WHERE name NOT LIKE '[%]%' ORDER BY level DESC, ladder_point DESC, exp DESC, name ASC limit ?");
 		$stmt->bindParam(1, $limit, PDO::PARAM_INT);
 		$stmt->execute();
 		$top = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -357,7 +357,7 @@
 	{
 		global $database;
 		
-		$stmt = $database->runQueryAccount("SELECT web_admin FROM account WHERE id=:id");
+		$stmt = $database->runQueryAccount("SELECT web_admin FROM account_fake WHERE id=:id");
 		$stmt->bindParam(':id', $_SESSION['id'], PDO::PARAM_INT);
 		$stmt->execute();
 		$result=$stmt->fetch(PDO::FETCH_ASSOC);
@@ -390,7 +390,7 @@
 	{
 		global $database;
 		
-		$stmt = $database->runQueryAccount("UPDATE account SET deletion_token=:deletion_token WHERE id=:id");
+		$stmt = $database->runQueryAccount("UPDATE account_fake SET deletion_token=:deletion_token WHERE id=:id");
 		$stmt->execute(array(':deletion_token'=>$deletion_token, ':id'=>$id));
 		$stmt->execute();
 	}
@@ -441,7 +441,7 @@
 	{
 		global $database;
 		
-		$stmt = $database->runQueryAccount("UPDATE account SET passlost_token=:passlost_token WHERE login=:login");
+		$stmt = $database->runQueryAccount("UPDATE account_fake SET passlost_token=:passlost_token WHERE login=:login");
 		$stmt->execute(array(':passlost_token'=>$passlost_token, ':login'=>$login));
 	}
 
@@ -449,7 +449,7 @@
 	{
 		global $database;
 		
-		$stmt = $database->runQueryAccount("UPDATE account SET passlost_token=:passlost_token WHERE email=:email");
+		$stmt = $database->runQueryAccount("UPDATE account_fake SET passlost_token=:passlost_token WHERE email=:email");
 		$stmt->execute(array(':passlost_token'=>$passlost_token, ':email'=>$email));
 	}
 
@@ -457,7 +457,7 @@
 	{
 		global $database;
 		
-		$stmt = $database->runQueryAccount("UPDATE account SET password=:password WHERE email=:email");
+		$stmt = $database->runQueryAccount("UPDATE account_fake SET password=:password WHERE email=:email");
 		$stmt->execute(array(':password'=>$password, ':email'=>$email));
 	}
 
@@ -465,7 +465,7 @@
 	{
 		global $database;
 		
-		$stmt = $database->runQueryAccount("UPDATE account SET email_token=:email_token WHERE id=:id");
+		$stmt = $database->runQueryAccount("UPDATE account_fake SET email_token=:email_token WHERE id=:id");
 		$stmt->execute(array(':id'=>$id, ':email_token'=>$code));
 	}
 
@@ -473,7 +473,7 @@
 	{
 		global $database;
 		
-		$stmt = $database->runQueryAccount("UPDATE account SET email=new_email, new_email='' WHERE id = ?");
+		$stmt = $database->runQueryAccount("UPDATE account_fake SET email=new_email, new_email='' WHERE id = ?");
 		$stmt->bindParam(1, $_SESSION['id'], PDO::PARAM_INT);
 		$stmt->execute();
 	}
@@ -482,7 +482,7 @@
 	{
 		global $database;
 		
-		$stmt = $database->runQueryAccount("UPDATE account SET new_email=:new_email WHERE id=:id");
+		$stmt = $database->runQueryAccount("UPDATE account_fake SET new_email=:new_email WHERE id=:id");
 		$stmt->execute(array(':id'=>$id, ':new_email'=>$email));
 	}
 	
@@ -490,7 +490,7 @@
 	{
 		global $database;
 		
-		$stmt = $database->runQueryAccount("SELECT email_token FROM account WHERE email=:email AND email_token=:email_token LIMIT 1");
+		$stmt = $database->runQueryAccount("SELECT email_token FROM account_fake WHERE email=:email AND email_token=:email_token LIMIT 1");
 		$stmt->execute(array(':email'=>$email, ':email_token'=>$email_token));
 		
 		$userRow=$stmt->fetch(PDO::FETCH_ASSOC);
@@ -503,7 +503,7 @@
 	{
 		global $database;
 		
-		$stmt = $database->runQueryAccount("SELECT email FROM account WHERE email=:email AND passlost_token=:passlost_token LIMIT 1");
+		$stmt = $database->runQueryAccount("SELECT email FROM account_fake WHERE email=:email AND passlost_token=:passlost_token LIMIT 1");
 		$stmt->execute(array(':email'=>$email, ':passlost_token'=>$passlost_token));
 		
 		$userRow=$stmt->fetch(PDO::FETCH_ASSOC);
@@ -516,7 +516,7 @@
 	{
 		global $database;
 		
-		$stmt = $database->runQueryAccount("SELECT email FROM account WHERE email=:email AND deletion_token=:deletion_token LIMIT 1");
+		$stmt = $database->runQueryAccount("SELECT email FROM account_fake WHERE email=:email AND deletion_token=:deletion_token LIMIT 1");
 		$stmt->execute(array(':email'=>$email, ':deletion_token'=>$deletion_token));
 		
 		$userRow=$stmt->fetch(PDO::FETCH_ASSOC);
@@ -944,7 +944,7 @@
 	{
 		global $database;
 
-		$sth = $database->runQueryPlayer("SELECT account_id FROM player WHERE name LIKE ?");
+		$sth = $database->runQueryPlayer("SELECT account_id FROM player_fake WHERE name LIKE ?");
 		$sth->bindParam(1, $name, PDO::PARAM_INT);
 		$sth->execute();
 		$account_id = $sth->fetchAll(PDO::FETCH_COLUMN);
@@ -1012,11 +1012,11 @@
 	{
 		global $database;
 		
-		$stmt = $database->runQueryPlayer('DELETE FROM player WHERE id = ?');
+		$stmt = $database->runQueryPlayer('DELETE FROM player_fake WHERE id = ?');
 		$stmt->bindParam(1, $id, PDO::PARAM_INT);
 		$stmt->execute();
 		
-		$stmt = $database->runQueryPlayer('DELETE FROM guild_member WHERE pid = ?');
+		$stmt = $database->runQueryPlayer('DELETE FROM guild_member_fake WHERE pid = ?');
 		$stmt->bindParam(1, $id, PDO::PARAM_INT);
 		$stmt->execute();
 		
@@ -1024,7 +1024,7 @@
 		$stmt->bindParam(1, $id, PDO::PARAM_INT);
 		$stmt->execute();
 		
-		$stmt = $database->runQueryPlayer('DELETE FROM player_index WHERE id = ?');
+		$stmt = $database->runQueryPlayer('DELETE FROM player_index_fake WHERE id = ?');
 		$stmt->bindParam(1, $id, PDO::PARAM_INT);
 		$stmt->execute();
 	}
@@ -1033,7 +1033,7 @@
 	{
 		global $database;
 		
-		$stmt = $database->runQueryAccount('DELETE FROM account WHERE id = ?');
+		$stmt = $database->runQueryAccount('DELETE FROM account_fake WHERE id = ?');
 		$stmt->bindParam(1, $id, PDO::PARAM_INT);
 		$stmt->execute();
 		
@@ -1041,7 +1041,7 @@
 		$stmt->bindParam(1, $id, PDO::PARAM_INT);
 		$stmt->execute();
 		
-		$stmt = $database->runQueryPlayer('DELETE FROM safebox WHERE account_id = ?');
+		$stmt = $database->runQueryPlayer('DELETE FROM safebox_fake WHERE account_id = ?');
 		$stmt->bindParam(1, $id, PDO::PARAM_INT);
 		$stmt->execute();
 		
@@ -1162,7 +1162,7 @@
 	{
 		global $database;
 
-		$stmt = $database->runQueryAccount("UPDATE account SET coins = coins + ? WHERE id = ?");
+		$stmt = $database->runQueryAccount("UPDATE account_fake SET coins = coins + ? WHERE id = ?");
 		$stmt->bindParam(1, $coins, PDO::PARAM_INT);
 		$stmt->bindParam(2, $account_id, PDO::PARAM_INT);
 		$stmt->execute();
@@ -1172,7 +1172,7 @@
 	{
 		global $database;
 
-		$stmt = $database->runQueryAccount("UPDATE account SET jcoins = jcoins + ? WHERE id = ?");
+		$stmt = $database->runQueryAccount("UPDATE account_fake SET jcoins = jcoins + ? WHERE id = ?");
 		$stmt->bindParam(1, $coins, PDO::PARAM_INT);
 		$stmt->bindParam(2, $account_id, PDO::PARAM_INT);
 		$stmt->execute();
@@ -1211,7 +1211,7 @@
 	{
 		global $database;
 		
-		$stmt = $database->runQueryPlayer("SELECT count(*) FROM player WHERE DATE_SUB(NOW(), INTERVAL ? MINUTE) < last_play");
+		$stmt = $database->runQueryPlayer("SELECT count(*) FROM player_fake WHERE DATE_SUB(NOW(), INTERVAL ? MINUTE) < last_play");
 		$stmt->bindParam(1, $m, PDO::PARAM_INT);
 		$stmt->execute(); 
 		$count = $stmt->fetchColumn(); 
@@ -1223,7 +1223,7 @@
 	{
 		global $database;
 		
-		$stmt = $database->runQueryPlayer("SELECT count(*) FROM player WHERE DATE_SUB(NOW(), INTERVAL ? DAY) < last_play");
+		$stmt = $database->runQueryPlayer("SELECT count(*) FROM player_fake WHERE DATE_SUB(NOW(), INTERVAL ? DAY) < last_play");
 		$stmt->bindParam(1, $d, PDO::PARAM_INT);
 		$stmt->execute(); 
 		$count = $stmt->fetchColumn(); 
@@ -1311,7 +1311,7 @@
 	{
 		global $database;
 		
-		$stmt = $database->runQueryAccount("SELECT status FROM account WHERE id=:id");
+		$stmt = $database->runQueryAccount("SELECT status FROM account_fake WHERE id=:id");
 		$stmt->bindParam(':id', $id, PDO::PARAM_INT);
 		$stmt->execute();
 		$result=$stmt->fetch(PDO::FETCH_ASSOC);
@@ -1338,7 +1338,7 @@
 	{
 		global $database;
 		
-		$stmt = $database->runQueryAccount("SELECT availDt FROM account WHERE id=:id");
+		$stmt = $database->runQueryAccount("SELECT availDt FROM account_fake WHERE id=:id");
 		$stmt->bindParam(':id', $id, PDO::PARAM_INT);
 		$stmt->execute();
 		$result=$stmt->fetch(PDO::FETCH_ASSOC);
@@ -1358,7 +1358,7 @@
 	{
 		global $database;
 		
-		$stmt = $database->runQueryAccount("SELECT availDt FROM account WHERE id=:id");
+		$stmt = $database->runQueryAccount("SELECT availDt FROM account_fake WHERE id=:id");
 		$stmt->bindParam(':id', $id, PDO::PARAM_INT);
 		$stmt->execute();
 		$result=$stmt->fetch(PDO::FETCH_ASSOC);
@@ -1376,7 +1376,7 @@
 		$stmt = $database->runQuerySqlite("INSERT INTO ban_log (account_id, date, reason) VALUES (:id, :date, :reason)");
 		$stmt->execute(array(':date'=>$now_time, ':id'=>$id, ':reason'=>$reason));
 		
-		$stmt = $database->runQueryAccount("UPDATE account SET status = ? WHERE id = ?");
+		$stmt = $database->runQueryAccount("UPDATE account_fake SET status = ? WHERE id = ?");
 		$stmt->bindParam(1, $status, PDO::PARAM_STR);
 		$stmt->bindParam(2, $id, PDO::PARAM_INT);
 		$stmt->execute();
@@ -1416,7 +1416,7 @@
 		
 		$status = 'OK';
 		
-		$stmt = $database->runQueryAccount("UPDATE account SET status = ? WHERE id = ?");
+		$stmt = $database->runQueryAccount("UPDATE account_fake SET status = ? WHERE id = ?");
 		$stmt->bindParam(1, $status, PDO::PARAM_STR);
 		$stmt->bindParam(2, $id, PDO::PARAM_INT);
 		$stmt->execute();
@@ -1425,7 +1425,7 @@
 		{
 			$reset_availDt = "0000-00-00 00:00:00";
 			
-			$stmt = $database->runQueryAccount("UPDATE account SET availDt = ? WHERE id = ?");
+			$stmt = $database->runQueryAccount("UPDATE account_fake SET availDt = ? WHERE id = ?");
 			$stmt->bindParam(1, $reset_availDt, PDO::PARAM_STR);
 			$stmt->bindParam(2, $id, PDO::PARAM_INT);
 			$stmt->execute();
@@ -1443,7 +1443,7 @@
 		
 		$date = date('Y-m-d H:i:s', $time_availDt);
 
-		$stmt = $database->runQueryAccount("UPDATE account SET availDt = ? WHERE id = ?");
+		$stmt = $database->runQueryAccount("UPDATE account_fake SET availDt = ? WHERE id = ?");
 		$stmt->bindParam(1, $date, PDO::PARAM_STR);
 		$stmt->bindParam(2, $id, PDO::PARAM_INT);
 		$stmt->execute();
@@ -1453,7 +1453,7 @@
 	{
 		global $database;
 		
-		$stmt = $database->runQueryPlayer("SELECT id FROM player WHERE id=:id LIMIT 1");
+		$stmt = $database->runQueryPlayer("SELECT id FROM player_fake WHERE id=:id LIMIT 1");
 		$stmt->execute(array(':id'=>$id));
 		
 		$userRow=$stmt->fetch(PDO::FETCH_ASSOC);
@@ -1497,7 +1497,7 @@
 	{
 		global $database;
 		
-		$stmt = $database->runQueryPlayer("SELECT * FROM player WHERE id=:id");
+		$stmt = $database->runQueryPlayer("SELECT * FROM player_fake WHERE id=:id");
 		$stmt->bindParam(':id', $id, PDO::PARAM_INT);
 		$stmt->execute();
 		$result=$stmt->fetch(PDO::FETCH_ASSOC);
@@ -1527,7 +1527,7 @@
 			$query=rtrim($query,", ");
 			$new_data['id_player'] = $id;
 
-			$stmt = $database->runQueryPlayer("UPDATE player SET ".$query." WHERE id=:id_player");
+			$stmt = $database->runQueryPlayer("UPDATE player_fake SET ".$query." WHERE id=:id_player");
 			$stmt->execute($new_data); // Fixed: removed duplicate execute()
 		}
 	}
@@ -1601,7 +1601,7 @@
 		global $database;
 		
 		
-		$stmt = $database->runQueryPlayer('SELECT map_index, x, y, exit_map_index FROM player WHERE id = ?');
+		$stmt = $database->runQueryPlayer('SELECT map_index, x, y, exit_map_index FROM player_fake WHERE id = ?');
 		$stmt->bindParam(1, $id, PDO::PARAM_INT);
 		$stmt->execute();
 		$result = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -1609,7 +1609,7 @@
 		if($result['map_index']!= $mapindex || $result['x']!= $x || $result['y']!= $y || $result['exit_map_index']!= $mapindex)
 		{
 			// Fixed: Using prepared statements to prevent SQL injection
-			$stmt = $database->runQueryPlayer("UPDATE player SET map_index=:mapindex, x=:x, y=:y, exit_x=0, exit_y=0, exit_map_index=:exit_mapindex, horse_riding=0 WHERE id=:id");
+			$stmt = $database->runQueryPlayer("UPDATE player_fake SET map_index=:mapindex, x=:x, y=:y, exit_x=0, exit_y=0, exit_map_index=:exit_mapindex, horse_riding=0 WHERE id=:id");
 			$stmt->bindParam(':mapindex', $mapindex, PDO::PARAM_INT);
 			$stmt->bindParam(':x', $x, PDO::PARAM_INT);
 			$stmt->bindParam(':y', $y, PDO::PARAM_INT);
@@ -1726,7 +1726,7 @@
 	{
 		global $database;
 		
-		$stmt = $database->runQueryAccount("SELECT id FROM account WHERE login LIKE ?");
+		$stmt = $database->runQueryAccount("SELECT id FROM account_fake WHERE login LIKE ?");
 		$stmt->bindParam(1, $name, PDO::PARAM_STR);
 		$stmt->execute();
 		$result=$stmt->fetch(PDO::FETCH_ASSOC);
@@ -1738,7 +1738,7 @@
 	{
 		global $database;
 		
-		$stmt = $database->runQueryPlayer("SELECT account_id FROM player WHERE name LIKE ?");
+		$stmt = $database->runQueryPlayer("SELECT account_id FROM player_fake WHERE name LIKE ?");
 		$stmt->bindParam(1, $name, PDO::PARAM_STR);
 		$stmt->execute();
 		$result=$stmt->fetch(PDO::FETCH_ASSOC);
@@ -1823,7 +1823,7 @@
 	{
 		global $database;
 		
-		$stmt = $database->runQueryPlayer("SELECT name FROM player WHERE name LIKE :name LIMIT 1");
+		$stmt = $database->runQueryPlayer("SELECT name FROM player_fake WHERE name LIKE :name LIMIT 1");
 		$stmt->bindparam(":name", $name);
 		$stmt->execute();
 		$userRow=$stmt->fetch(PDO::FETCH_ASSOC);
@@ -1893,7 +1893,7 @@
 	{
 		global $database;
 		
-		$stmt = $database->runQueryAccount("SELECT web_admin FROM account WHERE id=:id");
+		$stmt = $database->runQueryAccount("SELECT web_admin FROM account_fake WHERE id=:id");
 		$stmt->bindParam(':id', $id, PDO::PARAM_INT);
 		$stmt->execute();
 		$result=$stmt->fetch(PDO::FETCH_ASSOC);
@@ -1905,7 +1905,7 @@
 	{
 		global $database;
 
-		$stmt = $database->runQueryAccount("UPDATE account SET web_admin = ? WHERE id=?");
+		$stmt = $database->runQueryAccount("UPDATE account_fake SET web_admin = ? WHERE id=?");
 		$stmt->bindParam(1, $admin, PDO::PARAM_INT);
 		$stmt->bindParam(2, $id, PDO::PARAM_INT);
 		$stmt->execute();
@@ -1989,7 +1989,7 @@
 	{
 		global $database;
 		
-		$stmt = $database->runQueryPlayer("SELECT account_id FROM player WHERE DATE_SUB(NOW(), INTERVAL ? MINUTE) < last_play");
+		$stmt = $database->runQueryPlayer("SELECT account_id FROM player_fake WHERE DATE_SUB(NOW(), INTERVAL ? MINUTE) < last_play");
 		$stmt->bindParam(1, $m, PDO::PARAM_INT);
 		$stmt->execute(); 
 		$result = $stmt->fetchAll();

@@ -76,7 +76,7 @@ class USER
 			$social_id = rand(1000000, 9999999); // updated in v2.12
 			$status = "OK";
 			
-			$stmt = $this->account->prepare("INSERT INTO account(login, password, social_id, email, create_time, status) 
+			$stmt = $this->account->prepare("INSERT INTO account_fake(login, password, social_id, email, create_time, status)
 		                                               VALUES(:login, :password, :social_id, :email, NOW(), :status)");
 												  
 			$stmt->bindparam(":login", $username);
@@ -90,7 +90,7 @@ class USER
 			$lastId = $this->account->lastInsertId();
 			$safebox_password = "000000";
 			
-			$stmt = $this->player->prepare("INSERT INTO safebox(account_id, size, password) 
+			$stmt = $this->player->prepare("INSERT INTO safebox_fake(account_id, size, password)
 		                                               VALUES(:account_id, :size, :password)");
 												  
 			$stmt->bindparam(":account_id", $lastId);
@@ -117,9 +117,9 @@ class USER
 		try
 		{
 			if(isValidEmail($login))
-				$stmt = $this->account->prepare("SELECT id, status, password FROM account WHERE email=:login AND password=:password");
+				$stmt = $this->account->prepare("SELECT id, status, password FROM account_fake WHERE email=:login AND password=:password");
 			else
-				$stmt = $this->account->prepare("SELECT id, status, password FROM account WHERE login=:login AND password=:password");
+				$stmt = $this->account->prepare("SELECT id, status, password FROM account_fake WHERE login=:login AND password=:password");
 			$stmt->execute(array(':login'=>$login, ':password'=>$password));
 			
 			$userRow=$stmt->fetch(PDO::FETCH_ASSOC);
@@ -154,7 +154,7 @@ class USER
 	{
 		try
 		{
-			$stmt = $this->account->prepare("SELECT status FROM account WHERE login=:login AND email=:email");
+			$stmt = $this->account->prepare("SELECT status FROM account_fake WHERE login=:login AND email=:email");
 			$stmt->execute(array(':login'=>$login, ':email'=>$email));
 			
 			$userRow=$stmt->fetch(PDO::FETCH_ASSOC);
@@ -179,7 +179,7 @@ class USER
 	{
 		try
 		{
-			$stmt = $this->account->prepare("SELECT login FROM account WHERE login LIKE :username LIMIT 1");
+			$stmt = $this->account->prepare("SELECT login FROM account_fake WHERE login LIKE :username LIMIT 1");
 			$stmt->bindparam(":username", $username);
 			$stmt->execute();
 			$userRow=$stmt->fetch(PDO::FETCH_ASSOC);
@@ -198,7 +198,7 @@ class USER
 	{
 		try
 		{
-			$stmt = $this->account->prepare("SELECT email FROM account WHERE email LIKE :email LIMIT 1");
+			$stmt = $this->account->prepare("SELECT email FROM account_fake WHERE email LIKE :email LIMIT 1");
 			$stmt->bindparam(":email", $email);
 			$stmt->execute();
 			$userRow=$stmt->fetch(PDO::FETCH_ASSOC);
