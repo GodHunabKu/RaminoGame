@@ -196,7 +196,7 @@
 }
 
 .stat-box:hover {
-    transform: translateY(-5px);
+    /* transform removed */
     box-shadow: 0 8px 30px rgba(231, 76, 60, 0.3);
     border-color: rgba(231, 76, 60, 0.5);
 }
@@ -318,7 +318,7 @@
 }
 
 .action-item:hover {
-    transform: translateY(-8px);
+    /* transform removed */
     border-color: rgba(231, 76, 60, 0.5);
     box-shadow: 0 12px 35px rgba(231, 76, 60, 0.3);
 }
@@ -401,7 +401,7 @@
 .action-btn-primary:hover {
     background: linear-gradient(135deg, #C0392B 0%, #A93226 100%);
     box-shadow: 0 6px 25px rgba(231, 76, 60, 0.5);
-    transform: translateY(-2px);
+    /* transform removed */
 }
 
 .action-btn-warning {
@@ -413,7 +413,7 @@
 .action-btn-warning:hover {
     background: linear-gradient(135deg, #F39C12 0%, #E67E22 100%);
     box-shadow: 0 6px 25px rgba(241, 196, 15, 0.5);
-    transform: translateY(-2px);
+    /* transform removed */
 }
 
 .action-btn i {
@@ -421,7 +421,7 @@
 }
 
 .action-btn:hover i {
-    transform: translateX(5px);
+    /* transform removed */
 }
 
 /* ===========================

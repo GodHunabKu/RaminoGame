@@ -215,13 +215,13 @@
         transform: translateY(0);
     }
     25% {
-        transform: translateY(-15px);
+        /* transform removed */
     }
     50% {
         transform: translateY(0);
     }
     75% {
-        transform: translateY(-15px);
+        /* transform removed */
     }
 }
 
@@ -600,7 +600,7 @@
         transform: translateY(0);
     }
     50% {
-        transform: translateY(-5px);
+        /* transform removed */
     }
 }
 

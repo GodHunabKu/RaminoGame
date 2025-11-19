@@ -149,7 +149,7 @@
 /* Hover effects */
 .sidebar-nav ul li.itemshop-premium a:hover {
     background-position: 200% center;
-    transform: translateX(8px) scale(1.05);
+    transform: scale(1.05);
     box-shadow:
         0 0 40px rgba(255, 215, 0, 1),
         0 0 80px rgba(255, 215, 0, 0.7),
@@ -257,7 +257,7 @@
 
 .sidebar-right .gold-premium-link:hover {
     background-position: 200% center;
-    transform: translateY(-5px) scale(1.05);
+    transform: scale(1.05);
     box-shadow:
         0 0 40px rgba(255, 215, 0, 1),
         0 0 80px rgba(255, 215, 0, 0.7),

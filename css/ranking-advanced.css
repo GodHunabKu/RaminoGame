@@ -81,7 +81,7 @@
 }
 
 .card-3d:hover {
-    transform: translateY(-5px) scale(1.02);
+    transform: scale(1.02);
 }
 
 /* Parallax Hover */
@@ -408,7 +408,7 @@
 }
 
 .export-button:hover {
-    transform: translateY(-2px);
+    /* transform removed */
     box-shadow: 0 6px 25px rgba(39, 174, 96, 0.5);
 }
 
