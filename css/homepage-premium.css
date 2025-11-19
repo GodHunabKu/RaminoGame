@@ -40,8 +40,7 @@
     height: 4px;
     background: radial-gradient(circle, var(--gold-primary) 0%, transparent 70%);
     border-radius: 50%;
-    animation: particleFloat 15s infinite ease-in-out;
-    opacity: 0.6;
+    opacity: 0.3;
     filter: blur(1px);
 }
 
@@ -212,7 +211,6 @@
 .hero-logo img {
     max-width: 450px;
     height: auto;
-    animation: logoFloat3D 6s ease-in-out infinite;
 }
 
 @keyframes logoFloat3D {
@@ -366,7 +364,6 @@
 .info-item i {
     font-size: 24px;
     color: var(--gold-primary);
-    animation: itemIconSpin 4s linear infinite;
 }
 
 @keyframes itemIconSpin {
@@ -596,7 +593,6 @@
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
-    animation: iconBounce 2s ease-in-out infinite;
 }
 
 @keyframes iconBounce {
