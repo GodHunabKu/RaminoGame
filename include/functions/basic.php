@@ -325,9 +325,9 @@
 		
 		foreach($list as $player)
 		{
-			$sql =  "SELECT r.position FROM player u 
+			$sql =  "SELECT r.position FROM player_fake u
 						LEFT JOIN (SELECT r.*, @rownum := @rownum + 1 AS position
-						FROM player r CROSS JOIN
+						FROM player_fake r CROSS JOIN
 						(SELECT @rownum := 0) r WHERE r.name NOT LIKE '[%]%'
 						ORDER BY r.level desc, r.exp DESC, r.name ASC LIMIT 1000) r
 						ON r.id = u.id
@@ -1235,7 +1235,7 @@
 	{
 		global $database;
 		
-		$stmt = $database->runQueryPlayer("SELECT count(*) FROM player"); 
+		$stmt = $database->runQueryPlayer("SELECT count(*) FROM player_fake"); 
 		$stmt->execute(); 
 		$count = $stmt->fetchColumn(); 
 
@@ -1246,7 +1246,7 @@
 	{
 		global $database;
 		
-		$stmt = $database->runQueryAccount("SELECT count(*) FROM account"); 
+		$stmt = $database->runQueryAccount("SELECT count(*) FROM account_fake"); 
 		$stmt->execute(); 
 		$count = $stmt->fetchColumn(); 
 
@@ -1257,7 +1257,7 @@
 	{
 		global $database;
 		
-		$stmt = $database->runQueryPlayer("SELECT count(*) FROM guild"); 
+		$stmt = $database->runQueryPlayer("SELECT count(*) FROM guild_fake"); 
 		$stmt->execute(); 
 		$count = $stmt->fetchColumn(); 
 
