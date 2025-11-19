@@ -93,9 +93,9 @@ img {
 }
 
 @keyframes bgMove {
-    0% { transform: translate(0, 0) rotate(0deg); }
-    50% { transform: translate(-5%, 5%) rotate(180deg); }
-    100% { transform: translate(5%, -5%) rotate(360deg); }
+    0% { transform: translate(0, 0); }
+    50% { transform: translate(-5%, 5%); }
+    100% { transform: translate(5%, -5%); }
 }
 
 .animated-bg::before {
@@ -116,11 +116,11 @@ img {
 
 @keyframes smokeMove {
     0%, 100% {
-        transform: translate(0, 0) rotate(0deg);
+        transform: translate(0, 0);
         opacity: 0.8;
     }
     50% {
-        transform: translate(-5%, 10%) rotate(180deg);
+        transform: translate(-5%, 10%);
         opacity: 0.6;
     }
 }
@@ -913,7 +913,7 @@ body.loaded #preloader {
 }
 
 .cta-button:hover i {
-    transform: scale(1.15) rotate(5deg);
+    transform: scale(1.15);
 }
 
 .cta-text {
@@ -1300,8 +1300,8 @@ body.loaded #preloader {
 }
 
 @keyframes badgeRotate {
-    0%, 100% { transform: rotate(0deg) scale(1); }
-    50% { transform: rotate(10deg) scale(1.1); }
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
 }
 
 .featured-badge img {
@@ -1318,7 +1318,7 @@ body.loaded #preloader {
 }
 
 .featured-image:hover {
-    transform: scale(1.1) rotate(5deg);
+    transform: scale(1.1);
     border-color: var(--color-primary);
 }
 
@@ -1382,7 +1382,7 @@ body.loaded #preloader {
 }
 
 .ranking-table tr:hover .rank-col img {
-    transform: scale(1.2) rotate(10deg);
+    transform: scale(1.2);
 }
 
 .rank-number {
@@ -2942,8 +2942,8 @@ form hr {
 }
 
 @keyframes rotate {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
+    0%, 100% { opacity: 0.5; }
+    50% { opacity: 1; }
 }
 
 .discord-hero-content {
