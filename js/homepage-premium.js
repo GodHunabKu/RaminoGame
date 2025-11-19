@@ -288,28 +288,9 @@
     // ==================== INTERSECTION OBSERVER ANIMATIONS ====================
     class ScrollReveal {
         static init() {
-            const observerOptions = {
-                threshold: 0.1,
-                rootMargin: '0px 0px -50px 0px'
-            };
-
-            const observer = new IntersectionObserver((entries) => {
-                entries.forEach(entry => {
-                    if (entry.isIntersecting) {
-                        entry.target.style.opacity = '1';
-                        entry.target.style.transform = 'translateY(0) scale(1)';
-                        observer.unobserve(entry.target);
-                    }
-                });
-            }, observerOptions);
-
-            // Osserva content boxes
-            document.querySelectorAll('.content-box').forEach((box, index) => {
-                box.style.opacity = '0';
-                box.style.transform = 'translateY(50px) scale(0.95)';
-                box.style.transition = `all 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) ${index * 0.1}s`;
-                observer.observe(box);
-            });
+            // Animazioni disabilitate - gli elementi appaiono immediatamente
+            // Non modifichiamo più opacity e transform degli elementi
+            return;
         }
     }
 

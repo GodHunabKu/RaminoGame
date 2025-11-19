@@ -174,24 +174,16 @@
     // ==================== CARD ANIMATIONS ====================
     const CardAnimator = {
         init: function() {
-            // Add modern card classes to existing cards
+            // Animazioni disabilitate - aggiunge solo card-modern senza animate-fadeIn
             document.querySelectorAll('.card, .panel, .box').forEach(card => {
                 if (!card.classList.contains('card-modern')) {
-                    card.classList.add('card-modern', 'animate-fadeIn');
+                    card.classList.add('card-modern');
+                    // Rimosso 'animate-fadeIn' per evitare animazioni fastidiose
                 }
             });
 
-            // Intersection Observer for scroll animations
-            const observer = new IntersectionObserver((entries) => {
-                entries.forEach(entry => {
-                    if (entry.isIntersecting) {
-                        entry.target.style.opacity = '1';
-                        entry.target.style.transform = 'translateY(0)';
-                    }
-                });
-            }, {
-                threshold: 0.1
-            });
+            // IntersectionObserver disabilitato - gli elementi appaiono immediatamente
+            return;
 
             document.querySelectorAll('.card-modern').forEach(card => {
                 card.style.opacity = '0';
