@@ -123,11 +123,6 @@ if(isset($item_shop) && $item_shop != "") {
 <link rel="stylesheet" href="<?php echo $site_url; ?>css/ranking-advanced.css?v=<?php echo time(); ?>">
 <?php } ?>
 
-    <?php if($page != 'admin') { ?>
-    <!-- Modern Design System (escluso dal pannello admin) -->
-    <link rel="stylesheet" href="<?php echo $site_url; ?>css/variables.css?v=<?php echo time(); ?>" type="text/css">
-    <?php } ?>
-
     <!-- Sidebar Gold Button (ItemShop Premium) -->
     <link rel="stylesheet" href="<?php echo $site_url; ?>css/sidebar-gold-button.css?v=<?php echo time(); ?>" type="text/css">
 
