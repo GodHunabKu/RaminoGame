@@ -577,11 +577,6 @@
         animateCounter(element) {
             // Disabled
             return;
-                    clearInterval(timer);
-                } else {
-                    element.textContent = Math.floor(current).toLocaleString();
-                }
-            }, 16);
         }
     };
 
