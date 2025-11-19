@@ -123,11 +123,6 @@ if(isset($item_shop) && $item_shop != "") {
 <link rel="stylesheet" href="<?php echo $site_url; ?>css/ranking-advanced.css?v=<?php echo time(); ?>">
 <?php } ?>
 
-    <?php if($page != 'admin') { ?>
-    <!-- Modern Design System (escluso dal pannello admin) -->
-    <link rel="stylesheet" href="<?php echo $site_url; ?>css/variables.css?v=<?php echo time(); ?>" type="text/css">
-    <?php } ?>
-
     <!-- Sidebar Gold Button (ItemShop Premium) -->
     <link rel="stylesheet" href="<?php echo $site_url; ?>css/sidebar-gold-button.css?v=<?php echo time(); ?>" type="text/css">
 
@@ -145,6 +140,11 @@ if(isset($item_shop) && $item_shop != "") {
     <?php if($page == 'admin') { ?>
     <!-- Admin Panel Styles -->
     <link rel="stylesheet" href="<?php echo $site_url; ?>css/admin.css?v=<?php echo time(); ?>" type="text/css">
+    <?php } ?>
+
+    <?php if($page == 'administration' || $page == 'newadministration') { ?>
+    <!-- Administration V2 Styles -->
+    <link rel="stylesheet" href="<?php echo $site_url; ?>css/administration-v2.css?v=<?php echo time(); ?>" type="text/css">
     <?php } ?>
 </head>
 <body class="<?php if($is_homepage) echo 'homepage-style'; if($page == 'admin') echo ' admin-page'; ?>">
@@ -178,7 +178,7 @@ if(isset($item_shop) && $item_shop != "") {
                 <?php if(!$database->is_loggedin()) { ?>
                 <a href="<?php echo $site_url; ?>users/register"><?php echo $lang['register']; ?></a>
                 <?php } else { ?>
-                <a href="<?php echo $site_url; ?>user/administration"><?php echo $lang['account-data']; ?></a>
+                <a href="<?php echo $site_url; ?>user/newadministration"><?php echo $lang['account-data']; ?></a>
                 <?php } ?>
                 <a href="<?php echo $site_url; ?>ranking/players"><?php echo $lang['ranking']; ?></a>
             </nav>
@@ -197,7 +197,7 @@ if(isset($item_shop) && $item_shop != "") {
                             <a href="<?php echo $site_url; ?>users/login" role="menuitem"><?php echo $lang['login']; ?></a>
                             <a href="<?php echo $site_url; ?>users/register" role="menuitem"><?php echo $lang['register']; ?></a>
                         <?php } else { ?>
-                            <a href="<?php echo $site_url; ?>user/administration" role="menuitem"><?php echo $lang['account-data']; ?></a>
+                            <a href="<?php echo $site_url; ?>user/newadministration" role="menuitem"><?php echo $lang['account-data']; ?></a>
                             <a href="<?php echo $site_url; ?>user/characters" role="menuitem"><?php echo $lang['chars-list']; ?></a>
                             <a href="<?php echo $site_url; ?>users/logout" role="menuitem"><?php echo $lang['logout']; ?></a>
                         <?php } ?>
@@ -518,7 +518,7 @@ if(isset($item_shop) && $item_shop != "") {
                         <i class="fas fa-cogs"></i> <?php print $lang['administration']; ?>
                     </a>
                     <?php } ?>
-                    <a href="<?php print $site_url; ?>user/administration">
+                    <a href="<?php print $site_url; ?>user/newadministration">
                         <i class="fa fa-user"></i> <?php print $lang['account-data']; ?>
                     </a>
                     <a href="<?php print $site_url; ?>user/characters">
@@ -569,12 +569,18 @@ if(isset($item_shop) && $item_shop != "") {
     <!-- JavaScript del sito (esclusi dal pannello admin) -->
     <script src="<?php print $site_url; ?>js/app.js?v=<?php echo time(); ?>"></script>
     <script src="<?php print $site_url; ?>js/features.js?v=<?php echo time(); ?>"></script>
+    <script src="<?php print $site_url; ?>js/block-itemshop.js?v=<?php echo time(); ?>"></script>
     <?php } ?>
 
     <?php if($is_homepage) { ?>
     <!-- Homepage Premium 2025 JavaScript - Solo Homepage -->
     <script src="<?php print $site_url; ?>js/homepage-premium.js?v=<?php echo time(); ?>"></script>
     <script src="<?php print $site_url; ?>js/wow-effects-premium.js?v=<?php echo time(); ?>"></script>
+    <?php } ?>
+
+    <?php if($page == 'administration' || $page == 'newadministration') { ?>
+    <!-- Administration V2 JavaScript -->
+    <script src="<?php print $site_url; ?>js/administration-v2.js?v=<?php echo time(); ?>"></script>
     <?php } ?>
 
     <?php include 'include/functions/footer.php'; ?>
