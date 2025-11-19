@@ -30,6 +30,10 @@
 			$page = 'administration';
 			$title = $lang['administration'];
 			break;
+		case 'newadministration':
+			$page = 'newadministration';
+			$title = $lang['administration'];
+			break;
 		case 'lost':
 			$page = 'lost';
 			$title = $lang['account-recovery'];
