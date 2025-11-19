@@ -110,26 +110,29 @@
 			include 'include/functions/admin-functions.php';
 		}
 
-		$last_modified_time_ranking = filemtime('include/db/ranking.json');
-		if ((time() - $last_modified_time_ranking) > 5 * 60) {
-			$top = topPlayers(5);
-			if(count($top))
-				$top[0]['guild_name'] = get_player_guild($top[0]['id']);
-			foreach($top as &$player)
-				$player['empire'] = get_player_empire($player['account_id']);
-			$jsondataRanking['top10backup']['players'] = $top;
+		// Aggiornamento automatico classifica (solo se abilitato in config.php)
+		if ($ranking_auto_update) {
+			$last_modified_time_ranking = filemtime('include/db/ranking.json');
+			if ((time() - $last_modified_time_ranking) > 5 * 60) {
+				$top = topPlayers(5);
+				if(count($top))
+					$top[0]['guild_name'] = get_player_guild($top[0]['id']);
+				foreach($top as &$player)
+					$player['empire'] = get_player_empire($player['account_id']);
+				$jsondataRanking['top10backup']['players'] = $top;
 
-			$top = topGuilds(5);
-			if(count($top)) {
-				$data = getPlayerNameAndJob($top[0]['master']);
-				$top[0]['master_name'] = $data['name'];
-				$top[0]['master_job'] = $data['job'];
+				$top = topGuilds(5);
+				if(count($top)) {
+					$data = getPlayerNameAndJob($top[0]['master']);
+					$top[0]['master_name'] = $data['name'];
+					$top[0]['master_job'] = $data['job'];
+				}
+				foreach($top as &$guild)
+					$guild['empire'] = get_player_empire(getAccountID($guild['master']));
+				$jsondataRanking['top10backup']['guilds'] = $top;
+
+				file_put_contents('include/db/ranking.json', json_encode($jsondataRanking));
 			}
-			foreach($top as &$guild)
-				$guild['empire'] = get_player_empire(getAccountID($guild['master']));
-			$jsondataRanking['top10backup']['guilds'] = $top;
-
-			file_put_contents('include/db/ranking.json', json_encode($jsondataRanking));
 		}
 
 		$last_modified_time_stats = filemtime('include/db/stats.json');

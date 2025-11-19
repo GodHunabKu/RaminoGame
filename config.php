@@ -29,4 +29,8 @@
 
 	// Mt2cms version (keep for compatibility)
 	$mt2cms = '2'; // hardcoded
+
+	// Ranking auto-update (set to true when server is officially online)
+	// Disabilitato durante sviluppo per evitare aggiornamenti automatici ogni 5 minuti
+	$ranking_auto_update = false; // Cambia in true quando apri ufficialmente
 ?>
