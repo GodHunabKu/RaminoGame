@@ -19,32 +19,10 @@
         }
     }
 
-    // Animazione di entrata per le card
+    // Animazione di entrata per le card - DISABILITATA
     function initCardAnimations() {
-        const statBoxes = document.querySelectorAll('.stat-box');
-        const actionItems = document.querySelectorAll('.action-item');
-
-        // Animazione ritardata per stat boxes
-        statBoxes.forEach(function(box, index) {
-            box.style.opacity = '0';
-            box.style.transform = 'translateY(20px)';
-            setTimeout(function() {
-                box.style.transition = 'all 0.5s ease';
-                box.style.opacity = '1';
-                box.style.transform = 'translateY(0)';
-            }, 100 * index);
-        });
-
-        // Animazione ritardata per action items
-        actionItems.forEach(function(item, index) {
-            item.style.opacity = '0';
-            item.style.transform = 'translateY(20px)';
-            setTimeout(function() {
-                item.style.transition = 'all 0.5s ease';
-                item.style.opacity = '1';
-                item.style.transform = 'translateY(0)';
-            }, 150 * index + 300);
-        });
+        // Animazioni disabilitate - elementi appaiono immediatamente
+        return;
     }
 
     // Conferma per azioni critiche

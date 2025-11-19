@@ -286,7 +286,7 @@ body.loaded #preloader {
 }
 
 .nav-logo:hover {
-    transform: translateY(-2px);
+    /* transform removed */
 }
 
 .nav-logo img {
@@ -379,7 +379,7 @@ body.loaded #preloader {
 
 .dropbtn:hover {
     color: var(--color-text-light);
-    transform: translateY(-2px);
+    /* transform removed */
 }
 
 .dropdown-content {
@@ -395,7 +395,6 @@ body.loaded #preloader {
     backdrop-filter: blur(15px);
     overflow: hidden;
     margin-top: 10px;
-    animation: dropdownSlide 0.3s ease;
 }
 
 @keyframes dropdownSlide {
@@ -459,7 +458,7 @@ body.loaded #preloader {
 }
 
 .btn-download:hover {
-    transform: translateY(-3px);
+    /* transform removed */
     box-shadow: var(--shadow-primary-lg);
 }
 
@@ -691,7 +690,7 @@ body.loaded #preloader {
 }
 
 .stat-box:hover {
-    transform: translateY(-5px);
+    /* transform removed */
     box-shadow: 0 8px 30px rgba(231, 76, 60, 0.4);
     border-color: rgba(231, 76, 60, 0.4);
 }
@@ -830,7 +829,6 @@ body.loaded #preloader {
     border-radius: 10px;
     box-shadow: var(--shadow-md);
     transition: var(--transition-smooth);
-    animation: infoFadeIn 0.8s ease-out backwards;
 }
 
 .info-item:nth-child(1) { animation-delay: 0.1s; }
@@ -849,7 +847,7 @@ body.loaded #preloader {
 }
 
 .info-item:hover {
-    transform: translateY(-3px);
+    /* transform removed */
     border-color: rgba(231, 76, 60, 0.4);
     box-shadow: 0 6px 25px rgba(231, 76, 60, 0.3);
 }
@@ -943,7 +941,7 @@ body.loaded #preloader {
 }
 
 .cta-primary:hover {
-    transform: translateY(-3px);
+    /* transform removed */
     box-shadow: 0 8px 25px rgba(231, 76, 60, 0.4);
 }
 
@@ -957,7 +955,7 @@ body.loaded #preloader {
 .cta-secondary:hover {
     background: rgba(255, 255, 255, 0.1);
     border-color: var(--color-primary);
-    transform: translateY(-3px);
+    /* transform removed */
     box-shadow: 0 8px 25px rgba(231, 76, 60, 0.3);
 }
 
@@ -978,7 +976,6 @@ body.loaded #preloader {
     border-radius: 12px;
     padding: 30px;
     box-shadow: var(--shadow-lg);
-    animation: fadeIn 0.6s ease-out;
     transition: var(--transition-smooth);
     position: relative;
     overflow: hidden;
@@ -1001,7 +998,7 @@ body.loaded #preloader {
 }
 
 .content-box:hover {
-    transform: translateY(-5px);
+    /* transform removed */
     border-color: rgba(231, 76, 60, 0.3);
     box-shadow: 0 12px 40px rgba(231, 76, 60, 0.3);
 }
@@ -1151,12 +1148,12 @@ body.loaded #preloader {
 }
 
 .login-form .btn-submit:hover {
-    transform: translateY(-3px);
+    /* transform removed */
     box-shadow: var(--shadow-primary-lg);
 }
 
 .login-form .btn-submit:active {
-    transform: translateY(-1px);
+    /* transform removed */
 }
 
 /* =================================
@@ -1286,7 +1283,7 @@ body.loaded #preloader {
 }
 
 .top-player-featured:hover {
-    transform: translateX(5px);
+    /* transform removed */
     box-shadow: -5px 0 20px rgba(231, 76, 60, 0.3);
 }
 
@@ -1356,7 +1353,7 @@ body.loaded #preloader {
 
 .ranking-table tr:hover {
     background: rgba(231, 76, 60, 0.08);
-    transform: translateX(3px);
+    /* transform removed */
 }
 
 .ranking-table td {
@@ -1438,7 +1435,7 @@ body.loaded #preloader {
 }
 
 .btn-more:hover {
-    transform: translateY(-3px);
+    /* transform removed */
     box-shadow: var(--shadow-primary-lg);
 }
 
@@ -1447,7 +1444,7 @@ body.loaded #preloader {
 }
 
 .btn-more:hover i {
-    transform: translateX(5px);
+    /* transform removed */
 }
 
 .emp-1 { color: #FFD700; text-shadow: 0 0 10px rgba(255, 215, 0, 0.5); }
@@ -1605,7 +1602,7 @@ form hr {
 }
 
 .btn-danger.btn-lg.btn-block:hover {
-    transform: translateY(-3px);
+    /* transform removed */
     box-shadow: var(--shadow-primary-lg);
 }
 
@@ -1664,7 +1661,7 @@ form hr {
     background: rgba(231, 76, 60, 0.2);
     color: var(--color-text-light);
     border-color: var(--color-primary);
-    transform: translateY(-2px);
+    /* transform removed */
 }
 
 .tab-link.active {
@@ -1685,7 +1682,6 @@ form hr {
     border-radius: 12px;
     padding: 30px;
     box-shadow: var(--shadow-lg);
-    animation: fadeIn 0.6s ease-out;
 }
 
 .search-box {
@@ -1747,7 +1743,7 @@ form hr {
 }
 
 .search-btn:hover {
-    transform: translateY(-2px);
+    /* transform removed */
     box-shadow: var(--shadow-primary-lg);
 }
 
@@ -1785,7 +1781,7 @@ form hr {
 
 .ranking-table-full tbody tr:hover {
     background: rgba(231, 76, 60, 0.1);
-    transform: translateX(5px);
+    /* transform removed */
 }
 
 .ranking-table-full tbody tr:nth-child(odd) {
@@ -1884,7 +1880,7 @@ form hr {
     background: rgba(231, 76, 60, 0.2);
     border-color: var(--color-primary);
     color: var(--color-text-light);
-    transform: translateY(-2px);
+    /* transform removed */
 }
 
 .pagination-wrapper .pagination .active,
@@ -1959,7 +1955,7 @@ form hr {
 }
 
 .footer-sponsor a:hover {
-    transform: translateY(-3px);
+    /* transform removed */
     opacity: 1;
 }
 
@@ -2019,7 +2015,7 @@ form hr {
 .admin-content-wrapper .list-group-item-action:hover {
     background: rgba(231, 76, 60, 0.2);
     border-color: rgba(231, 76, 60, 0.4);
-    transform: translateX(5px);
+    /* transform removed */
 }
 
 .admin-content-wrapper .list-group-item-heading {
@@ -2540,7 +2536,7 @@ form hr {
 }
 
 .btn-submit-modern:hover {
-    transform: translateY(-3px);
+    /* transform removed */
     box-shadow: var(--shadow-primary-lg);
 }
 
@@ -2684,7 +2680,7 @@ form hr {
 }
 
 .stat-card:hover {
-    transform: translateY(-5px);
+    /* transform removed */
     box-shadow: 0 8px 30px rgba(231, 76, 60, 0.4);
     border-color: var(--color-primary);
 }
@@ -2775,7 +2771,7 @@ form hr {
 }
 
 .action-card:hover {
-    transform: translateY(-5px);
+    /* transform removed */
     border-color: var(--color-primary);
     box-shadow: 0 8px 30px rgba(231, 76, 60, 0.3);
 }
@@ -2872,7 +2868,7 @@ form hr {
 }
 
 .action-button:hover {
-    transform: translateY(-2px);
+    /* transform removed */
     box-shadow: 0 6px 25px rgba(231, 76, 60, 0.5);
 }
 
@@ -2882,7 +2878,7 @@ form hr {
 }
 
 .action-button:hover i {
-    transform: translateX(3px);
+    /* transform removed */
 }
 
 .btn-warning {
@@ -3028,7 +3024,7 @@ form hr {
 }
 
 .discord-info-card:hover {
-    transform: translateY(-8px);
+    /* transform removed */
     box-shadow: 0 15px 60px rgba(88, 101, 242, 0.4);
     border-color: #5865F2;
 }
@@ -3159,7 +3155,7 @@ form hr {
 .feature-box:hover {
     background: rgba(88, 101, 242, 0.2);
     border-color: #5865F2;
-    transform: translateY(-5px);
+    /* transform removed */
 }
 
 .feature-box i {

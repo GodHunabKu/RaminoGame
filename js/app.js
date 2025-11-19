@@ -343,27 +343,8 @@
         },
 
         addParallaxEffect() {
-            const cards = document.querySelectorAll('.content-box, .stat-box');
-
-            cards.forEach(card => {
-                card.addEventListener('mousemove', function(e) {
-                    const rect = this.getBoundingClientRect();
-                    const x = e.clientX - rect.left;
-                    const y = e.clientY - rect.top;
-
-                    const centerX = rect.width / 2;
-                    const centerY = rect.height / 2;
-
-                    const deltaX = (x - centerX) / centerX;
-                    const deltaY = (y - centerY) / centerY;
-
-                    this.style.transform = `perspective(1000px) rotateY(${deltaX * 3}deg) rotateX(${-deltaY * 3}deg) translateY(-5px)`;
-                });
-
-                card.addEventListener('mouseleave', function() {
-                    this.style.transform = '';
-                });
-            });
+            // Effetto parallax 3D disabilitato - troppo confusionario
+            return;
         },
 
         addNavGlowEffect() {
@@ -387,28 +368,12 @@
         }
     };
 
-    // ===== ANIMATIONS ON SCROLL =====
+    // ===== ANIMATIONS ON SCROLL - DISABLED =====
     const ScrollAnimationsModule = {
         init() {
-            // Usa Intersection Observer solo se disponibile
-            if (!('IntersectionObserver' in window)) return;
-
-            const observer = new IntersectionObserver((entries) => {
-                entries.forEach(entry => {
-                    if (entry.isIntersecting) {
-                        entry.target.style.animation = 'fadeIn 0.6s ease-out forwards';
-                        observer.unobserve(entry.target); // Anima solo una volta
-                    }
-                });
-            }, {
-                threshold: 0.1,
-                rootMargin: '0px 0px -50px 0px'
-            });
-
-            // Osserva solo elementi che hanno senso animare
-            document.querySelectorAll('.content-box, .trailer-container, .ranking-box').forEach(el => {
-                observer.observe(el);
-            });
+            // Animazioni disabilitate per evitare confusione
+            // L'IntersectionObserver aggiungeva fadeIn agli elementi quando appaiono
+            return;
         }
     };
 
@@ -583,41 +548,16 @@
         }
     };
 
-    // ===== NUMBER COUNTER ANIMATION =====
+    // ===== NUMBER COUNTER ANIMATION - DISABLED =====
     const CounterAnimationModule = {
         init() {
-            if (!('IntersectionObserver' in window)) return;
-
-            const counters = document.querySelectorAll('.stat-info h4');
-
-            const observer = new IntersectionObserver((entries) => {
-                entries.forEach(entry => {
-                    if (entry.isIntersecting && !entry.target.classList.contains('counted')) {
-                        this.animateCounter(entry.target);
-                        entry.target.classList.add('counted');
-                        observer.unobserve(entry.target);
-                    }
-                });
-            }, { threshold: 0.5 });
-
-            counters.forEach(counter => observer.observe(counter));
+            // Contatore numeri disabilitato - i numeri appaiono immediatamente senza animazione
+            return;
         },
 
         animateCounter(element) {
-            const target = parseInt(element.textContent.replace(/\D/g, '')) || 0;
-            const duration = 2000;
-            const step = target / (duration / 16);
-            let current = 0;
-
-            const timer = setInterval(() => {
-                current += step;
-                if (current >= target) {
-                    element.textContent = target.toLocaleString();
-                    clearInterval(timer);
-                } else {
-                    element.textContent = Math.floor(current).toLocaleString();
-                }
-            }, 16);
+            // Disabled
+            return;
         }
     };
 
