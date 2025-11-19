@@ -569,6 +569,7 @@ if(isset($item_shop) && $item_shop != "") {
     <!-- JavaScript del sito (esclusi dal pannello admin) -->
     <script src="<?php print $site_url; ?>js/app.js?v=<?php echo time(); ?>"></script>
     <script src="<?php print $site_url; ?>js/features.js?v=<?php echo time(); ?>"></script>
+    <script src="<?php print $site_url; ?>js/block-itemshop.js?v=<?php echo time(); ?>"></script>
     <?php } ?>
 
     <?php if($is_homepage) { ?>
