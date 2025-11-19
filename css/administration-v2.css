@@ -346,7 +346,7 @@
 }
 
 .action-item:hover .action-icon-wrap {
-    transform: scale(1.1) rotate(5deg);
+    transform: scale(1.1);
 }
 
 .action-item-warning .action-icon-wrap {
