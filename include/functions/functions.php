@@ -26,9 +26,6 @@
 		case 'administration':
 			include 'include/functions/pages/administration.php';
 			break;
-		case 'newadministration':
-			include 'include/functions/pages/administration.php';
-			break;
 		case 'password':
 			include 'include/functions/pages/password.php';
 			break;

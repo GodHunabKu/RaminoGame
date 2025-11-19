@@ -3,7 +3,7 @@
 	{
 		global $database, $site_url;
 		
-		$pages = array("administration", "newadministration", "characters", "password", "email", "vote4coins", "donate", "referrals");
+		$pages = array("administration", "characters", "password", "email", "vote4coins", "donate", "referrals");
 		if (in_array($url, $pages) && !$database->is_loggedin())
 		{
 			header("Location: ".$site_url."users/login");

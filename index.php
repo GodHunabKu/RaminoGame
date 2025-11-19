@@ -142,7 +142,7 @@ if(isset($item_shop) && $item_shop != "") {
     <link rel="stylesheet" href="<?php echo $site_url; ?>css/admin.css?v=<?php echo time(); ?>" type="text/css">
     <?php } ?>
 
-    <?php if($page == 'newadministration') { ?>
+    <?php if($page == 'administration') { ?>
     <!-- Administration V2 Styles -->
     <link rel="stylesheet" href="<?php echo $site_url; ?>css/administration-v2.css?v=<?php echo time(); ?>" type="text/css">
     <?php } ?>
@@ -578,7 +578,7 @@ if(isset($item_shop) && $item_shop != "") {
     <script src="<?php print $site_url; ?>js/wow-effects-premium.js?v=<?php echo time(); ?>"></script>
     <?php } ?>
 
-    <?php if($page == 'newadministration') { ?>
+    <?php if($page == 'administration') { ?>
     <!-- Administration V2 JavaScript -->
     <script src="<?php print $site_url; ?>js/administration-v2.js?v=<?php echo time(); ?>"></script>
     <?php } ?>
