@@ -343,27 +343,8 @@
         },
 
         addParallaxEffect() {
-            const cards = document.querySelectorAll('.content-box, .stat-box');
-
-            cards.forEach(card => {
-                card.addEventListener('mousemove', function(e) {
-                    const rect = this.getBoundingClientRect();
-                    const x = e.clientX - rect.left;
-                    const y = e.clientY - rect.top;
-
-                    const centerX = rect.width / 2;
-                    const centerY = rect.height / 2;
-
-                    const deltaX = (x - centerX) / centerX;
-                    const deltaY = (y - centerY) / centerY;
-
-                    this.style.transform = `perspective(1000px) rotateY(${deltaX * 3}deg) rotateX(${-deltaY * 3}deg) translateY(-5px)`;
-                });
-
-                card.addEventListener('mouseleave', function() {
-                    this.style.transform = '';
-                });
-            });
+            // Effetto parallax 3D disabilitato - troppo confusionario
+            return;
         },
 
         addNavGlowEffect() {

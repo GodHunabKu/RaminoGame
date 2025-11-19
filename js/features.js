@@ -31,9 +31,7 @@
 
             // Auto remove after duration
             setTimeout(() => {
-                toast.style.opacity = '0';
-                toast.style.transform = 'translateX(100%)';
-                setTimeout(() => toast.remove(), 300);
+                toast.remove();
             }, duration);
 
             return toast;
@@ -184,13 +182,6 @@
 
             // IntersectionObserver disabilitato - gli elementi appaiono immediatamente
             return;
-
-            document.querySelectorAll('.card-modern').forEach(card => {
-                card.style.opacity = '0';
-                card.style.transform = 'translateY(20px)';
-                card.style.transition = 'all 0.6s ease-out';
-                observer.observe(card);
-            });
         }
     };
 

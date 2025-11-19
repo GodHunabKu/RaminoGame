@@ -17,7 +17,7 @@
             size: { min: 2, max: 6 }
         },
         parallax: {
-            enabled: true,
+            enabled: false, // DISABILITATO - effetto confusionario
             intensity: 0.05
         },
         animations: {
@@ -322,15 +322,8 @@
     // ==================== MICROINTERAZIONI ====================
     class MicroInteractions {
         static init() {
-            // Hover effect su CTA buttons
-            document.querySelectorAll('.cta-button').forEach(button => {
-                button.addEventListener('mouseenter', function() {
-                    this.style.transform = 'translateY(-8px) scale(1.05)';
-                });
-
-                button.addEventListener('mouseleave', function() {
-                    this.style.transform = 'translateY(0) scale(1)';
-                });
+            // Hover effect su CTA buttons - DISABILITATO
+            return;
 
                 // Ripple effect on click
                 button.addEventListener('click', function(e) {

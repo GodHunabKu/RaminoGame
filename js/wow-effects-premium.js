@@ -27,9 +27,9 @@
         },
         premiumEffects: {
             cursorGlow: false, // DISABILITATO - evidenziazione mouse rimossa
-            magneticButtons: true,
-            textReveal: true,
-            scrollMagic: true
+            magneticButtons: false, // DISABILITATO - effetto confusionario
+            textReveal: false, // DISABILITATO - effetto confusionario
+            scrollMagic: false // DISABILITATO - effetto confusionario
         }
     };
 
