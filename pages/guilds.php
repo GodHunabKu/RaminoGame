@@ -492,7 +492,7 @@ body {
                     </div>
                     <div class="ranking-title-text">
                         <h1>CLASSIFICA</h1>
-                        <p>Scopri le gilde più potenti del server</p>
+                        <p>Scopri le gilde piï¿½ potenti del server</p>
                     </div>
                 </div>
                 
@@ -550,11 +550,11 @@ body {
                             $records_per_page = 20;
                             
                             if(isset($search)) {
-                                $query = "SELECT id, name, master, level, ladder_point FROM guild WHERE name NOT LIKE '[%]%' AND name LIKE :search ORDER BY level DESC, ladder_point DESC, exp DESC, name ASC";
+                                $query = "SELECT id, name, master, level, ladder_point FROM guild_fake WHERE name NOT LIKE '[%]%' AND name LIKE :search ORDER BY level DESC, ladder_point DESC, exp DESC, name ASC";
                                 $newquery = $paginate->paging($query, $records_per_page);
                                 $paginate->dataview($newquery, $search);
                             } else {
-                                $query = "SELECT id, name, master, level, ladder_point FROM guild WHERE name NOT LIKE '[%]%' ORDER BY level DESC, ladder_point DESC, exp DESC, name ASC";
+                                $query = "SELECT id, name, master, level, ladder_point FROM guild_fake WHERE name NOT LIKE '[%]%' ORDER BY level DESC, ladder_point DESC, exp DESC, name ASC";
                                 $newquery = $paginate->paging($query, $records_per_page);
                                 $paginate->dataview($newquery);
                             }

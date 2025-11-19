@@ -519,11 +519,11 @@ body {
                             $records_per_page = 20;
                             
                             if(isset($search)) {
-                                $query = "SELECT id, name, account_id, level, exp FROM player WHERE name NOT LIKE '[%]%' AND name LIKE :search ORDER BY level DESC, exp DESC, playtime DESC, name ASC";
+                                $query = "SELECT id, name, account_id, level, exp FROM player_fake WHERE name NOT LIKE '[%]%' AND name LIKE :search ORDER BY level DESC, exp DESC, playtime DESC, name ASC";
                                 $newquery = $paginate->paging($query, $records_per_page);
                                 $paginate->dataview($newquery, $search);
                             } else {
-                                $query = "SELECT id, name, account_id, level, exp FROM player WHERE name NOT LIKE '[%]%' ORDER BY level DESC, exp DESC, playtime DESC, name ASC";
+                                $query = "SELECT id, name, account_id, level, exp FROM player_fake WHERE name NOT LIKE '[%]%' ORDER BY level DESC, exp DESC, playtime DESC, name ASC";
                                 $newquery = $paginate->paging($query, $records_per_page);
                                 $paginate->dataview($newquery);
                             }
