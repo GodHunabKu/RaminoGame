@@ -141,6 +141,11 @@ if(isset($item_shop) && $item_shop != "") {
     <!-- Admin Panel Styles -->
     <link rel="stylesheet" href="<?php echo $site_url; ?>css/admin.css?v=<?php echo time(); ?>" type="text/css">
     <?php } ?>
+
+    <?php if($page == 'administration') { ?>
+    <!-- Administration V2 Styles -->
+    <link rel="stylesheet" href="<?php echo $site_url; ?>css/administration-v2.css?v=<?php echo time(); ?>" type="text/css">
+    <?php } ?>
 </head>
 <body class="<?php if($is_homepage) echo 'homepage-style'; if($page == 'admin') echo ' admin-page'; ?>">
 
@@ -571,6 +576,11 @@ if(isset($item_shop) && $item_shop != "") {
     <!-- Homepage Premium 2025 JavaScript - Solo Homepage -->
     <script src="<?php print $site_url; ?>js/homepage-premium.js?v=<?php echo time(); ?>"></script>
     <script src="<?php print $site_url; ?>js/wow-effects-premium.js?v=<?php echo time(); ?>"></script>
+    <?php } ?>
+
+    <?php if($page == 'administration') { ?>
+    <!-- Administration V2 JavaScript -->
+    <script src="<?php print $site_url; ?>js/administration-v2.js?v=<?php echo time(); ?>"></script>
     <?php } ?>
 
     <?php include 'include/functions/footer.php'; ?>

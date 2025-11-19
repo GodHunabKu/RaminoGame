@@ -206,9 +206,3 @@
         </div>
     </div>
 </div>
-
-<!-- Link CSS dedicato -->
-<link rel="stylesheet" href="<?php print $site_url; ?>css/administration-v2.css?v=<?php echo time(); ?>">
-
-<!-- Link JS dedicato -->
-<script src="<?php print $site_url; ?>js/administration-v2.js?v=<?php echo time(); ?>"></script>
