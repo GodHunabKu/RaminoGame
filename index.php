@@ -142,7 +142,7 @@ if(isset($item_shop) && $item_shop != "") {
     <link rel="stylesheet" href="<?php echo $site_url; ?>css/admin.css?v=<?php echo time(); ?>" type="text/css">
     <?php } ?>
 
-    <?php if($page == 'administration') { ?>
+    <?php if($page == 'administration' || $page == 'newadministration') { ?>
     <!-- Administration V2 Styles -->
     <link rel="stylesheet" href="<?php echo $site_url; ?>css/administration-v2.css?v=<?php echo time(); ?>" type="text/css">
     <?php } ?>
@@ -178,7 +178,7 @@ if(isset($item_shop) && $item_shop != "") {
                 <?php if(!$database->is_loggedin()) { ?>
                 <a href="<?php echo $site_url; ?>users/register"><?php echo $lang['register']; ?></a>
                 <?php } else { ?>
-                <a href="<?php echo $site_url; ?>user/administration"><?php echo $lang['account-data']; ?></a>
+                <a href="<?php echo $site_url; ?>user/newadministration"><?php echo $lang['account-data']; ?></a>
                 <?php } ?>
                 <a href="<?php echo $site_url; ?>ranking/players"><?php echo $lang['ranking']; ?></a>
             </nav>
@@ -197,7 +197,7 @@ if(isset($item_shop) && $item_shop != "") {
                             <a href="<?php echo $site_url; ?>users/login" role="menuitem"><?php echo $lang['login']; ?></a>
                             <a href="<?php echo $site_url; ?>users/register" role="menuitem"><?php echo $lang['register']; ?></a>
                         <?php } else { ?>
-                            <a href="<?php echo $site_url; ?>user/administration" role="menuitem"><?php echo $lang['account-data']; ?></a>
+                            <a href="<?php echo $site_url; ?>user/newadministration" role="menuitem"><?php echo $lang['account-data']; ?></a>
                             <a href="<?php echo $site_url; ?>user/characters" role="menuitem"><?php echo $lang['chars-list']; ?></a>
                             <a href="<?php echo $site_url; ?>users/logout" role="menuitem"><?php echo $lang['logout']; ?></a>
                         <?php } ?>
@@ -518,7 +518,7 @@ if(isset($item_shop) && $item_shop != "") {
                         <i class="fas fa-cogs"></i> <?php print $lang['administration']; ?>
                     </a>
                     <?php } ?>
-                    <a href="<?php print $site_url; ?>user/administration">
+                    <a href="<?php print $site_url; ?>user/newadministration">
                         <i class="fa fa-user"></i> <?php print $lang['account-data']; ?>
                     </a>
                     <a href="<?php print $site_url; ?>user/characters">
@@ -578,7 +578,7 @@ if(isset($item_shop) && $item_shop != "") {
     <script src="<?php print $site_url; ?>js/wow-effects-premium.js?v=<?php echo time(); ?>"></script>
     <?php } ?>
 
-    <?php if($page == 'administration') { ?>
+    <?php if($page == 'administration' || $page == 'newadministration') { ?>
     <!-- Administration V2 JavaScript -->
     <script src="<?php print $site_url; ?>js/administration-v2.js?v=<?php echo time(); ?>"></script>
     <?php } ?>

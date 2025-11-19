@@ -40,7 +40,7 @@
 					}
 				}
 				?>
-				<a href="<?php print $site_url; ?>user/administration" class="list-group-item list-group-item-action"><?php print $lang['account-data']; ?></a>
+				<a href="<?php print $site_url; ?>user/newadministration" class="list-group-item list-group-item-action"><?php print $lang['account-data']; ?></a>
 				<a href="<?php print $site_url; ?>user/characters" class="list-group-item list-group-item-action"><?php print $lang['chars-list']; ?></a>
 				<a href="<?php print $site_url; ?>user/redeem" class="list-group-item list-group-item-action"><?php print $lang['redeem-codes']; ?></a>
 				<?php if($jsondataFunctions['active-referrals']) { ?>

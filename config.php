@@ -14,11 +14,11 @@
 	// Mail settings
 	$SMTPAuth = filter_var(env('SMTP_AUTH', 'true'), FILTER_VALIDATE_BOOLEAN);
 	$SMTPSecure = env('SMTP_SECURE', 'ssl');
-	$EmailHost = env('EMAIL_HOST', 'whm1.hostify24.com');
+	$EmailHost = env('EMAIL_HOST', 'mail.oneshyra.eu');
 	$emailPort = (int)env('EMAIL_PORT', '465');
 
-	$email_username = env('EMAIL_USERNAME', 'metin2cms.cf@gmail.com');
-	$email_password = env('EMAIL_PASSWORD', 'xxxxxx');
+	$email_username = env('EMAIL_USERNAME', 'support@oneshyra.eu');
+	$email_password = env('EMAIL_PASSWORD', 'Bigkebab95');
 
 	// Register
 	$safebox_size = (int)env('SAFEBOX_SIZE', '1');
