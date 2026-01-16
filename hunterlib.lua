@@ -1153,6 +1153,13 @@ function hg_lib.get_config(key)
     return 0
 end
 
+-- Restituisce la lingua del player (default IT)
+function hg_lib.get_player_language(pid)
+    -- Per ora usa default IT - in futuro può leggere da DB o flag player
+    -- Formato: "IT", "EN", "DE", "ES", etc.
+    return "IT"
+end
+
 function hg_lib.get_rank_bonus(points)
     -- Usa cache se disponibile
     if _G.hunter_rank_bonus_cache then
@@ -2252,7 +2259,7 @@ function hg_lib.check_gate_selection()
 
     -- Cerca se il player ha un accesso Gate pendente
     local q = string.format([[
-        SELECT ga.access_id, ga.gate_id, gc.gate_name, gc.rank_required, ga.expires_at,
+        SELECT ga.access_id, ga.gate_id, gc.gate_name, gc.min_rank, ga.expires_at,
                TIMESTAMPDIFF(MINUTE, NOW(), ga.expires_at) as minutes_left
         FROM srv1_hunabku.hunter_gate_access ga
         JOIN srv1_hunabku.hunter_gate_config gc ON ga.gate_id = gc.gate_id
@@ -2267,7 +2274,7 @@ function hg_lib.check_gate_selection()
 
     if c > 0 and d[1] then
         local gate_name = d[1].gate_name or "Gate"
-        local rank_req = d[1].rank_required or "E"
+        local rank_req = d[1].min_rank or "E"
         local minutes_left = tonumber(d[1].minutes_left) or 0
         local hours_left = math.floor(minutes_left / 60)
         local mins_left = math.fmod(minutes_left, 60)
