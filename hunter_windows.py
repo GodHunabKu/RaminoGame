@@ -8,6 +8,7 @@ import ui
 import net
 import wndMgr
 import app
+import math
 
 from hunter_core import (
     DraggableMixin,
@@ -263,99 +264,371 @@ class SystemMessageWindow(ui.Window):
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
-#  EMERGENCY QUEST WINDOW - Missioni a tempo
+#  EMERGENCY QUEST WINDOW - Solo Leveling Style - Missioni a tempo
 # ═══════════════════════════════════════════════════════════════════════════════
+
+# Colori per difficolta' Emergency Quest
+DIFFICULTY_COLORS = {
+    "EASY": {"bg": 0xCC004400, "border": 0xFF00FF00, "text": 0xFF00FF00, "label": "FACILE"},
+    "NORMAL": {"bg": 0xCC001144, "border": 0xFF00CCFF, "text": 0xFF00CCFF, "label": "NORMALE"},
+    "HARD": {"bg": 0xCC442200, "border": 0xFFFF8800, "text": 0xFFFF8800, "label": "DIFFICILE"},
+    "EXTREME": {"bg": 0xCC440000, "border": 0xFFFF0000, "text": 0xFFFF0000, "label": "ESTREMA"},
+    "GOD_MODE": {"bg": 0xCC220044, "border": 0xFFFF00FF, "text": 0xFFFF00FF, "label": "DIVINO"}
+}
+
 class EmergencyQuestWindow(ui.Window, DraggableMixin):
-    """Emergency Quest (Red Box) - Finestra Movibile"""
-    
+    """Emergency Quest - Solo Leveling Style - Finestra Espansa con Descrizione"""
+
     def __init__(self):
         ui.Window.__init__(self)
-        self.SetSize(300, 100)
+        self.SetSize(420, 220)
         screenWidth = wndMgr.GetScreenWidth()
-        defaultX = (screenWidth - 300) // 2
-        defaultY = 220
-        
+        defaultX = (screenWidth - 420) // 2
+        defaultY = 180
+
         self.InitDraggable("EmergencyQuestWindow", defaultX, defaultY)
-        
-        # Sfondo Rosso Scuro
-        self.bg = ui.Bar()
-        self.bg.SetParent(self)
-        self.bg.SetPosition(0, 0)
-        self.bg.SetSize(300, 100)
-        self.bg.SetColor(0xCC330000)
-        self.bg.AddFlag("not_pick")
-        self.bg.Show()
-        
-        # Bordi Rossi
-        self.borders = []
-        color = COLOR_SCHEMES["RED"]["border"]
-        for y in [0, 98]:
-            b = ui.Bar(); b.SetParent(self); b.SetPosition(0, y); b.SetSize(300, 2); b.SetColor(color); b.AddFlag("not_pick"); b.Show()
-            self.borders.append(b)
-        for x in [0, 298]:
-            b = ui.Bar(); b.SetParent(self); b.SetPosition(x, 0); b.SetSize(2, 100); b.SetColor(color); b.AddFlag("not_pick"); b.Show()
-            self.borders.append(b)
-        
-        self.title = ui.TextLine()
-        self.title.SetParent(self)
-        self.title.SetPosition(150, 10)
-        self.title.SetHorizontalAlignCenter()
-        self.title.SetText("! EMERGENCY QUEST !")
-        self.title.SetPackedFontColor(COLOR_SCHEMES["RED"]["title"])
-        self.title.SetOutline()
-        self.title.AddFlag("not_pick")
-        self.title.Show()
-        
-        self.questName = ui.TextLine()
-        self.questName.SetParent(self)
-        self.questName.SetPosition(150, 35)
-        self.questName.SetHorizontalAlignCenter()
-        self.questName.SetText("")
-        self.questName.SetPackedFontColor(COLOR_TEXT_NORMAL)
-        self.questName.AddFlag("not_pick")
-        self.questName.Show()
-        
-        self.timer = ui.TextLine()
-        self.timer.SetParent(self)
-        self.timer.SetPosition(150, 60)
-        self.timer.SetHorizontalAlignCenter()
-        self.timer.SetPackedFontColor(COLOR_SCHEMES["GOLD"]["title"])
-        self.timer.SetOutline()
-        self.timer.AddFlag("not_pick")
-        self.timer.Show()
-        
+
+        # Variabili di stato
         self.endTime = 0
         self.currentTitle = ""
         self.targetCount = 0
-        
-    def StartMission(self, title, seconds, mobVnum, count):
+        self.currentProgress = 0
+        self.description = ""
+        self.difficulty = "NORMAL"
+        self.penalty = 0
+        self.pulsePhase = 0.0
+
+        # Sfondo principale scuro
+        self.bg = ui.Bar()
+        self.bg.SetParent(self)
+        self.bg.SetPosition(0, 0)
+        self.bg.SetSize(420, 220)
+        self.bg.SetColor(0xEE0A0A14)  # Quasi nero con sfumatura blu scuro
+        self.bg.AddFlag("not_pick")
+        self.bg.Show()
+
+        # Inner glow effect (bordo interno luminoso)
+        self.innerGlow = ui.Bar()
+        self.innerGlow.SetParent(self)
+        self.innerGlow.SetPosition(3, 3)
+        self.innerGlow.SetSize(414, 214)
+        self.innerGlow.SetColor(0x22FFFFFF)
+        self.innerGlow.AddFlag("not_pick")
+        self.innerGlow.Show()
+
+        # Inner background
+        self.innerBg = ui.Bar()
+        self.innerBg.SetParent(self)
+        self.innerBg.SetPosition(5, 5)
+        self.innerBg.SetSize(410, 210)
+        self.innerBg.SetColor(0xDD080812)
+        self.innerBg.AddFlag("not_pick")
+        self.innerBg.Show()
+
+        # Bordi esterni animati (4 lati)
+        self.borders = []
+        self.borderColor = DIFFICULTY_COLORS["NORMAL"]["border"]
+        for y in [0, 218]:
+            b = ui.Bar(); b.SetParent(self); b.SetPosition(0, y); b.SetSize(420, 2); b.SetColor(self.borderColor); b.AddFlag("not_pick"); b.Show()
+            self.borders.append(b)
+        for x in [0, 418]:
+            b = ui.Bar(); b.SetParent(self); b.SetPosition(x, 0); b.SetSize(2, 220); b.SetColor(self.borderColor); b.AddFlag("not_pick"); b.Show()
+            self.borders.append(b)
+
+        # ═══════════ HEADER SECTION ═══════════
+        # Linea separatore header
+        self.headerLine = ui.Bar()
+        self.headerLine.SetParent(self)
+        self.headerLine.SetPosition(10, 45)
+        self.headerLine.SetSize(400, 1)
+        self.headerLine.SetColor(0x66FFFFFF)
+        self.headerLine.AddFlag("not_pick")
+        self.headerLine.Show()
+
+        # Titolo "EMERGENCY QUEST"
+        self.systemLabel = ui.TextLine()
+        self.systemLabel.SetParent(self)
+        self.systemLabel.SetPosition(210, 8)
+        self.systemLabel.SetHorizontalAlignCenter()
+        self.systemLabel.SetText("[SYSTEM] EMERGENCY QUEST")
+        self.systemLabel.SetPackedFontColor(0xFFFF4444)
+        self.systemLabel.SetOutline()
+        self.systemLabel.AddFlag("not_pick")
+        self.systemLabel.Show()
+
+        # Badge Difficolta'
+        self.diffBadgeBg = ui.Bar()
+        self.diffBadgeBg.SetParent(self)
+        self.diffBadgeBg.SetPosition(10, 25)
+        self.diffBadgeBg.SetSize(80, 18)
+        self.diffBadgeBg.SetColor(0xCC001144)
+        self.diffBadgeBg.AddFlag("not_pick")
+        self.diffBadgeBg.Show()
+
+        self.diffBadgeText = ui.TextLine()
+        self.diffBadgeText.SetParent(self)
+        self.diffBadgeText.SetPosition(50, 27)
+        self.diffBadgeText.SetHorizontalAlignCenter()
+        self.diffBadgeText.SetText("NORMALE")
+        self.diffBadgeText.SetPackedFontColor(0xFF00CCFF)
+        self.diffBadgeText.AddFlag("not_pick")
+        self.diffBadgeText.Show()
+
+        # Timer grande a destra
+        self.timerBg = ui.Bar()
+        self.timerBg.SetParent(self)
+        self.timerBg.SetPosition(320, 22)
+        self.timerBg.SetSize(90, 22)
+        self.timerBg.SetColor(0x66000000)
+        self.timerBg.AddFlag("not_pick")
+        self.timerBg.Show()
+
+        self.timer = ui.TextLine()
+        self.timer.SetParent(self)
+        self.timer.SetPosition(365, 25)
+        self.timer.SetHorizontalAlignCenter()
+        self.timer.SetText("00:00")
+        self.timer.SetPackedFontColor(0xFFFFD700)
+        self.timer.SetOutline()
+        self.timer.AddFlag("not_pick")
+        self.timer.Show()
+
+        # ═══════════ QUEST INFO SECTION ═══════════
+        # Nome Quest
+        self.questName = ui.TextLine()
+        self.questName.SetParent(self)
+        self.questName.SetPosition(210, 52)
+        self.questName.SetHorizontalAlignCenter()
+        self.questName.SetText("")
+        self.questName.SetPackedFontColor(0xFFFFFFFF)
+        self.questName.SetOutline()
+        self.questName.AddFlag("not_pick")
+        self.questName.Show()
+
+        # ═══════════ DESCRIPTION SECTION ═══════════
+        self.descBg = ui.Bar()
+        self.descBg.SetParent(self)
+        self.descBg.SetPosition(10, 72)
+        self.descBg.SetSize(400, 60)
+        self.descBg.SetColor(0x44000000)
+        self.descBg.AddFlag("not_pick")
+        self.descBg.Show()
+
+        # Descrizione su piu' linee
+        self.descLines = []
+        for i in range(3):
+            line = ui.TextLine()
+            line.SetParent(self)
+            line.SetPosition(20, 77 + i * 18)
+            line.SetText("")
+            line.SetPackedFontColor(0xFFCCCCCC)
+            line.AddFlag("not_pick")
+            line.Show()
+            self.descLines.append(line)
+
+        # ═══════════ PROGRESS SECTION ═══════════
+        # Linea separatore progress
+        self.progressLine = ui.Bar()
+        self.progressLine.SetParent(self)
+        self.progressLine.SetPosition(10, 138)
+        self.progressLine.SetSize(400, 1)
+        self.progressLine.SetColor(0x66FFFFFF)
+        self.progressLine.AddFlag("not_pick")
+        self.progressLine.Show()
+
+        # Progress Bar Background
+        self.progressBg = ui.Bar()
+        self.progressBg.SetParent(self)
+        self.progressBg.SetPosition(15, 148)
+        self.progressBg.SetSize(390, 20)
+        self.progressBg.SetColor(0xFF1A1A2E)
+        self.progressBg.AddFlag("not_pick")
+        self.progressBg.Show()
+
+        # Progress Bar Fill
+        self.progressFill = ui.Bar()
+        self.progressFill.SetParent(self)
+        self.progressFill.SetPosition(15, 148)
+        self.progressFill.SetSize(0, 20)
+        self.progressFill.SetColor(0xFF00CCFF)
+        self.progressFill.AddFlag("not_pick")
+        self.progressFill.Show()
+
+        # Progress Text
+        self.progressText = ui.TextLine()
+        self.progressText.SetParent(self)
+        self.progressText.SetPosition(210, 150)
+        self.progressText.SetHorizontalAlignCenter()
+        self.progressText.SetText("0 / 0")
+        self.progressText.SetPackedFontColor(0xFFFFFFFF)
+        self.progressText.SetOutline()
+        self.progressText.AddFlag("not_pick")
+        self.progressText.Show()
+
+        # ═══════════ FOOTER SECTION ═══════════
+        # Penalty Warning
+        self.penaltyBg = ui.Bar()
+        self.penaltyBg.SetParent(self)
+        self.penaltyBg.SetPosition(15, 178)
+        self.penaltyBg.SetSize(190, 30)
+        self.penaltyBg.SetColor(0x44330000)
+        self.penaltyBg.AddFlag("not_pick")
+        self.penaltyBg.Show()
+
+        self.penaltyLabel = ui.TextLine()
+        self.penaltyLabel.SetParent(self)
+        self.penaltyLabel.SetPosition(20, 181)
+        self.penaltyLabel.SetText("PENALITA' FALLIMENTO:")
+        self.penaltyLabel.SetPackedFontColor(0xFFFF6666)
+        self.penaltyLabel.AddFlag("not_pick")
+        self.penaltyLabel.Show()
+
+        self.penaltyValue = ui.TextLine()
+        self.penaltyValue.SetParent(self)
+        self.penaltyValue.SetPosition(20, 195)
+        self.penaltyValue.SetText("-0 Gloria")
+        self.penaltyValue.SetPackedFontColor(0xFFFF4444)
+        self.penaltyValue.SetOutline()
+        self.penaltyValue.AddFlag("not_pick")
+        self.penaltyValue.Show()
+
+        # Status Text (Motivational)
+        self.statusText = ui.TextLine()
+        self.statusText.SetParent(self)
+        self.statusText.SetPosition(315, 188)
+        self.statusText.SetHorizontalAlignCenter()
+        self.statusText.SetText("SORGI, CACCIATORE!")
+        self.statusText.SetPackedFontColor(0xFFFFD700)
+        self.statusText.SetOutline()
+        self.statusText.AddFlag("not_pick")
+        self.statusText.Show()
+
+        self.Hide()
+
+    def SetDifficultyTheme(self, difficulty):
+        """Imposta tema colori basato sulla difficolta'"""
+        if difficulty not in DIFFICULTY_COLORS:
+            difficulty = "NORMAL"
+
+        colors = DIFFICULTY_COLORS[difficulty]
+        self.borderColor = colors["border"]
+
+        # Aggiorna bordi
+        for b in self.borders:
+            b.SetColor(colors["border"])
+
+        # Aggiorna badge difficolta'
+        self.diffBadgeBg.SetColor(colors["bg"])
+        self.diffBadgeText.SetText(colors["label"])
+        self.diffBadgeText.SetPackedFontColor(colors["text"])
+
+        # Aggiorna progress bar fill color
+        self.progressFill.SetColor(colors["border"])
+
+    def WrapText(self, text, maxCharsPerLine=55):
+        """Divide il testo in linee per la descrizione"""
+        words = text.split()
+        lines = []
+        currentLine = ""
+
+        for word in words:
+            if len(currentLine) + len(word) + 1 <= maxCharsPerLine:
+                if currentLine:
+                    currentLine += " " + word
+                else:
+                    currentLine = word
+            else:
+                if currentLine:
+                    lines.append(currentLine)
+                currentLine = word
+
+        if currentLine:
+            lines.append(currentLine)
+
+        return lines[:3]  # Max 3 linee
+
+    def StartMission(self, title, seconds, vnums, count, description="", difficulty="NORMAL", penalty=0):
         self.currentTitle = title.replace("+", " ")
         self.targetCount = count
-        self.UpdateProgress(0)
+        self.currentProgress = 0
+        self.description = description.replace("+", " ") if description else "Completa la sfida prima che scada il tempo!"
+        self.difficulty = difficulty
+        self.penalty = penalty
+
+        # Imposta tema colori
+        self.SetDifficultyTheme(difficulty)
+
+        # Imposta timer
         self.endTime = app.GetTime() + seconds
+
+        # Aggiorna testi
+        self.questName.SetText(self.currentTitle)
+
+        # Descrizione su piu' linee
+        descLines = self.WrapText(self.description)
+        for i, line in enumerate(self.descLines):
+            if i < len(descLines):
+                line.SetText(descLines[i])
+            else:
+                line.SetText("")
+
+        # Penalty
+        if penalty > 0:
+            self.penaltyValue.SetText("-%d Gloria" % penalty)
+            self.penaltyBg.Show()
+            self.penaltyLabel.Show()
+            self.penaltyValue.Show()
+        else:
+            self.penaltyBg.Hide()
+            self.penaltyLabel.Hide()
+            self.penaltyValue.Hide()
+
+        # Progress
+        self.UpdateProgress(0)
+
+        # Status message basato su difficolta'
+        statusMessages = {
+            "EASY": "Inizia la caccia!",
+            "NORMAL": "Sorgi, Cacciatore!",
+            "HARD": "Dimostra il tuo valore!",
+            "EXTREME": "Solo i forti sopravvivono!",
+            "GOD_MODE": "Diventa il Monarca!"
+        }
+        self.statusText.SetText(statusMessages.get(difficulty, "Sorgi, Cacciatore!"))
+
         self.Show()
         self.SetTop()
-        self.title.SetText("IL DESTINO SI DECIDE ORA!")
-        self.title.SetPackedFontColor(COLOR_SCHEMES["GOLD"]["title"])
-        
+
     def UpdateProgress(self, current):
+        self.currentProgress = current
+        self.progressText.SetText("%d / %d" % (current, self.targetCount))
+
         if self.targetCount > 0:
-            self.questName.SetText("%s [%d/%d]" % (self.currentTitle, current, self.targetCount))
-        else:
-            self.questName.SetText(self.currentTitle)
-        
+            fillWidth = int((float(current) / float(self.targetCount)) * 390)
+            fillWidth = min(fillWidth, 390)
+            self.progressFill.SetSize(fillWidth, 20)
+
     def EndMission(self, status, isEmergency=True):
         if isEmergency:
             if status == "SUCCESS":
-                self.title.SetText("MISSION COMPLETE")
-                self.title.SetPackedFontColor(COLOR_SCHEMES["GREEN"]["title"])
+                self.systemLabel.SetText("[SYSTEM] MISSION COMPLETE")
+                self.systemLabel.SetPackedFontColor(0xFF00FF00)
+                self.statusText.SetText("VITTORIA!")
+                self.statusText.SetPackedFontColor(0xFF00FF00)
+                for b in self.borders:
+                    b.SetColor(0xFF00FF00)
             elif status == "FAILED":
-                self.title.SetText("MISSION FAILED")
-                self.title.SetPackedFontColor(COLOR_SCHEMES["RED"]["title"])
+                self.systemLabel.SetText("[SYSTEM] MISSION FAILED")
+                self.systemLabel.SetPackedFontColor(0xFFFF0000)
+                self.statusText.SetText("FALLIMENTO...")
+                self.statusText.SetPackedFontColor(0xFFFF0000)
+                for b in self.borders:
+                    b.SetColor(0xFFFF0000)
         else:
-            self.title.SetText("IL DESTINO SI DECIDE ORA!")
-            self.title.SetPackedFontColor(COLOR_SCHEMES["GOLD"]["title"])
-        self.endTime = app.GetTime() + 3.0
+            self.systemLabel.SetText("[SYSTEM] EMERGENCY QUEST")
+            self.systemLabel.SetPackedFontColor(0xFFFF4444)
+
+        self.endTime = app.GetTime() + 4.0
 
     def OnUpdate(self):
         if self.endTime > 0:
@@ -364,7 +637,18 @@ class EmergencyQuestWindow(ui.Window, DraggableMixin):
                 self.Hide()
                 self.endTime = 0
             else:
-                self.timer.SetText(FormatTime(left))
+                # Formatta timer
+                mins = int(left) // 60
+                secs = int(left) % 60
+                self.timer.SetText("%02d:%02d" % (mins, secs))
+
+                # Effetto pulsante sui bordi quando il tempo sta per scadere
+                if left < 10:
+                    self.pulsePhase += 0.15
+                    alpha = int(128 + 127 * math.sin(self.pulsePhase))
+                    pulseColor = (0xFF << 24) | (alpha << 16) | (0x00 << 8) | 0x00
+                    for b in self.borders:
+                        b.SetColor(pulseColor)
 
 
 # ═══════════════════════════════════════════════════════════════════════════════

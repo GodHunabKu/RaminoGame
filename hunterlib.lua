@@ -904,31 +904,48 @@ function hg_lib.notice_t(key, fallback, replacements)
 end
 
 -- SISTEMA EMERGENZE
-function hg_lib.start_emergency(title, seconds, mob_vnum, count)
+-- Parametri opzionali: description, difficulty, penalty_pts, vnums (stringa con più vnum separati da virgola)
+function hg_lib.start_emergency(title, seconds, mob_vnum, count, description, difficulty, penalty_pts, vnums)
     local expire_time = get_time() + seconds
-    
+
+    -- Supporto multi-vnum: se vnums è fornito, usa quello, altrimenti usa mob_vnum singolo
+    local vnum_str = tostring(mob_vnum or 0)
+    if vnums and vnums ~= "" then
+        vnum_str = vnums  -- Formato: "8052,8053" per esempio
+    end
+
     -- Setta flag su TUTTI i membri del party (o solo player se solo)
     if party.is_party() then
         local pids = {party.get_member_pids()}
         for i, member_pid in ipairs(pids) do
             q.begin_other_pc_block(member_pid)
             pc.setqf("hq_emerg_active", 1)
-            pc.setqf("hq_emerg_vnum", mob_vnum)
+            pc.setqf("hq_emerg_vnum", mob_vnum or 0)
+            pc.setqf("hq_emerg_vnums", vnum_str)  -- Multi-vnum string
             pc.setqf("hq_emerg_req", count)
             pc.setqf("hq_emerg_cur", 0)
             pc.setqf("hq_emerg_expire", expire_time)
+            pc.setqf("hq_emerg_penalty_pts", penalty_pts or 0)
             q.end_other_pc_block()
         end
     else
         pc.setqf("hq_emerg_active", 1)
-        pc.setqf("hq_emerg_vnum", mob_vnum)
+        pc.setqf("hq_emerg_vnum", mob_vnum or 0)
+        pc.setqf("hq_emerg_vnums", vnum_str)  -- Multi-vnum string
         pc.setqf("hq_emerg_req", count)
         pc.setqf("hq_emerg_cur", 0)
         pc.setqf("hq_emerg_expire", expire_time)
+        pc.setqf("hq_emerg_penalty_pts", penalty_pts or 0)
     end
-    
-    -- Invia UI a TUTTI i membri del party
-    hg_lib.party_cmdchat("HunterEmergency " .. hg_lib.clean_str(title) .. "|" .. seconds .. "|" .. mob_vnum .. "|" .. count)
+
+    -- Invia UI a TUTTI i membri del party con dati estesi
+    -- Formato: title|seconds|vnum|count|description|difficulty|penalty
+    local desc_clean = hg_lib.clean_str(description or "Completa la sfida prima che scada il tempo!")
+    local diff_clean = difficulty or "NORMAL"
+    local penalty_str = tostring(penalty_pts or 0)
+    local vnums_clean = hg_lib.clean_str(vnum_str)
+
+    hg_lib.party_cmdchat("HunterEmergency " .. hg_lib.clean_str(title) .. "|" .. seconds .. "|" .. vnums_clean .. "|" .. count .. "|" .. desc_clean .. "|" .. diff_clean .. "|" .. penalty_str)
     cleartimer("hunter_emerg_tmr")
     loop_timer("hunter_emerg_tmr", 1)
 end
@@ -1005,14 +1022,36 @@ function hg_lib.end_emergency(status)
 
         hg_lib.send_player_data()
     else
-        local msg = "[!] TEMPO SCADUTO: Bonus Velocita' perso."
-        hg_lib.hunter_speak_color(msg, "ORANGE")
+        -- PENALITA' per emergency quest fallita
+        local penalty_pts = pc.getqf("hq_emerg_penalty_pts") or 0
+        if penalty_pts > 0 then
+            mysql_direct_query("UPDATE srv1_hunabku.hunter_quest_ranking SET total_points=GREATEST(0, total_points-"..penalty_pts.."), spendable_points=GREATEST(0, spendable_points-"..penalty_pts..") WHERE player_id="..pc.get_player_id())
+
+            syschat("|cffFF0000========================================|r")
+            hg_lib.syschat_t("EMERG_FAILED_TITLE", "[!!!] SFIDA EMERGENZA FALLITA [!!!]", nil, "FF0000")
+            syschat("|cffFF0000========================================|r")
+            syschat("")
+            hg_lib.syschat_t("EMERG_PENALTY", "Penalita' Gloria: -{PTS}", {PTS = penalty_pts}, "FF0000")
+            syschat("")
+            syschat("|cffFF0000========================================|r")
+
+            local msg = "[FALLIMENTO] SFIDA FALLITA! -" .. penalty_pts .. " GLORIA"
+            hg_lib.hunter_speak_color(msg, "RED")
+
+            hg_lib.send_player_data()
+        else
+            local msg = "[!] TEMPO SCADUTO: Bonus Velocita' perso."
+            hg_lib.hunter_speak_color(msg, "ORANGE")
+        end
     end
 
     pc.setqf("hq_emerg_reward_pts", 0)
+    pc.setqf("hq_emerg_penalty_pts", 0)
     pc.setqf("hq_emerg_reward_vnum", 0)
     pc.setqf("hq_emerg_reward_count", 0)
     pc.setqf("hq_emerg_vnum", 0)
+    pc.setqf("hq_emerg_vnums", "")
+    pc.setqf("hq_emerg_id", 0)
 end
 
 -- FIX: Cooldown per notifiche rival (evita spam ogni pochi secondi)
@@ -2127,6 +2166,69 @@ function hg_lib.check_pending_rewards()
 end
 
 -- ============================================================
+-- RESTORE EMERGENCY QUEST ON LOGIN
+-- Se il player ha un'emergency quest attiva che non è scaduta,
+-- riavvia l'UI con il tempo rimanente
+-- ============================================================
+function hg_lib.restore_emergency_on_login()
+    local emerg_active = pc.getqf("hq_emerg_active") or 0
+    if emerg_active ~= 1 then return end
+
+    local expire_time = pc.getqf("hq_emerg_expire") or 0
+    local now = get_time()
+
+    if expire_time <= now then
+        -- L'emergency è scaduta durante il logout - FALLIMENTO
+        hg_lib.end_emergency("FAIL")
+        return
+    end
+
+    -- Calcola tempo rimanente
+    local remaining_seconds = expire_time - now
+    local emerg_id = pc.getqf("hq_emerg_id") or 0
+    local req = pc.getqf("hq_emerg_req") or 1
+    local cur = pc.getqf("hq_emerg_cur") or 0
+    local vnums_str = pc.getqf("hq_emerg_vnums") or "0"
+    local penalty_pts = pc.getqf("hq_emerg_penalty_pts") or 0
+
+    -- Recupera info dalla missione originale nel DB (se esiste)
+    local title = "Emergency Quest"
+    local description = "Completa la sfida prima che scada il tempo!"
+    local difficulty = "NORMAL"
+
+    if emerg_id > 0 then
+        local c, d = mysql_direct_query("SELECT name, description, difficulty FROM srv1_hunabku.hunter_quest_emergencies WHERE id=" .. emerg_id)
+        if c > 0 and d[1] then
+            title = d[1].name or title
+            description = d[1].description or description
+            difficulty = d[1].difficulty or difficulty
+        end
+    end
+
+    -- Riavvia l'UI del client con i dati esistenti
+    local desc_clean = hg_lib.clean_str(description)
+    local vnums_clean = hg_lib.clean_str(vnums_str)
+    local penalty_str = tostring(penalty_pts)
+
+    hg_lib.party_cmdchat("HunterEmergency " .. hg_lib.clean_str(title) .. "|" .. remaining_seconds .. "|" .. vnums_clean .. "|" .. req .. "|" .. desc_clean .. "|" .. difficulty .. "|" .. penalty_str)
+
+    -- Invia anche l'aggiornamento del progresso corrente
+    if cur > 0 then
+        hg_lib.update_emergency(cur)
+    end
+
+    -- Riattiva il timer
+    cleartimer("hunter_emerg_tmr")
+    loop_timer("hunter_emerg_tmr", 1)
+
+    -- Notifica il player
+    local diff_color = {EASY = "GREEN", NORMAL = "BLUE", HARD = "ORANGE", EXTREME = "RED", GOD_MODE = "PURPLE"}
+    local msg_color = diff_color[difficulty] or "BLUE"
+    local msg = hg_lib.get_text("EMERG_RESTORED", nil, "[SYSTEM] Emergency Quest Ripristinata! Tempo: " .. remaining_seconds .. "s")
+    hg_lib.hunter_speak_color(msg, msg_color)
+end
+
+-- ============================================================
 -- CHECK GATE SELECTION - Notifica se il player e' stato sorteggiato
 -- Chiamato al login per mostrare effetto + aprire finestra Gate
 -- ============================================================
@@ -2284,9 +2386,24 @@ function hg_lib.check_overtake(pid, pname, col_name, added_val, label_nice)
     end
 end
 
+-- Helper: controlla se un vnum è nella stringa di vnum separati da virgola
+function hg_lib.is_vnum_in_list(vnum, vnum_str)
+    if not vnum_str or vnum_str == "" or vnum_str == "0" then
+        return true  -- Se nessun vnum specificato, qualsiasi mob conta
+    end
+    local vnum_s = tostring(vnum)
+    for v in string.gmatch(vnum_str, "([^,]+)") do
+        v = string.gsub(v, "^%s*(.-)%s*$", "%1")  -- trim spaces
+        if v == vnum_s or v == "0" then
+            return true
+        end
+    end
+    return false
+end
+
 function hg_lib.on_emergency_kill(vnum)
     local emerg_active = pc.getqf("hq_emerg_active") or 0
-    
+
     -- SE NON HA EMERGENCY LOCALE, CONTROLLA SE IL SUO PARTY HA UNA EMERGENCY ATTIVA
     if emerg_active ~= 1 then
         if party.is_party() then
@@ -2296,32 +2413,50 @@ function hg_lib.on_emergency_kill(vnum)
                 q.begin_other_pc_block(member_pid)
                 local member_active = pc.getqf("hq_emerg_active") or 0
                 local member_vnum = pc.getqf("hq_emerg_vnum") or 0
+                local member_vnums = pc.getqf("hq_emerg_vnums") or ""
                 q.end_other_pc_block()
-                
-                if member_active == 1 and (member_vnum == 0 or member_vnum == vnum) then
+
+                -- Supporto multi-vnum: controlla se il vnum ucciso è valido
+                local vnum_matches = hg_lib.is_vnum_in_list(vnum, member_vnums)
+                if not vnum_matches and member_vnum ~= 0 then
+                    vnum_matches = (member_vnum == vnum)
+                end
+
+                if member_active == 1 and vnum_matches then
                     -- Un membro del party ha l'emergency attiva! Eredita i flag
                     q.begin_other_pc_block(member_pid)
                     local req = pc.getqf("hq_emerg_req") or 1
                     local expire = pc.getqf("hq_emerg_expire") or 0
                     local reward_pts = pc.getqf("hq_emerg_reward_pts") or 0
+                    local penalty_pts = pc.getqf("hq_emerg_penalty_pts") or 0
                     q.end_other_pc_block()
-                    
+
                     pc.setqf("hq_emerg_active", 1)
                     pc.setqf("hq_emerg_vnum", member_vnum)
+                    pc.setqf("hq_emerg_vnums", member_vnums)
                     pc.setqf("hq_emerg_req", req)
                     pc.setqf("hq_emerg_cur", 0)
                     pc.setqf("hq_emerg_expire", expire)
                     pc.setqf("hq_emerg_reward_pts", reward_pts)
+                    pc.setqf("hq_emerg_penalty_pts", penalty_pts)
                     emerg_active = 1
                     break
                 end
             end
         end
     end
-    
+
     if emerg_active == 1 then
-        local req_vnum = pc.getqf("hq_emerg_vnum")
-        if req_vnum == 0 or req_vnum == vnum then
+        local req_vnum = pc.getqf("hq_emerg_vnum") or 0
+        local vnums_str = pc.getqf("hq_emerg_vnums") or ""
+
+        -- Supporto multi-vnum: controlla se il vnum ucciso è valido
+        local vnum_valid = hg_lib.is_vnum_in_list(vnum, vnums_str)
+        if not vnum_valid and req_vnum ~= 0 then
+            vnum_valid = (req_vnum == vnum)
+        end
+
+        if vnum_valid then
             local current = pc.getqf("hq_emerg_cur") + 1
             local required = pc.getqf("hq_emerg_req")
             pc.setqf("hq_emerg_cur", current)
@@ -2666,25 +2801,39 @@ function hg_lib.trigger_random_emergency()
     if pc.getqf("hq_speedkill_active") == 1 then return end
 
     local lv = pc.get_level()
-    local q = "SELECT id, name, duration_seconds, target_count, target_vnum, reward_points, reward_item_vnum, reward_item_count, difficulty FROM srv1_hunabku.hunter_quest_emergencies WHERE enabled = 1 AND min_level <= " .. lv .. " AND max_level >= " .. lv .. " ORDER BY RAND() LIMIT 1"
-        
+    local q = "SELECT id, name, description, duration_seconds, target_count, target_vnum, reward_points, reward_item_vnum, reward_item_count, difficulty FROM srv1_hunabku.hunter_quest_emergencies WHERE enabled = 1 AND min_level <= " .. lv .. " AND max_level >= " .. lv .. " ORDER BY RAND() LIMIT 1"
+
     local c, d = mysql_direct_query(q)
-        
+
     if c > 0 and d[1] then
         local mission = d[1]
-            
+        local reward_pts = tonumber(mission.reward_points) or 0
+        -- Penalità = 50% della ricompensa (configurabile)
+        local penalty_pts = math.floor(reward_pts * 0.5)
+
         pc.setqf("hq_emerg_id", tonumber(mission.id))
-        pc.setqf("hq_emerg_reward_pts", tonumber(mission.reward_points) or 0)
+        pc.setqf("hq_emerg_reward_pts", reward_pts)
+        pc.setqf("hq_emerg_penalty_pts", penalty_pts)
         pc.setqf("hq_emerg_reward_vnum", tonumber(mission.reward_item_vnum) or 0)
         pc.setqf("hq_emerg_reward_count", tonumber(mission.reward_item_count) or 0)
-            
-        hg_lib.start_emergency(mission.name, tonumber(mission.duration_seconds), tonumber(mission.target_vnum), tonumber(mission.target_count))
-            
+
+        -- Passa tutti i parametri incluso descrizione, difficoltà e penalità
+        hg_lib.start_emergency(
+            mission.name,
+            tonumber(mission.duration_seconds),
+            tonumber(mission.target_vnum),
+            tonumber(mission.target_count),
+            mission.description or "Completa la sfida prima che scada il tempo!",
+            mission.difficulty or "NORMAL",
+            penalty_pts,
+            tostring(mission.target_vnum)  -- vnums singolo per ora
+        )
+
         local diff_color = {EASY = "|cff00FF00", NORMAL = "|cff00CCFF", HARD = "|cffFF8800", EXTREME = "|cffFF0000", GOD_MODE = "|cffFF00FF"}
         local dc = diff_color[mission.difficulty] or "|cffFFFFFF"
         syschat(dc .. "[" .. mission.difficulty .. "]|r Missione: " .. mission.name)
     else
-        hg_lib.start_emergency("Orda Improvvisa", 60, 0, 20)
+        hg_lib.start_emergency("Orda Improvvisa", 60, 0, 20, "Elimina i nemici prima che il tempo scada!", "EASY", 50, "0")
     end
 end
 
@@ -3404,15 +3553,12 @@ function hg_lib.spawn_defense_wave(wave_num, rank_grade)
         local msg = hg_lib.get_text("defense_wave_spawn", {WAVE = wave_num}) or ("ONDATA " .. wave_num .. "! DIFENDITI!")
         local fcolor = "RED"
         if hunter_defense_data and hunter_defense_data[pc.get_player_id()] then
-            fcolor = hunter_defense_data[pc.get_player_id()].color
+            fcolor = hunter_defense_data[pc.get_player_id()].color or "RED"
         end
-        hg_lib.hunter_speak_color(msg, fcolor)
-        
-        -- Notifica party dell'ondata
-        if party.is_party() then
-            local wave_msg = hg_lib.get_text("WAVE_NOTIFICATION", {WAVE = wave_num, MOBS = added_req}, "ONDATA " .. wave_num .. "! +" .. added_req .. " mob!")
-            party.syschat("[HUNTER] " .. wave_msg)
-        end
+
+        -- FIX: Usa party_hunter_speak_color per inviare messaggi colorati a tutto il party
+        local wave_msg = hg_lib.get_text("WAVE_NOTIFICATION", {WAVE = wave_num, MOBS = added_req}, "[ONDATA " .. wave_num .. "] +" .. added_req .. " nemici!")
+        hg_lib.party_hunter_speak_color(wave_msg, fcolor)
     end)
 end
 

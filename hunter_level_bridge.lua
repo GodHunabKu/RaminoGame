@@ -255,8 +255,10 @@ when chat."/hunter_request_trial_data" begin
             cleartimer("hunter_reset_check")
             local timer_reset = hg_lib.get_config("timer_reset_check") or 60
             loop_timer("hunter_reset_check", timer_reset)
-            
-            pc.setqf("hq_emerg_active", 0)
+
+            -- PERSISTENZA EMERGENCY QUEST: Restaura se ancora attiva, altrimenti fallisce
+            -- Questo permette ai player di continuare la quest anche dopo logout/login
+            timer("hq_restore_emergency", 3)  -- Ritarda per dare tempo all'UI di caricarsi
         end
 
         when logout begin
@@ -295,6 +297,11 @@ when chat."/hunter_request_trial_data" begin
         when hq_welcome_msg.timer begin
             local pts = pc.getqf("hq_welcome_pts") or 0
             hg_lib.show_rank_welcome(pc.get_name(), pts)
+        end
+
+        when hq_restore_emergency.timer begin
+            -- Ripristina emergency quest se attiva, altrimenti la fallisce
+            hg_lib.restore_emergency_on_login()
         end
 
         when hq_awaken_1.timer begin

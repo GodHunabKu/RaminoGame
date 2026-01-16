@@ -3493,9 +3493,9 @@ class Interface(object):
 		if self.wndHunterLevel:
 			self.wndHunterLevel.ShowWelcomeMessage(rankKey, name, points)
 
-	def HunterEmergency(self, title, seconds, vnum, count):
+	def HunterEmergency(self, title, seconds, vnums, count, description="", difficulty="NORMAL", penalty=0):
 		if self.wndHunterLevel:
-			self.wndHunterLevel.StartEmergencyQuest(title, seconds, vnum, count)
+			self.wndHunterLevel.StartEmergencyQuest(title, seconds, vnums, count, description, difficulty, penalty)
 
 	def HunterEmergencyUpdate(self, current):
 		if self.wndHunterLevel:
