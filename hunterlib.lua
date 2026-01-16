@@ -957,6 +957,12 @@ end
 function hg_lib.end_emergency(status)
     if pc.getqf("hq_emerg_active") == 0 then return end
 
+    -- IMPORTANTE: Salva i valori reward/penalty PRIMA di resettare i flag
+    local bonus_pts = pc.getqf("hq_emerg_reward_pts") or 0
+    local penalty_pts = pc.getqf("hq_emerg_penalty_pts") or 0
+    local reward_vnum = pc.getqf("hq_emerg_reward_vnum") or 0
+    local reward_count = pc.getqf("hq_emerg_reward_count") or 0
+
     -- Pulisci flag su TUTTI i membri del party
     if party.is_party() then
         local pids = {party.get_member_pids()}
@@ -964,10 +970,13 @@ function hg_lib.end_emergency(status)
             q.begin_other_pc_block(member_pid)
             pc.setqf("hq_emerg_active", 0)
             pc.setqf("hq_emerg_vnum", 0)
+            pc.setqf("hq_emerg_vnums", "")
             pc.setqf("hq_emerg_req", 0)
             pc.setqf("hq_emerg_cur", 0)
             pc.setqf("hq_emerg_expire", 0)
+            pc.setqf("hq_emerg_id", 0)
             pc.setqf("hq_emerg_reward_pts", 0)
+            pc.setqf("hq_emerg_penalty_pts", 0)
             pc.setqf("hq_emerg_reward_vnum", 0)
             pc.setqf("hq_emerg_reward_count", 0)
             pc.setqf("hq_speedkill_active", 0)
@@ -976,23 +985,30 @@ function hg_lib.end_emergency(status)
         end
     else
         pc.setqf("hq_emerg_active", 0)
+        pc.setqf("hq_emerg_vnum", 0)
+        pc.setqf("hq_emerg_vnums", "")
+        pc.setqf("hq_emerg_req", 0)
+        pc.setqf("hq_emerg_cur", 0)
+        pc.setqf("hq_emerg_expire", 0)
+        pc.setqf("hq_emerg_id", 0)
+        pc.setqf("hq_emerg_reward_pts", 0)
+        pc.setqf("hq_emerg_penalty_pts", 0)
+        pc.setqf("hq_emerg_reward_vnum", 0)
+        pc.setqf("hq_emerg_reward_count", 0)
         pc.setqf("hq_speedkill_active", 0)
+        pc.setqf("hq_speedkill_vnum", 0)
     end
-    
+
     cleartimer("hunter_emerg_tmr")
     cleartimer("hq_speedkill_timer")
 
     local s_str = "FAIL"
     if status == "SUCCESS" then s_str = "SUCCESS" end
-    
+
     -- Invia chiusura UI a TUTTI i membri del party
     hg_lib.party_cmdchat("HunterEmergencyClose " .. s_str)
 
     if status == "SUCCESS" then
-        local bonus_pts = pc.getqf("hq_emerg_reward_pts") or 0
-        local reward_vnum = pc.getqf("hq_emerg_reward_vnum") or 0
-        local reward_count = pc.getqf("hq_emerg_reward_count") or 0
-
         if bonus_pts > 0 then
             mysql_direct_query("UPDATE srv1_hunabku.hunter_quest_ranking SET total_points=total_points+"..bonus_pts..", spendable_points=spendable_points+"..bonus_pts.." WHERE player_id="..pc.get_player_id())
 
@@ -1023,7 +1039,6 @@ function hg_lib.end_emergency(status)
         hg_lib.send_player_data()
     else
         -- PENALITA' per emergency quest fallita
-        local penalty_pts = pc.getqf("hq_emerg_penalty_pts") or 0
         if penalty_pts > 0 then
             mysql_direct_query("UPDATE srv1_hunabku.hunter_quest_ranking SET total_points=GREATEST(0, total_points-"..penalty_pts.."), spendable_points=GREATEST(0, spendable_points-"..penalty_pts..") WHERE player_id="..pc.get_player_id())
 
@@ -1044,14 +1059,6 @@ function hg_lib.end_emergency(status)
             hg_lib.hunter_speak_color(msg, "ORANGE")
         end
     end
-
-    pc.setqf("hq_emerg_reward_pts", 0)
-    pc.setqf("hq_emerg_penalty_pts", 0)
-    pc.setqf("hq_emerg_reward_vnum", 0)
-    pc.setqf("hq_emerg_reward_count", 0)
-    pc.setqf("hq_emerg_vnum", 0)
-    pc.setqf("hq_emerg_vnums", "")
-    pc.setqf("hq_emerg_id", 0)
 end
 
 -- FIX: Cooldown per notifiche rival (evita spam ogni pochi secondi)
