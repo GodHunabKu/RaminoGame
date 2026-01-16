@@ -2196,12 +2196,20 @@ function hg_lib.restore_emergency_on_login()
     local description = "Completa la sfida prima che scada il tempo!"
     local difficulty = "NORMAL"
 
-    if emerg_id > 0 then
-        local c, d = mysql_direct_query("SELECT name, description, difficulty FROM srv1_hunabku.hunter_quest_emergencies WHERE id=" .. emerg_id)
-        if c > 0 and d[1] then
-            title = d[1].name or title
-            description = d[1].description or description
-            difficulty = d[1].difficulty or difficulty
+    -- SICUREZZA: Valida emerg_id come intero prima della query
+    emerg_id = tonumber(emerg_id) or 0
+    if emerg_id > 0 and emerg_id < 10000 then  -- Limita a range ragionevole
+        local ok, err = pcall(function()
+            local c, d = mysql_direct_query("SELECT name, description, difficulty FROM srv1_hunabku.hunter_quest_emergencies WHERE id=" .. emerg_id .. " LIMIT 1")
+            if c > 0 and d[1] then
+                title = d[1].name or title
+                description = d[1].description or description
+                difficulty = d[1].difficulty or difficulty
+            end
+        end)
+        if not ok then
+            -- Log errore ma continua con valori default
+            hg_lib.log_info("EMERGENCY", "RESTORE_DB_ERROR", tostring(err))
         end
     end
 

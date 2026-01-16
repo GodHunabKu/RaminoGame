@@ -292,6 +292,14 @@ when chat."/hunter_request_trial_data" begin
                 local throttle_key = pid .. "_mission_flush"
                 _G.hunter_mission_throttle[throttle_key] = nil
             end
+            -- Pulisci kill tracking per questo player
+            if _G.hunter_kill_tracking and _G.hunter_kill_tracking[pid] then
+                _G.hunter_kill_tracking[pid] = nil
+            end
+            -- Pulisci send_player_data throttle
+            if _G.hunter_player_data_throttle and _G.hunter_player_data_throttle[pid] then
+                _G.hunter_player_data_throttle[pid] = nil
+            end
         end
 
         when hq_welcome_msg.timer begin
