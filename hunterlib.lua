@@ -2444,6 +2444,7 @@ function hg_lib.on_emergency_kill(vnum)
                     local expire = pc.getqf("hq_emerg_expire") or 0
                     local reward_pts = pc.getqf("hq_emerg_reward_pts") or 0
                     local penalty_pts = pc.getqf("hq_emerg_penalty_pts") or 0
+                    local emerg_id = pc.getqf("hq_emerg_id") or 0
                     q.end_other_pc_block()
 
                     pc.setqf("hq_emerg_active", 1)
@@ -2454,6 +2455,7 @@ function hg_lib.on_emergency_kill(vnum)
                     pc.setqf("hq_emerg_expire", expire)
                     pc.setqf("hq_emerg_reward_pts", reward_pts)
                     pc.setqf("hq_emerg_penalty_pts", penalty_pts)
+                    pc.setqf("hq_emerg_id", emerg_id)
                     emerg_active = 1
                     break
                 end
@@ -2825,12 +2827,30 @@ function hg_lib.trigger_random_emergency()
         local reward_pts = tonumber(mission.reward_points) or 0
         -- Penalità = 50% della ricompensa (configurabile)
         local penalty_pts = math.floor(reward_pts * 0.5)
+        local emerg_id = tonumber(mission.id) or 0
+        local reward_vnum = tonumber(mission.reward_item_vnum) or 0
+        local reward_count = tonumber(mission.reward_item_count) or 0
 
-        pc.setqf("hq_emerg_id", tonumber(mission.id))
-        pc.setqf("hq_emerg_reward_pts", reward_pts)
-        pc.setqf("hq_emerg_penalty_pts", penalty_pts)
-        pc.setqf("hq_emerg_reward_vnum", tonumber(mission.reward_item_vnum) or 0)
-        pc.setqf("hq_emerg_reward_count", tonumber(mission.reward_item_count) or 0)
+        -- Setta i flag reward su TUTTI i membri del party (o solo player se solo)
+        -- Questo garantisce che anche se il triggerante si slogga, gli altri avranno i flag
+        if party.is_party() then
+            local pids = {party.get_member_pids()}
+            for i, member_pid in ipairs(pids) do
+                q.begin_other_pc_block(member_pid)
+                pc.setqf("hq_emerg_id", emerg_id)
+                pc.setqf("hq_emerg_reward_pts", reward_pts)
+                pc.setqf("hq_emerg_penalty_pts", penalty_pts)
+                pc.setqf("hq_emerg_reward_vnum", reward_vnum)
+                pc.setqf("hq_emerg_reward_count", reward_count)
+                q.end_other_pc_block()
+            end
+        else
+            pc.setqf("hq_emerg_id", emerg_id)
+            pc.setqf("hq_emerg_reward_pts", reward_pts)
+            pc.setqf("hq_emerg_penalty_pts", penalty_pts)
+            pc.setqf("hq_emerg_reward_vnum", reward_vnum)
+            pc.setqf("hq_emerg_reward_count", reward_count)
+        end
 
         -- Passa tutti i parametri incluso descrizione, difficoltà e penalità
         hg_lib.start_emergency(
@@ -2848,7 +2868,27 @@ function hg_lib.trigger_random_emergency()
         local dc = diff_color[mission.difficulty] or "|cffFFFFFF"
         syschat(dc .. "[" .. mission.difficulty .. "]|r Missione: " .. mission.name)
     else
-        hg_lib.start_emergency("Orda Improvvisa", 60, 0, 20, "Elimina i nemici prima che il tempo scada!", "EASY", 50, "0")
+        -- Fallback: emergency generica
+        local fallback_penalty = 25
+        if party.is_party() then
+            local pids = {party.get_member_pids()}
+            for i, member_pid in ipairs(pids) do
+                q.begin_other_pc_block(member_pid)
+                pc.setqf("hq_emerg_id", 0)
+                pc.setqf("hq_emerg_reward_pts", 0)
+                pc.setqf("hq_emerg_penalty_pts", fallback_penalty)
+                pc.setqf("hq_emerg_reward_vnum", 0)
+                pc.setqf("hq_emerg_reward_count", 0)
+                q.end_other_pc_block()
+            end
+        else
+            pc.setqf("hq_emerg_id", 0)
+            pc.setqf("hq_emerg_reward_pts", 0)
+            pc.setqf("hq_emerg_penalty_pts", fallback_penalty)
+            pc.setqf("hq_emerg_reward_vnum", 0)
+            pc.setqf("hq_emerg_reward_count", 0)
+        end
+        hg_lib.start_emergency("Orda Improvvisa", 60, 0, 20, "Elimina i nemici prima che il tempo scada!", "EASY", fallback_penalty, "0")
     end
 end
 
