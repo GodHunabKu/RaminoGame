@@ -2251,6 +2251,60 @@ function hg_lib.restore_emergency_on_login()
 end
 
 -- ============================================================
+-- RESEND EMERGENCY UI - Rimostra l'UI se il player ha un'emergency
+-- ma la finestra non e' visibile (es. dopo aver provato ad aprire frattura)
+-- ============================================================
+function hg_lib.resend_emergency_ui()
+    local emerg_active = pc.getqf("hq_emerg_active") or 0
+    if emerg_active ~= 1 then return end
+
+    local expire_time = pc.getqf("hq_emerg_expire") or 0
+    local now = get_time()
+
+    if expire_time <= now then
+        -- Scaduta, non mostrare nulla
+        return
+    end
+
+    -- Calcola tempo rimanente
+    local remaining_seconds = expire_time - now
+    local req = pc.getqf("hq_emerg_req") or 1
+    local cur = pc.getqf("hq_emerg_cur") or 0
+    local vnums_str = pc.getqf("hq_emerg_vnums") or "0"
+    local penalty_pts = pc.getqf("hq_emerg_penalty_pts") or 0
+    local emerg_id = pc.getqf("hq_emerg_id") or 0
+
+    -- Recupera info dal DB se possibile
+    local title = "Emergency Quest"
+    local description = "Completa la sfida prima che scada il tempo!"
+    local difficulty = "NORMAL"
+
+    emerg_id = tonumber(emerg_id) or 0
+    if emerg_id > 0 and emerg_id < 10000 then
+        local ok, err = pcall(function()
+            local c, d = mysql_direct_query("SELECT name, description, difficulty FROM srv1_hunabku.hunter_quest_emergencies WHERE id=" .. emerg_id .. " LIMIT 1")
+            if c > 0 and d[1] then
+                title = d[1].name or title
+                description = d[1].description or description
+                difficulty = d[1].difficulty or difficulty
+            end
+        end)
+    end
+
+    -- Invia UI al client
+    local desc_clean = hg_lib.clean_str(description)
+    local vnums_clean = hg_lib.clean_str(vnums_str)
+    local penalty_str = tostring(penalty_pts)
+
+    cmdchat("HunterEmergency " .. hg_lib.clean_str(title) .. "|" .. remaining_seconds .. "|" .. vnums_clean .. "|" .. req .. "|" .. desc_clean .. "|" .. difficulty .. "|" .. penalty_str)
+
+    -- Invia anche il progresso corrente
+    if cur > 0 then
+        hg_lib.update_emergency(cur)
+    end
+end
+
+-- ============================================================
 -- CHECK GATE SELECTION - Notifica se il player e' stato sorteggiato
 -- Chiamato al login per mostrare effetto + aprire finestra Gate
 -- ============================================================
@@ -3289,6 +3343,8 @@ end
 function hg_lib.open_gate(fname, frank, fcolor, pid)
     if pc.getqf("hq_emerg_active") == 1 then
         syschat("|cffFF0000[" .. hg_lib.get_text("CONFLICT", nil, "CONFLITTO") .. "]|r " .. hg_lib.get_text("CONFLICT_EMERGENCY", nil, "Completa prima l'Emergency Quest in corso!"))
+        -- Rimostra l'UI dell'emergency se non visibile
+        hg_lib.resend_emergency_ui()
         return
     end
     if pc.getqf("hq_defense_active") == 1 then
