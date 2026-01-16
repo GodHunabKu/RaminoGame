@@ -3482,16 +3482,31 @@ class GameWindow(ui.ScriptWindow):
 			pass
 
 	def __HunterEmergency(self, data):
-		"""Attiva missione Emergency Quest"""
+		"""Attiva missione Emergency Quest con parametri estesi"""
 		try:
 			parts = data.split("|")
 			if len(parts) >= 4:
-				title = parts[0]
+				title = parts[0].replace("+", " ")
 				seconds = int(parts[1])
-				vnum = int(parts[2])
+				vnums = parts[2]  # Può essere "0" o "8052,8053" per multi-vnum
 				count = int(parts[3])
+				description = ""
+				difficulty = "NORMAL"
+				penalty = 0
+
+				# Parametri opzionali: description, difficulty, penalty
+				if len(parts) >= 5:
+					description = parts[4].replace("+", " ")
+				if len(parts) >= 6:
+					difficulty = parts[5]
+				if len(parts) >= 7:
+					try:
+						penalty = int(parts[6])
+					except:
+						penalty = 0
+
 				if self.interface:
-					self.interface.HunterEmergency(title, seconds, vnum, count)
+					self.interface.HunterEmergency(title, seconds, vnums, count, description, difficulty, penalty)
 		except:
 			pass
 

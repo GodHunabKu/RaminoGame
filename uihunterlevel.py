@@ -2392,9 +2392,9 @@ class HunterLevelWindow(ui.ScriptWindow):
             fullMsg = title + " - " + message
             self.systemMsgWnd.ShowMessage(fullMsg, color)
     
-    def StartEmergencyQuest(self, title, seconds, mobVnum, count):
+    def StartEmergencyQuest(self, title, seconds, vnums, count, description="", difficulty="NORMAL", penalty=0):
         if self.emergencyWnd:
-            self.emergencyWnd.StartMission(title, seconds, mobVnum, count)
+            self.emergencyWnd.StartMission(title, seconds, vnums, count, description, difficulty, penalty)
     
     def UpdateEmergencyCount(self, current):
         if self.emergencyWnd:
