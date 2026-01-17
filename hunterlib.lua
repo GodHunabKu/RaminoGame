@@ -2461,7 +2461,7 @@ function hg_lib.is_vnum_in_list(vnum, vnum_str)
         return true  -- Se nessun vnum specificato, qualsiasi mob conta
     end
     local vnum_s = tostring(vnum)
-    for v in string.gmatch(vnum_str, "([^,]+)") do
+    for v in string.gfind(vnum_str, "([^,]+)") do
         v = string.gsub(v, "^%s*(.-)%s*$", "%1")  -- trim spaces
         if v == vnum_s or v == "0" then
             return true
