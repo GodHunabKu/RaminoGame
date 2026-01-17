@@ -2592,6 +2592,13 @@ function hg_lib.on_defense_mob_kill(killed_vnum)
     local current_killed = game.get_event_flag("hq_defense_killed_" .. fracture_vid) or 0
     current_killed = current_killed + 1
     game.set_event_flag("hq_defense_killed_" .. fracture_vid, current_killed)
+
+    -- Aggiorna l'UI Emergency con il progresso attuale
+    local total_req = game.get_event_flag("hq_defense_req_" .. fracture_vid) or 0
+    if total_req > 0 then
+        -- Invia update UI solo al player che ha ucciso (non a tutto il party)
+        cmdchat("HunterEmergencyUpdate " .. current_killed)
+    end
 end
 
 -- NOTA: _internal_defense_kill rimossa (mai chiamata, logica legacy)
@@ -3412,11 +3419,10 @@ function hg_lib.open_gate(fname, frank, fcolor, pid)
     pc.setqf("hq_defense_duration", duration)
 
     -- SEMPRE: Setta flag globali basate sul VID (funziona sia SOLO che PARTY)
-    -- NOTA: hq_defense_req inizia a 0, viene incrementato da ogni wave spawn
     local rank_idx = hg_lib.get_rank_index_by_letter(frank)
     game.set_event_flag("hq_defense_rank_" .. fracture_vid, rank_idx)
     game.set_event_flag("hq_defense_killed_" .. fracture_vid, 0)
-    game.set_event_flag("hq_defense_req_" .. fracture_vid, 0)  -- INIZIA A 0, le wave incrementeranno
+    game.set_event_flag("hq_defense_req_" .. fracture_vid, total_mobs_req)  -- Setta subito il totale richiesto
     
     -- PARTY: Attiva difesa su TUTTI i membri con TUTTI i flag necessari
     if party.is_party() then
@@ -3456,11 +3462,21 @@ function hg_lib.open_gate(fname, frank, fcolor, pid)
     end
 
     local defense_title = "DIFESA " .. fname
-    -- Invia popup a TUTTI i membri del party
-    hg_lib.party_cmdchat("HunterEmergency " .. hg_lib.clean_str(defense_title) .. "|" .. duration .. "|" .. total_mobs_req .. "|0")
+
+    -- Mapping rank -> difficulty per colori UI
+    local rank_to_difficulty = {
+        E = "EASY", D = "NORMAL", C = "NORMAL",
+        B = "HARD", A = "EXTREME", S = "GOD_MODE", N = "GOD_MODE"
+    }
+    local difficulty = rank_to_difficulty[frank] or "NORMAL"
+    local description = "Uccidi " .. total_mobs_req .. " mob per aprire la frattura!"
+
+    -- Invia popup a TUTTI i membri del party con formato corretto
+    -- Formato: title|seconds|vnum|count|description|difficulty|penalty
+    hg_lib.party_cmdchat("HunterEmergency " .. hg_lib.clean_str(defense_title) .. "|" .. duration .. "|0|" .. total_mobs_req .. "|" .. hg_lib.clean_str(description) .. "|" .. difficulty .. "|0")
 
     local msg = hg_lib.get_text("defense_start", {SECONDS = duration}, "UCCIDI TUTTI I MOB! Hai " .. duration .. " secondi!")
-    hg_lib.hunter_speak_color(msg, fcolor)
+    hg_lib.party_hunter_speak_color(msg, fcolor)
 
     -- Notifica party
     if party.is_party() then
@@ -3654,13 +3670,9 @@ function hg_lib.spawn_defense_wave(wave_num, rank_grade)
         
         pc.setqf("hq_defense_mob_req", current_req + added_req)
         
-        -- CRITICO: Aggiorna ANCHE la flag globale (usata dal timer e kill counter)
-        local fracture_vid = pc.getqf("hq_defense_fracture_vid") or 0
-        if fracture_vid > 0 then
-            local global_req = game.get_event_flag("hq_defense_req_" .. fracture_vid) or 0
-            game.set_event_flag("hq_defense_req_" .. fracture_vid, global_req + added_req)
-        end
-        
+        -- NOTA: hq_defense_req_ viene settato una sola volta all'inizio con il totale
+        -- Le wave non incrementano piu' il totale
+
         local msg = hg_lib.get_text("defense_wave_spawn", {WAVE = wave_num}) or ("ONDATA " .. wave_num .. "! DIFENDITI!")
         local fcolor = "RED"
         if hunter_defense_data and hunter_defense_data[pc.get_player_id()] then

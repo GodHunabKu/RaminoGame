@@ -754,7 +754,7 @@ class SystemSpeakWindow(ui.Window):
         self.SetSize(600, 80)
         self.SetPosition(
             (self.screenWidth - 600) // 2,
-            150
+            80  # Spostato piu' in alto per non sovrapporsi con altre UI
         )
         self.AddFlag("not_pick")
         
