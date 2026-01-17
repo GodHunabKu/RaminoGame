@@ -555,6 +555,10 @@ class EmergencyQuestWindow(ui.Window, DraggableMixin):
         self.difficulty = difficulty
         self.penalty = penalty
 
+        # RESET: Resetta il titolo sistema (potrebbe essere rimasto "MISSION FAILED")
+        self.systemLabel.SetText("[SYSTEM] EMERGENCY QUEST")
+        self.systemLabel.SetPackedFontColor(0xFFFF4444)
+
         # Imposta tema colori
         self.SetDifficultyTheme(difficulty)
 
@@ -595,6 +599,7 @@ class EmergencyQuestWindow(ui.Window, DraggableMixin):
             "GOD_MODE": "Diventa il Monarca!"
         }
         self.statusText.SetText(statusMessages.get(difficulty, "Sorgi, Cacciatore!"))
+        self.statusText.SetPackedFontColor(0xFFFFD700)  # Reset colore oro
 
         self.Show()
         self.SetTop()
