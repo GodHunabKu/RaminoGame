@@ -250,8 +250,8 @@ when chat."/hunter_request_trial_data" begin
             loop_timer("hunter_reset_check", timer_reset)
 
             -- PERSISTENZA EMERGENCY QUEST: Restaura se ancora attiva, altrimenti fallisce
-            -- Questo permette ai player di continuare la quest anche dopo logout/login
-            timer("hq_restore_emergency", 3)  -- Ritarda per dare tempo all'UI di caricarsi
+            -- Timer a 6 secondi per apparire DOPO tutti gli altri messaggi di login
+            timer("hq_restore_emergency", 6)
         end
 
         when logout begin

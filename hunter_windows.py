@@ -650,6 +650,14 @@ class EmergencyQuestWindow(ui.Window, DraggableMixin):
                     for b in self.borders:
                         b.SetColor(pulseColor)
 
+    def OnPressEscapeKey(self):
+        # Blocca la chiusura con ESC - la finestra rimane sempre visibile
+        return True
+
+    def Close(self):
+        # Blocca la chiusura manuale - solo EndMission puo' chiudere
+        pass
+
 
 # ═══════════════════════════════════════════════════════════════════════════════
 #  EVENT STATUS WINDOW - Popup evento attivo
