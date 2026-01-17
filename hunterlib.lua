@@ -1153,13 +1153,6 @@ function hg_lib.get_config(key)
     return 0
 end
 
--- Restituisce la lingua del player (default IT)
-function hg_lib.get_player_language(pid)
-    -- Per ora usa default IT - in futuro può leggere da DB o flag player
-    -- Formato: "IT", "EN", "DE", "ES", etc.
-    return "IT"
-end
-
 function hg_lib.get_rank_bonus(points)
     -- Usa cache se disponibile
     if _G.hunter_rank_bonus_cache then
