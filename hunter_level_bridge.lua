@@ -231,13 +231,6 @@ when chat."/hunter_request_trial_data" begin
             -- (player data, ranking, shop, achievements, timers, etc.)
             hg_lib.send_all_data()
 
-            -- Invia la lingua corrente del player al client
-            local player_lang = hg_lib.get_player_language(pid)
-            cmdchat("HunterPlayerLanguage " .. player_lang)
-
-            -- Invia le traduzioni nella lingua del player
-            hg_lib.send_translations_to_client(player_lang)
-
             if pc.getqf("hq_intro") == 0 then 
                 pc.setqf("hq_intro", 1)
                 hg_lib.show_awakening_sequence(pname)
@@ -257,8 +250,8 @@ when chat."/hunter_request_trial_data" begin
             loop_timer("hunter_reset_check", timer_reset)
 
             -- PERSISTENZA EMERGENCY QUEST: Restaura se ancora attiva, altrimenti fallisce
-            -- Questo permette ai player di continuare la quest anche dopo logout/login
-            timer("hq_restore_emergency", 3)  -- Ritarda per dare tempo all'UI di caricarsi
+            -- Timer a 6 secondi per apparire DOPO tutti gli altri messaggi di login
+            timer("hq_restore_emergency", 6)
         end
 
         when logout begin
@@ -1335,43 +1328,6 @@ when chat."/hunter_request_trial_data" begin
         -- SMART CLAIM - Riscuoti tutte le ricompense disponibili
         when chat."/hunter_smart_claim" begin
             hg_lib.smart_claim_all()
-        end
-
-        -- ============================================================
-        -- MULTI-LANGUAGE SYSTEM
-        -- ============================================================
-
-        -- Richiesta traduzioni dal client
-        when chat."/hunter_request_translations" begin
-            hg_lib.send_translations_to_client()
-        end
-
-        -- Richiesta lista lingue disponibili
-        when chat."/hunter_request_languages" begin
-            hg_lib.send_available_languages()
-        end
-
-        -- Cambio lingua dal client
-        when chat."/hunter_change_language" begin
-            local lang = string.gsub(input, "/hunter_change_language ", "")
-            if lang and lang ~= "" then
-                hg_lib.handle_language_change(lang)
-            end
-        end
-
-        -- Salva lingua dal popup Python
-        when chat."/hunter_set_language" begin
-            local lang = string.gsub(input, "/hunter_set_language ", "")
-            if lang and lang ~= "" and lang ~= "/hunter_set_language" then
-                local pid = pc.get_player_id()
-                local current_lang = hg_lib.get_player_language(pid)
-
-                if lang ~= current_lang then
-                    hg_lib.set_player_language(pid, lang)
-                    syschat("|cff00AAFF[HUNTER]|r Lingua cambiata in: " .. string.upper(lang))
-                    cmdchat("HunterLanguageChanged " .. lang)
-                end
-            end
         end
 
     end
