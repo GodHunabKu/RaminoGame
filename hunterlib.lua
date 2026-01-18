@@ -2188,14 +2188,7 @@ function hg_lib.get_rank_key(points)
 end
 
 function hg_lib.get_rank_data(rank_key)
-    local border = hg_lib.get_text_colored("welcome_" .. rank_key .. "_border")
-    local title = hg_lib.get_text_colored("welcome_" .. rank_key .. "_title")
-    local line1 = hg_lib.get_text_colored("welcome_" .. rank_key .. "_line1")
-    local line2 = hg_lib.get_text_colored("welcome_" .. rank_key .. "_line2")
-    local line3 = hg_lib.get_text_colored("welcome_" .. rank_key .. "_line3")
-    local stats = hg_lib.get_text_colored("welcome_" .. rank_key .. "_stats")
-    local quote = hg_lib.get_text_colored("welcome_" .. rank_key .. "_quote")
-        
+    -- Fallback completi per ogni rank
     local fallback = {
         ["E"] = {
             border = "|cff808080====================================================|r",
@@ -2205,18 +2198,73 @@ function hg_lib.get_rank_data(rank_key)
             welcome_line3 = "|cffAAAAAA   inizia con un singolo passo.|r",
             stats_line = "|cff808080   >> Status: ATTIVO | Minacce: IN ATTESA <<|r",
             quote = "|cff808080   'Il debole di oggi... il forte di domani.'|r"
+        },
+        ["D"] = {
+            border = "|cff8B4513====================================================|r",
+            title_line = "|cff8B4513              [D-RANK] CACCIATORE|r",
+            welcome_line1 = "|cffCD853F   Bentornato, Cacciatore di Rango D.|r",
+            welcome_line2 = "|cffCD853F   Hai dimostrato di avere potenziale.|r",
+            welcome_line3 = "|cffCD853F   Continua a crescere.|r",
+            stats_line = "|cff8B4513   >> Status: ATTIVO | Minacce: BASSE <<|r",
+            quote = "|cff8B4513   'Ogni caccia ti rende piu forte.'|r"
+        },
+        ["C"] = {
+            border = "|cff00FF00====================================================|r",
+            title_line = "|cff00FF00              [C-RANK] VETERANO|r",
+            welcome_line1 = "|cff32CD32   Bentornato, Veterano di Rango C.|r",
+            welcome_line2 = "|cff32CD32   La tua esperienza parla da sola.|r",
+            welcome_line3 = "|cff32CD32   Le fratture ti temono.|r",
+            stats_line = "|cff00FF00   >> Status: ATTIVO | Minacce: MODERATE <<|r",
+            quote = "|cff00FF00   'La forza nasce dalla perseveranza.'|r"
+        },
+        ["B"] = {
+            border = "|cff00BFFF====================================================|r",
+            title_line = "|cff00BFFF              [B-RANK] ELITE|r",
+            welcome_line1 = "|cff87CEEB   Bentornato, Elite di Rango B.|r",
+            welcome_line2 = "|cff87CEEB   Pochi raggiungono questo livello.|r",
+            welcome_line3 = "|cff87CEEB   Il Sistema riconosce il tuo valore.|r",
+            stats_line = "|cff00BFFF   >> Status: ATTIVO | Minacce: SIGNIFICATIVE <<|r",
+            quote = "|cff00BFFF   'I deboli fuggono, i forti combattono.'|r"
+        },
+        ["A"] = {
+            border = "|cffFFD700====================================================|r",
+            title_line = "|cffFFD700              [A-RANK] CAMPIONE|r",
+            welcome_line1 = "|cffFFFF00   Bentornato, Campione di Rango A.|r",
+            welcome_line2 = "|cffFFFF00   Sei tra i migliori cacciatori.|r",
+            welcome_line3 = "|cffFFFF00   Le ombre tremano al tuo passaggio.|r",
+            stats_line = "|cffFFD700   >> Status: ATTIVO | Minacce: ELEVATE <<|r",
+            quote = "|cffFFD700   'Solo i veri guerrieri arrivano qui.'|r"
+        },
+        ["S"] = {
+            border = "|cffFF4500====================================================|r",
+            title_line = "|cffFF4500              [S-RANK] LEGGENDA|r",
+            welcome_line1 = "|cffFF6347   Bentornato, Leggenda di Rango S.|r",
+            welcome_line2 = "|cffFF6347   Il tuo nome risuona tra i cacciatori.|r",
+            welcome_line3 = "|cffFF6347   Nessuna frattura puo fermarti.|r",
+            stats_line = "|cffFF4500   >> Status: ATTIVO | Minacce: ESTREME <<|r",
+            quote = "|cffFF4500   'Le leggende non muoiono mai.'|r"
+        },
+        ["N"] = {
+            border = "|cffFF00FF====================================================|r",
+            title_line = "|cffFF00FF          [N-RANK] MONARCA NAZIONALE|r",
+            welcome_line1 = "|cffFF69B4   Bentornato, Monarca Nazionale.|r",
+            welcome_line2 = "|cffFF69B4   Sei al vertice assoluto del Sistema.|r",
+            welcome_line3 = "|cffFF69B4   Il mondo si inchina davanti a te.|r",
+            stats_line = "|cffFF00FF   >> Status: SOVRANO | Minacce: ANNIENTATE <<|r",
+            quote = "|cffFF00FF   'Io sono il Sistema.'|r"
         }
     }
-    local fb = fallback["E"]
-        
+
+    local fb = fallback[rank_key] or fallback["E"]
+
     return {
-        border = border or fb.border,
-        title_line = title or fb.title_line,
-        welcome_line1 = line1 or fb.welcome_line1,
-        welcome_line2 = line2 or fb.welcome_line2,
-        welcome_line3 = line3 or fb.welcome_line3,
-        stats_line = stats or fb.stats_line,
-        quote = quote or fb.quote
+        border = fb.border,
+        title_line = fb.title_line,
+        welcome_line1 = fb.welcome_line1,
+        welcome_line2 = fb.welcome_line2,
+        welcome_line3 = fb.welcome_line3,
+        stats_line = fb.stats_line,
+        quote = fb.quote
     }
 end
 
