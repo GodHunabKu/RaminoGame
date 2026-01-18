@@ -1746,41 +1746,51 @@ end
 -- EVENTI PROGRAMMATI
 function hg_lib.get_active_event()
     local event = hg_lib.get_current_scheduled_event()
-        
+
     if event then
         local name = event.event_name or "Evento"
         local etype = event.event_type or "glory_rush"
         local glory = tonumber(event.reward_glory_base) or 50
         local desc = event.event_desc or ""
-            
+
+        -- Legge il moltiplicatore dal DB (colonna glory_multiplier), default basato su type
+        local custom_mult = tonumber(event.glory_multiplier)
+
         local mult = 1.0
         local apply_to = "points"
-            
+
         if etype == "glory_rush" then
-            mult = 2.0
+            mult = custom_mult or 2.0  -- Default x2, ma usa DB se presente
             apply_to = "points"
-            desc = "Gloria x2"
+            desc = "Gloria x" .. mult
         elseif etype == "first_rift" or etype == "rift_hunt" then
-            mult = 1.5
+            mult = custom_mult or 1.5
             apply_to = "chance"
-            desc = "Fratture +50"
+            desc = "Fratture +" .. math.floor((mult - 1) * 100)
         elseif etype == "double_spawn" then
-            mult = 2.0
+            mult = custom_mult or 2.0
             apply_to = "chance"
-            desc = "Spawn x2"
+            desc = "Spawn x" .. mult
         elseif etype == "super_metin" or etype == "metin_frenzy" then
-            mult = 1.5
+            mult = custom_mult or 1.5
             apply_to = "chance"
-            desc = "Metin +50"
+            desc = "Metin +" .. math.floor((mult - 1) * 100)
         elseif etype == "first_boss" or etype == "boss_massacre" then
-            mult = 1.5
+            mult = custom_mult or 1.5
             apply_to = "points"
-            desc = "Boss Glory +50"
+            desc = "Boss Glory +" .. math.floor((mult - 1) * 100)
+        else
+            -- Tipo sconosciuto ma con moltiplicatore custom
+            if custom_mult then
+                mult = custom_mult
+                apply_to = "points"
+                desc = "Gloria x" .. mult
+            end
         end
-            
+
         return name, mult, apply_to, desc
     end
-        
+
     return nil, 1.0, nil, nil
 end
 
@@ -1794,7 +1804,7 @@ function hg_lib.get_current_scheduled_event()
     local current_minute = t.min
     local current_total = current_hour * 60 + current_minute
         
-    local q = "SELECT id, event_name, event_type, event_desc, start_hour, start_minute, duration_minutes, min_rank, reward_glory_base, reward_glory_winner, color_scheme FROM srv1_hunabku.hunter_scheduled_events WHERE enabled=1 AND FIND_IN_SET(" .. day_db .. ", days_active) > 0 ORDER BY start_hour, start_minute"
+    local q = "SELECT id, event_name, event_type, event_desc, start_hour, start_minute, duration_minutes, min_rank, reward_glory_base, reward_glory_winner, color_scheme, glory_multiplier FROM srv1_hunabku.hunter_scheduled_events WHERE enabled=1 AND FIND_IN_SET(" .. day_db .. ", days_active) > 0 ORDER BY start_hour, start_minute"
         
     local c, d = mysql_direct_query(q)
         
@@ -5325,7 +5335,7 @@ function hg_lib.send_today_events(openWindow)
     local current_minute = t.min
     local current_total = current_hour * 60 + current_minute
         
-    local q = "SELECT id, event_name, event_type, event_desc, start_hour, start_minute, duration_minutes, min_rank, reward_glory_base, reward_glory_winner, color_scheme FROM srv1_hunabku.hunter_scheduled_events WHERE enabled=1 AND FIND_IN_SET(" .. day_db .. ", days_active) > 0 ORDER BY start_hour, start_minute"
+    local q = "SELECT id, event_name, event_type, event_desc, start_hour, start_minute, duration_minutes, min_rank, reward_glory_base, reward_glory_winner, color_scheme, glory_multiplier FROM srv1_hunabku.hunter_scheduled_events WHERE enabled=1 AND FIND_IN_SET(" .. day_db .. ", days_active) > 0 ORDER BY start_hour, start_minute"
     local c, d = mysql_direct_query(q)
     local BATCH_SIZE = 5
     local events_sent = 0
