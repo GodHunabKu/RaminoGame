@@ -27,6 +27,82 @@ function hg_lib.clean_str(str)
     return result
 end
 
+-- STORAGE MULTI-VNUM PER EMERGENCY (max 5 vnums come flags separati)
+-- pc.setqf accetta SOLO interi, non stringhe!
+function hg_lib.set_emerg_vnums(vnum_str)
+    -- Reset tutti i flag vnum
+    for i = 1, 5 do
+        pc.setqf("hq_emerg_vnum" .. i, 0)
+    end
+
+    if not vnum_str or vnum_str == "" or vnum_str == "0" then
+        return
+    end
+
+    -- Parse la stringa e salva ogni vnum come flag separato
+    local idx = 1
+    for v in string.gfind(tostring(vnum_str), "([^,]+)") do
+        v = string.gsub(v, "^%s*(.-)%s*$", "%1")  -- trim
+        local vnum = tonumber(v)
+        if vnum and vnum > 0 and idx <= 5 then
+            pc.setqf("hq_emerg_vnum" .. idx, vnum)
+            idx = idx + 1
+        end
+    end
+end
+
+function hg_lib.get_emerg_vnums()
+    -- Ricostruisce la stringa dai flags
+    local vnums = {}
+    for i = 1, 5 do
+        local v = pc.getqf("hq_emerg_vnum" .. i) or 0
+        if v > 0 then
+            table.insert(vnums, tostring(v))
+        end
+    end
+    if table.getn(vnums) == 0 then
+        return "0"
+    end
+    return table.concat(vnums, ",")
+end
+
+function hg_lib.clear_emerg_vnums()
+    for i = 1, 5 do
+        pc.setqf("hq_emerg_vnum" .. i, 0)
+    end
+end
+
+function hg_lib.is_vnum_in_emerg_list(vnum)
+    -- Controlla se un vnum è tra i vnums dell'emergency
+    local vnum_n = tonumber(vnum) or 0
+    if vnum_n == 0 then return false end
+
+    -- Controlla il vnum singolo principale
+    local main_vnum = pc.getqf("hq_emerg_vnum") or 0
+    if main_vnum > 0 and main_vnum == vnum_n then
+        return true
+    end
+
+    -- Controlla i multi-vnums
+    local has_any_vnum = false
+    for i = 1, 5 do
+        local v = pc.getqf("hq_emerg_vnum" .. i) or 0
+        if v > 0 then
+            has_any_vnum = true
+            if v == vnum_n then
+                return true
+            end
+        end
+    end
+
+    -- Se non ci sono vnums specificati, qualsiasi mob conta
+    if not has_any_vnum and main_vnum == 0 then
+        return true
+    end
+
+    return false
+end
+
 -- VALIDAZIONE RANK
 function hg_lib.validate_rank(rank)
     if rank == nil then return "E" end
@@ -921,7 +997,7 @@ function hg_lib.start_emergency(title, seconds, mob_vnum, count, description, di
             q.begin_other_pc_block(member_pid)
             pc.setqf("hq_emerg_active", 1)
             pc.setqf("hq_emerg_vnum", mob_vnum or 0)
-            pc.setqf("hq_emerg_vnums", vnum_str)  -- Multi-vnum string
+            hg_lib.set_emerg_vnums(vnum_str)  -- Multi-vnum come flags separati
             pc.setqf("hq_emerg_req", count)
             pc.setqf("hq_emerg_cur", 0)
             pc.setqf("hq_emerg_expire", expire_time)
@@ -931,7 +1007,7 @@ function hg_lib.start_emergency(title, seconds, mob_vnum, count, description, di
     else
         pc.setqf("hq_emerg_active", 1)
         pc.setqf("hq_emerg_vnum", mob_vnum or 0)
-        pc.setqf("hq_emerg_vnums", vnum_str)  -- Multi-vnum string
+        hg_lib.set_emerg_vnums(vnum_str)  -- Multi-vnum come flags separati
         pc.setqf("hq_emerg_req", count)
         pc.setqf("hq_emerg_cur", 0)
         pc.setqf("hq_emerg_expire", expire_time)
@@ -970,7 +1046,7 @@ function hg_lib.end_emergency(status)
             q.begin_other_pc_block(member_pid)
             pc.setqf("hq_emerg_active", 0)
             pc.setqf("hq_emerg_vnum", 0)
-            pc.setqf("hq_emerg_vnums", "")
+            hg_lib.clear_emerg_vnums()
             pc.setqf("hq_emerg_req", 0)
             pc.setqf("hq_emerg_cur", 0)
             pc.setqf("hq_emerg_expire", 0)
@@ -986,7 +1062,7 @@ function hg_lib.end_emergency(status)
     else
         pc.setqf("hq_emerg_active", 0)
         pc.setqf("hq_emerg_vnum", 0)
-        pc.setqf("hq_emerg_vnums", "")
+        hg_lib.clear_emerg_vnums()
         pc.setqf("hq_emerg_req", 0)
         pc.setqf("hq_emerg_cur", 0)
         pc.setqf("hq_emerg_expire", 0)
@@ -2195,7 +2271,7 @@ function hg_lib.restore_emergency_on_login()
     local emerg_id = pc.getqf("hq_emerg_id") or 0
     local req = pc.getqf("hq_emerg_req") or 1
     local cur = pc.getqf("hq_emerg_cur") or 0
-    local vnums_str = pc.getqf("hq_emerg_vnums") or "0"
+    local vnums_str = hg_lib.get_emerg_vnums()
     local penalty_pts = pc.getqf("hq_emerg_penalty_pts") or 0
 
     -- Recupera info dalla missione originale nel DB (se esiste)
@@ -2263,7 +2339,7 @@ function hg_lib.resend_emergency_ui()
     local remaining_seconds = expire_time - now
     local req = pc.getqf("hq_emerg_req") or 1
     local cur = pc.getqf("hq_emerg_cur") or 0
-    local vnums_str = pc.getqf("hq_emerg_vnums") or "0"
+    local vnums_str = hg_lib.get_emerg_vnums()
     local penalty_pts = pc.getqf("hq_emerg_penalty_pts") or 0
     local emerg_id = pc.getqf("hq_emerg_id") or 0
 
@@ -2482,7 +2558,7 @@ function hg_lib.on_emergency_kill(vnum)
                 q.begin_other_pc_block(member_pid)
                 local member_active = pc.getqf("hq_emerg_active") or 0
                 local member_vnum = pc.getqf("hq_emerg_vnum") or 0
-                local member_vnums = pc.getqf("hq_emerg_vnums") or ""
+                local member_vnums = hg_lib.get_emerg_vnums()  -- Legge i vnums del membro
                 q.end_other_pc_block()
 
                 -- Supporto multi-vnum: controlla se il vnum ucciso è valido
@@ -2503,7 +2579,7 @@ function hg_lib.on_emergency_kill(vnum)
 
                     pc.setqf("hq_emerg_active", 1)
                     pc.setqf("hq_emerg_vnum", member_vnum)
-                    pc.setqf("hq_emerg_vnums", member_vnums)
+                    hg_lib.set_emerg_vnums(member_vnums)  -- Copia i vnums al player corrente
                     pc.setqf("hq_emerg_req", req)
                     pc.setqf("hq_emerg_cur", 0)
                     pc.setqf("hq_emerg_expire", expire)
@@ -2518,14 +2594,8 @@ function hg_lib.on_emergency_kill(vnum)
     end
 
     if emerg_active == 1 then
-        local req_vnum = pc.getqf("hq_emerg_vnum") or 0
-        local vnums_str = pc.getqf("hq_emerg_vnums") or ""
-
-        -- Supporto multi-vnum: controlla se il vnum ucciso è valido
-        local vnum_valid = hg_lib.is_vnum_in_list(vnum, vnums_str)
-        if not vnum_valid and req_vnum ~= 0 then
-            vnum_valid = (req_vnum == vnum)
-        end
+        -- Usa la nuova funzione che controlla direttamente i flags
+        local vnum_valid = hg_lib.is_vnum_in_emerg_list(vnum)
 
         if vnum_valid then
             local current = pc.getqf("hq_emerg_cur") + 1
