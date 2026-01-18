@@ -2828,10 +2828,10 @@ function hg_lib.process_elite_kill(vnum)
     end
 
     if pc.getqf("hq_emerg_active") == 1 then
-        local emerg_vnum = pc.getqf("hq_emerg_vnum") or 0
-        if emerg_vnum == vnum then
-            cleartimer("hunter_emerg_tmr")
-            hg_lib.end_emergency("SUCCESS")
+        -- Usa la funzione multi-vnum per controllare se questo mob è un target
+        if hg_lib.is_vnum_in_emerg_list(vnum) then
+            -- Incrementa il contatore kills
+            hg_lib.on_emergency_kill(vnum)
         end
     end
 
@@ -2929,7 +2929,15 @@ function hg_lib.process_elite_kill(vnum)
         local trial_sub = before_trial - base_pts
         table.insert(modifier_log, {name = "Prova Esame", value = "-50%", add = -trial_sub})
     end
-    
+
+    -- MALUS EMERGENCY QUEST ATTIVA (-80% Gloria)
+    if pc.getqf("hq_emerg_active") == 1 then
+        local before_emerg = base_pts
+        base_pts = math.floor(base_pts * 0.20)  -- Solo 20% = -80%
+        local emerg_sub = before_emerg - base_pts
+        table.insert(modifier_log, {name = "EMERGENCY ATTIVA", value = "-80%", add = -emerg_sub})
+    end
+
     -- SYSCHAT DETTAGLIATO DEI MODIFICATORI
     local glory_label = hg_lib.get_text("GLORY", nil, "Gloria")
     syschat("|cff888888========== " .. hg_lib.get_text("GLORY_DETAIL", nil, "DETTAGLIO GLORIA") .. " =========|r")
@@ -2979,13 +2987,16 @@ function hg_lib.process_elite_kill(vnum)
 end
 
 function hg_lib.process_normal_kill()
-    -- NON contare kill durante Emergency Quest
+    -- Se c'è Emergency Quest attiva, controlla se scaduta
     if pc.getqf("hq_emerg_active") == 1 then
-        if get_time() > (pc.getqf("hq_emerg_expire") or 0) then
-            pc.setqf("hq_emerg_active", 0) 
-        else
-            return 
+        local expire = pc.getqf("hq_emerg_expire") or 0
+        if get_time() > expire then
+            -- SCADUTA! Chiama end_emergency per applicare penalità
+            hg_lib.end_emergency("FAIL")
         end
+        -- Durante emergency attiva, applica malus -80% Gloria (non blocca)
+        -- Il malus viene applicato in on_elite_kill e on_chest_open
+        return
     end
     
     -- NON contare kill durante Difesa Frattura (i mob della difesa non fanno spawnare fratture)
