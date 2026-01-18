@@ -1830,22 +1830,22 @@ end
 -- SISTEMA SORTEGGIO EVENTO
 function hg_lib.register_event_participant()
     local event = hg_lib.get_current_scheduled_event()
-    if not event then return end
-    
+    if not event then return false end
+
     local event_id = tonumber(event.id)
     local event_name = event.event_name or "Evento"
     local winner_prize = tonumber(event.reward_glory_winner) or 200
     local pid = pc.get_player_id()
     local pname = pc.get_name()
     local today = os.date("%Y-%m-%d")
-    
+
     -- Controlla se gia registrato oggi per questo evento
     local check_q = string.format(
         "SELECT id FROM srv1_hunabku.hunter_event_participants WHERE event_id=%d AND player_id=%d AND DATE(joined_at)='%s'",
         event_id, pid, today
     )
     local c = mysql_direct_query(check_q)
-    
+
     if c == 0 then
         -- Prima partecipazione oggi, registra
         local insert_q = string.format(
@@ -1853,11 +1853,43 @@ function hg_lib.register_event_participant()
             event_id, pid, mysql_escape_string(pname)
         )
         mysql_direct_query(insert_q)
-        
-        -- Notifica iscrizione con dettagli
-        hg_lib.syschat_t("EVENT_REGISTERED", "Sei iscritto all'estrazione finale!", nil, "FFD700")
-        syschat("|cff00FF00[" .. hg_lib.get_text("EVENT", nil, "EVENTO") .. "]|r " .. hg_lib.get_text("EVENT_LOTTERY_END", {PTS = winner_prize}, "Sorteggio a fine evento: +" .. winner_prize .. " Gloria!"))
+
+        -- Ottieni il rank del player per l'annuncio
+        local rc, rd = mysql_direct_query("SELECT total_points FROM srv1_hunabku.hunter_quest_ranking WHERE player_id=" .. pid)
+        local pts = 0
+        if rc > 0 and rd[1] then pts = tonumber(rd[1].total_points) or 0 end
+        local rank_key = hg_lib.get_rank_key(pts)
+
+        -- NOTICE_ALL: Annuncia la partecipazione in stile Solo Leveling
+        local rank_colors = {
+            E = "|cff808080", D = "|cff8B4513", C = "|cff00FF00",
+            B = "|cff00BFFF", A = "|cffFFD700", S = "|cffFF4500", N = "|cffFF00FF"
+        }
+        local rcolor = rank_colors[rank_key] or "|cffFFFFFF"
+        notice_all("|cffFFD700[SISTEMA]|r " .. rcolor .. pname .. " [" .. rank_key .. "-Rank]|r |cff00FF00si e' candidato al premio di|r |cffFFD700" .. event_name .. "|r")
+
+        -- Notifica personale in stile Solo Leveling
+        syschat("|cff00FF00=============================================|r")
+        syschat("|cffFFD700       [REGISTRAZIONE COMPLETATA]|r")
+        syschat("|cff00FF00=============================================|r")
+        syschat("")
+        syschat("|cffFFFFFF   Il Sistema ha registrato la tua presenza.|r")
+        syschat("|cffFFFFFF   Sei ora in lizza per il premio finale.|r")
+        syschat("")
+        syschat("|cffFFD700   Premio Sorteggio: +" .. winner_prize .. " Gloria|r")
+        syschat("")
+        syschat("|cff888888   'La fortuna favorisce gli audaci.'|r")
+        syschat("|cff00FF00=============================================|r")
+
+        hg_lib.hunter_speak_color("CANDIDATURA ACCETTATA. RESTA IN GIOCO.", "GOLD")
         cmdchat("HunterEventJoined " .. event_id .. "|" .. hg_lib.clean_str(event_name) .. "|0")
+
+        pc.setqf("hq_event_registered", 1)
+        return true
+    else
+        -- GIA' REGISTRATO - Non mostrare nulla qui, verra' mostrato dal notify
+        pc.setqf("hq_event_registered", 1)
+        return false
     end
 end
 
@@ -5398,6 +5430,7 @@ end
 function hg_lib.check_active_event_notify()
     local event = hg_lib.get_current_scheduled_event()
     if event then
+        local event_id = tonumber(event.id)
         local name = event.event_name or "Evento"
         local etype = event.event_type or "glory_rush"
         local desc = event.event_desc or ""
@@ -5405,7 +5438,7 @@ function hg_lib.check_active_event_notify()
         local winner_reward = tonumber(event.reward_glory_winner) or 200
         local color = event.color_scheme or "GOLD"
         local duration = tonumber(event.duration_minutes) or 30
-            
+
         local ts = get_time()
         local current_hour = hg_lib.get_hour_from_ts(ts)
         local current_minute = hg_lib.get_min_from_ts(ts)
@@ -5413,13 +5446,27 @@ function hg_lib.check_active_event_notify()
         local start_total = tonumber(event.start_hour) * 60 + tonumber(event.start_minute)
         local end_total = start_total + duration
         local remaining = end_total - current_total
-            
+
+        -- Controlla se già registrato
+        local pid = pc.get_player_id()
+        local today = os.date("%Y-%m-%d")
+        local check_q = string.format(
+            "SELECT id FROM srv1_hunabku.hunter_event_participants WHERE event_id=%d AND player_id=%d AND DATE(joined_at)='%s'",
+            event_id, pid, today
+        )
+        local c = mysql_direct_query(check_q)
+        local is_registered = (c > 0) and 1 or 0
+
         pc.setqf("hq_event_reward", reward)
         pc.setqf("hq_event_remaining", remaining)
         pc.setqf("hq_event_winner", winner_reward)
-            
+        pc.setqf("hq_event_registered", is_registered)
+
         timer("hq_event_notify", 8)
         cmdchat("HunterEventStatus " .. hg_lib.clean_str(name) .. "|" .. remaining * 60 .. "|" .. etype)
+    else
+        -- Nessun evento attivo, resetta il flag
+        pc.setqf("hq_event_registered", 0)
     end
 end
 
