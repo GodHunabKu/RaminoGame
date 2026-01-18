@@ -2149,6 +2149,27 @@ function hg_lib.show_rank_welcome(name, points)
     syschat(rank_data.border)
 end
 
+-- Versione che usa direttamente il rank_num invece di ricalcolarlo dai punti
+function hg_lib.show_rank_welcome_by_rank(name, rank_num, points)
+    local rank_letters = {"E", "D", "C", "B", "A", "S", "N"}
+    local rank_key = rank_letters[(rank_num or 0) + 1] or "E"
+    local rank_data = hg_lib.get_rank_data(rank_key)
+    cmdchat("HunterWelcome " .. rank_key .. "|" .. hg_lib.clean_str(name) .. "|" .. (points or 0))
+    syschat("")
+    syschat(rank_data.border)
+    syschat(rank_data.title_line)
+    syschat(rank_data.border)
+    syschat("")
+    syschat(rank_data.welcome_line1)
+    syschat(rank_data.welcome_line2)
+    syschat(rank_data.welcome_line3)
+    syschat("")
+    syschat(rank_data.stats_line)
+    syschat("")
+    syschat(rank_data.quote)
+    syschat(rank_data.border)
+end
+
 function hg_lib.get_rank_key(points)
     local N = tonumber(hg_lib.get_config("rank_threshold_N")) or 1500000
     local S = tonumber(hg_lib.get_config("rank_threshold_S")) or 500000

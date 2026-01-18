@@ -296,8 +296,10 @@ when chat."/hunter_request_trial_data" begin
         end
 
         when hq_welcome_msg.timer begin
+            -- Usa rank_num già calcolato invece di ricalcolarlo dai punti
+            local rank_num = pc.getqf("hq_rank_num") or 0
             local pts = pc.getqf("hq_welcome_pts") or 0
-            hg_lib.show_rank_welcome(pc.get_name(), pts)
+            hg_lib.show_rank_welcome_by_rank(pc.get_name(), rank_num, pts)
         end
 
         when hq_restore_emergency.timer begin
