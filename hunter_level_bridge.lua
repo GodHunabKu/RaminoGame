@@ -1268,14 +1268,39 @@ when chat."/hunter_request_trial_data" begin
             local reward = pc.getqf("hq_event_reward") or 50
             local remaining = pc.getqf("hq_event_remaining") or 30
             local winner = pc.getqf("hq_event_winner") or 200
-            
-            syschat("|cffFFAA00========================================|r")
-            syschat("|cffFFD700  [EVENTO IN CORSO]|r")
-            syschat("|cff00FF00  Guadagna Gloria per partecipare!|r")
-            syschat("|cffFFD700  Premio estrazione: +" .. winner .. " Gloria!|r")
-            syschat("|cffAAAAAA  Tempo rimanente: " .. remaining .. " minuti|r")
-            syschat("|cffFFAA00========================================|r")
-            hg_lib.hunter_speak_color("EVENTO ATTIVO! GIOCA PER ISCRIVERTI!", "GOLD")
+            local is_registered = pc.getqf("hq_event_registered") or 0
+
+            if is_registered == 1 then
+                -- GIA' REGISTRATO - Messaggio in stile Solo Leveling
+                syschat("|cff00FFFF=============================================|r")
+                syschat("|cffFFD700         [CANDIDATURA ATTIVA]|r")
+                syschat("|cff00FFFF=============================================|r")
+                syschat("")
+                syschat("|cff00FF00   Sei gia' iscritto all'estrazione.|r")
+                syschat("|cffFFFFFF   Resta online per scoprire l'esito.|r")
+                syschat("")
+                syschat("|cffFFD700   Premio in palio: +" .. winner .. " Gloria|r")
+                syschat("|cffAAAAAA   Tempo rimanente: " .. remaining .. " minuti|r")
+                syschat("")
+                syschat("|cff888888   'Il destino premia chi persevera.'|r")
+                syschat("|cff00FFFF=============================================|r")
+                hg_lib.hunter_speak_color("CANDIDATURA ATTIVA. ATTENDI L'ESITO.", "CYAN")
+            else
+                -- NON REGISTRATO - Invita a partecipare
+                syschat("|cffFFAA00=============================================|r")
+                syschat("|cffFFD700         [EVENTO IN CORSO]|r")
+                syschat("|cffFFAA00=============================================|r")
+                syschat("")
+                syschat("|cff00FF00   Guadagna Gloria per candidarti!|r")
+                syschat("|cffFFFFFF   Ogni azione ti avvicina al premio.|r")
+                syschat("")
+                syschat("|cffFFD700   Premio estrazione: +" .. winner .. " Gloria|r")
+                syschat("|cffAAAAAA   Tempo rimanente: " .. remaining .. " minuti|r")
+                syschat("")
+                syschat("|cff888888   'Solo chi combatte puo' vincere.'|r")
+                syschat("|cffFFAA00=============================================|r")
+                hg_lib.hunter_speak_color("EVENTO ATTIVO! COMBATTI PER ISCRIVERTI!", "GOLD")
+            end
         end
 
         -- QUICK ACCESS: Apre RankUp/GateAccess dalla finestra Trial
