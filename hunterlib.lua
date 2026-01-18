@@ -2511,7 +2511,7 @@ function hg_lib.check_gate_selection()
         local rank_req = d[1].min_rank or "E"
         local minutes_left = tonumber(d[1].minutes_left) or 0
         local hours_left = math.floor(minutes_left / 60)
-        local mins_left = math.fmod(minutes_left, 60)
+        local mins_left = minutes_left - (hours_left * 60)
 
         -- Invia comando al client per mostrare effetto e aprire finestra
         -- Formato: HunterGateSelected gateName|rank|hoursLeft|minsLeft
