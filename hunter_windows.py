@@ -1136,13 +1136,13 @@ class OvertakeWindow(ui.Window):
 
 # Colori per rank frattura
 DEFENSE_RANK_COLORS = {
-    "E": {"border": 0xFF808080, "glow": 0x44808080, "title": 0xFFAAAAAA, "accent": 0xFF606060},
-    "D": {"border": 0xFF00FF00, "glow": 0x4400FF00, "title": 0xFF55FF55, "accent": 0xFF00CC00},
-    "C": {"border": 0xFF00FFFF, "glow": 0x4400FFFF, "title": 0xFF55FFFF, "accent": 0xFF00CCCC},
-    "B": {"border": 0xFF0088FF, "glow": 0x440088FF, "title": 0xFF55AAFF, "accent": 0xFF0066CC},
-    "A": {"border": 0xFFAA00FF, "glow": 0x44AA00FF, "title": 0xFFCC55FF, "accent": 0xFF8800CC},
-    "S": {"border": 0xFFFF6600, "glow": 0x44FF6600, "title": 0xFFFFAA55, "accent": 0xFFCC5500},
-    "N": {"border": 0xFFFF0000, "glow": 0x44FF0000, "title": 0xFFFF5555, "accent": 0xFFCC0000},
+    "E": {"border": 0xFF00FF00, "glow": 0x4400FF00, "title": 0xFF55FF55, "accent": 0xFF00CC00},  # GREEN
+    "D": {"border": 0xFF0088FF, "glow": 0x440088FF, "title": 0xFF55AAFF, "accent": 0xFF0066CC},  # BLUE
+    "C": {"border": 0xFFFF8800, "glow": 0x44FF8800, "title": 0xFFFFAA55, "accent": 0xFFCC6600},  # ORANGE
+    "B": {"border": 0xFFFF0000, "glow": 0x44FF0000, "title": 0xFFFF5555, "accent": 0xFFCC0000},  # RED
+    "A": {"border": 0xFFFFD700, "glow": 0x44FFD700, "title": 0xFFFFE455, "accent": 0xFFCCAA00},  # GOLD
+    "S": {"border": 0xFFAA00FF, "glow": 0x44AA00FF, "title": 0xFFCC55FF, "accent": 0xFF8800CC},  # PURPLE
+    "N": {"border": 0xFFFFFFFF, "glow": 0x44FFFFFF, "title": 0xFFFFFFFF, "accent": 0xFFCCCCCC},  # BLACKWHITE (bianco brillante)
 }
 
 class FractureDefenseWindow(ui.Window, DraggableMixin):
