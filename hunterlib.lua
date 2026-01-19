@@ -4283,7 +4283,8 @@ function hg_lib.spawn_gate_mob_and_alert(rank_label, fcolor)
                     pc.setqf("hq_speedkill_duration", emergency_seconds)
                 end
                 
-                hg_lib.start_emergency(emergency_title, emergency_seconds, spawned_vnum, 1)
+                -- NON usare start_emergency per Boss/Super Metin
+                -- Ora abbiamo la UI dedicata SpeedKillTimer che non confligge con le fratture
 
                 cleartimer("hq_speedkill_timer")
                 loop_timer("hq_speedkill_timer", 1)
