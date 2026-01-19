@@ -106,18 +106,46 @@ end
 -- VALIDAZIONE RANK
 function hg_lib.validate_rank(rank)
     if rank == nil then return "E" end
-    
+
     -- PRENDE SOLO LA PRIMA LETTERA (es. "N-Rank" diventa "N")
     local clean_rank = string.upper(string.sub(rank, 1, 1))
-    
+
     local valid_ranks = {E=true, D=true, C=true, B=true, A=true, S=true, N=true}
-    
+
     if valid_ranks[clean_rank] then
         return clean_rank
     end
-    
+
     -- Se fallisce, ritorna E come sicurezza
     return "E"
+end
+
+-- RANK DAL LIVELLO - Usato per filtrare Emergency Quest
+-- Rank E: Level 1-49, Rank D: 50-74, Rank C: 75-99, Rank B: 100-124, Rank A: 125-149, Rank S: 150-174, Rank N: 175+
+function hg_lib.get_rank_from_level(level)
+    level = level or 1
+    if level >= 175 then return "N"
+    elseif level >= 150 then return "S"
+    elseif level >= 125 then return "A"
+    elseif level >= 100 then return "B"
+    elseif level >= 75 then return "C"
+    elseif level >= 50 then return "D"
+    else return "E"
+    end
+end
+
+-- Range di livello per ogni rank (per filtro Emergency Quest)
+function hg_lib.get_level_range_for_rank(rank)
+    local ranges = {
+        E = {min = 1, max = 49},
+        D = {min = 50, max = 74},
+        C = {min = 75, max = 99},
+        B = {min = 100, max = 124},
+        A = {min = 125, max = 149},
+        S = {min = 150, max = 174},
+        N = {min = 175, max = 200}
+    }
+    return ranges[rank] or ranges["E"]
 end
 
 -- CACHE MOB ELITE (FIX CRASH: Non cancella pi� la tabella globale brutalmente)
@@ -1146,7 +1174,8 @@ end
 -- Cooldown di 5 minuti (300 secondi) tra una notifica e l'altra per lo stesso tipo
 function hg_lib.notify_rival(name, points, label)
     local pid = pc.get_player_id()
-    local cooldown_key = "hq_rival_cooldown_" .. label:gsub("%s+", "_")
+    local label_safe = label or "unknown"
+    local cooldown_key = "hq_rival_cooldown_" .. string.gsub(label_safe, "%s+", "_")
     local last_notify = pc.getqf(cooldown_key) or 0
     local now = get_time()
     local cooldown_duration = 300  -- 5 minuti
@@ -3089,7 +3118,23 @@ function hg_lib.trigger_random_emergency()
     if pc.getqf("hq_speedkill_active") == 1 then return end
 
     local lv = pc.get_level()
-    local q = "SELECT id, name, description, duration_seconds, target_count, target_vnum, reward_points, reward_item_vnum, reward_item_count, difficulty FROM srv1_hunabku.hunter_quest_emergencies WHERE enabled = 1 AND min_level <= " .. lv .. " AND max_level >= " .. lv .. " ORDER BY RAND() LIMIT 1"
+    local player_rank = hg_lib.get_rank_from_level(lv)
+    local rank_range = hg_lib.get_level_range_for_rank(player_rank)
+
+    -- Filtra emergency quest in base al rank del player (evita missioni troppo difficili/facili)
+    -- La missione deve avere min_level e max_level che si sovrappongono al range del rank del player
+    local q = string.format([[
+        SELECT id, name, description, duration_seconds, target_count, target_vnum,
+               reward_points, reward_item_vnum, reward_item_count, difficulty
+        FROM srv1_hunabku.hunter_quest_emergencies
+        WHERE enabled = 1
+          AND min_level <= %d
+          AND max_level >= %d
+          AND ((min_level >= %d AND min_level <= %d) OR (max_level >= %d AND max_level <= %d)
+               OR (min_level <= %d AND max_level >= %d))
+        ORDER BY RAND() LIMIT 1
+    ]], lv, lv, rank_range.min, rank_range.max, rank_range.min, rank_range.max,
+        rank_range.min, rank_range.max)
 
     local c, d = mysql_direct_query(q)
 
