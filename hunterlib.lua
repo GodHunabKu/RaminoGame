@@ -3541,12 +3541,6 @@ function hg_lib.spawn_fracture()
 end
 
 function hg_lib.open_gate(fname, frank, fcolor, pid)
-    if pc.getqf("hq_emerg_active") == 1 then
-        syschat("|cffFF0000[" .. hg_lib.get_text("CONFLICT", nil, "CONFLITTO") .. "]|r " .. hg_lib.get_text("CONFLICT_EMERGENCY", nil, "Completa prima l'Emergency Quest in corso!"))
-        -- Rimostra l'UI dell'emergency se non visibile
-        hg_lib.resend_emergency_ui()
-        return
-    end
     if pc.getqf("hq_defense_active") == 1 then
         syschat("|cffFF0000[" .. hg_lib.get_text("CONFLICT", nil, "CONFLITTO") .. "]|r " .. hg_lib.get_text("CONFLICT_DEFENSE", nil, "Stai gia' difendendo un'altra frattura!"))
         return
