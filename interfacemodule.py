@@ -83,6 +83,8 @@ import uiBlend
 # ============================================================
 import uihunterlevel
 import hunter_windows
+import hunter_effects
+import uihunterlevel_gate_effects
 if app.ENABLE_MOUNT_COSTUME_SYSTEM:
 	import uiMount
 if app.ENABLE_RESP_SYSTEM:
@@ -905,7 +907,15 @@ class Interface(object):
 		if self.wndHunterLevel:
 			self.wndHunterLevel.Destroy()
 			self.wndHunterLevel = None
-				
+
+		# Reset tutte le finestre Hunter (FractureDefense, SpeedKill, Tips, Alert, Gate Effects)
+		try:
+			hunter_windows.ResetAllHunterWindows()
+			hunter_effects.ResetAllEffects()
+			uihunterlevel_gate_effects.ResetAllGateEffects()
+		except:
+			pass
+
 		if self.dlgWhisperWithoutTarget:
 			self.dlgWhisperWithoutTarget.Destroy()
 			del self.dlgWhisperWithoutTarget
@@ -1938,6 +1948,14 @@ class Interface(object):
 
 		if self.wndHunterLevel: # PULIZIA AGGIUNTA
 			self.wndHunterLevel.Close()
+
+		# Reset tutte le finestre Hunter (FractureDefense, SpeedKill, Tips, Alert, Gate Effects)
+		try:
+			hunter_windows.ResetAllHunterWindows()
+			hunter_effects.ResetAllEffects()
+			uihunterlevel_gate_effects.ResetAllGateEffects()
+		except:
+			pass
 
 		if app.TAKE_LEGEND_DAMAGE_BOARD_SYSTEM:
 			if self.wndLegendDamageWindow:

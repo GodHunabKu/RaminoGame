@@ -219,38 +219,39 @@ class BossAlertWindow(ui.Window):
     def OnUpdate(self):
         if not self.isFlashing:
             return
-        
+
         currentTime = app.GetTime()
-        
+
         if currentTime > self.endTime:
             self.Hide()
             self.isFlashing = False
             return
-        
-        # Animazione flash
-        cycle = (currentTime * 7) % 2
-        
-        if cycle < 1:
-            # FASE ACCESA
-            self.mainBar.SetColor(0xAAFF0000)
-            self.glowOuter.SetColor(0x30FF0000)
-            self.glowMiddle.SetColor(0x50FF0000)
-            self.neonTop.SetColor(0xFFFF0000)
-            self.neonBottom.SetColor(0xFFFF0000)
-            self.alertText.SetPackedFontColor(0xFFFFFFFF)
-            self.subText.SetPackedFontColor(0xFFFF0000)
-        else:
-            # FASE SPENTA
-            self.mainBar.SetColor(0x55880000)
-            self.glowOuter.SetColor(0x10880000)
-            self.glowMiddle.SetColor(0x20880000)
-            self.neonTop.SetColor(0xAACC0000)
-            self.neonBottom.SetColor(0xAACC0000)
-            self.alertText.SetPackedFontColor(0xAAFFAAAA)
-            self.subText.SetPackedFontColor(0xAABB0000)
-        
-        # Pulsazione angoli
-        goldPulse = int(abs((currentTime * 3) % 2 - 1) * 100) + 155
+
+        # Animazione PULSE LENTO (NO FLASH RAPIDO - epilepsy safe)
+        # Usa un seno lento (0.8 Hz invece di 3.5 Hz)
+        pulse = (math.sin(currentTime * 1.6) + 1.0) / 2.0  # Valore 0.0 - 1.0, ciclo ~0.8 Hz
+
+        # Calcola intensita basata sul pulse (variazione minima per evitare epilessia)
+        mainAlpha = int(0x77 + pulse * 0x33)  # 0x77 - 0xAA (meno contrasto)
+        glowOuterAlpha = int(0x15 + pulse * 0x15)
+        glowMiddleAlpha = int(0x25 + pulse * 0x25)
+
+        # Colori con pulse LENTO
+        self.mainBar.SetColor((mainAlpha << 24) | 0x00FF0000)
+        self.glowOuter.SetColor((glowOuterAlpha << 24) | 0x00FF0000)
+        self.glowMiddle.SetColor((glowMiddleAlpha << 24) | 0x00FF0000)
+
+        # Neon sempre acceso, solo leggera variazione alpha
+        neonAlpha = int(0xCC + pulse * 0x33)  # 0xCC - 0xFF
+        self.neonTop.SetColor((neonAlpha << 24) | 0x00FF0000)
+        self.neonBottom.SetColor((neonAlpha << 24) | 0x00FF0000)
+
+        # Testo sempre leggibile (NO flash)
+        self.alertText.SetPackedFontColor(0xFFFFFFFF)
+        self.subText.SetPackedFontColor(0xFFFF4444)
+
+        # Pulsazione angoli (lenta)
+        goldPulse = int(pulse * 80) + 175  # 175-255
         goldColor = 0x00FFD700 | (goldPulse << 24)
         
         self.cornerTL.SetColor(goldColor)
@@ -1224,3 +1225,44 @@ def CheckAndShowAwakening(level):
         ShowAwakening(level)
         return True
     return False
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+#  RESET ALL EFFECTS - Chiamato su cambio mappa/logout/relog
+# ═══════════════════════════════════════════════════════════════════════════════
+def ResetAllEffects():
+    """Resetta e nasconde tutti gli effetti Hunter al cambio mappa/logout/relog"""
+    global g_bossAlertWindow, g_systemInitWindow, g_awakeningEffect, g_rankUpEffect
+
+    # Reset BossAlertWindow
+    if g_bossAlertWindow is not None:
+        try:
+            g_bossAlertWindow.isFlashing = False
+            g_bossAlertWindow.endTime = 0
+            g_bossAlertWindow.Hide()
+        except:
+            pass
+
+    # Reset SystemInitWindow
+    if g_systemInitWindow is not None:
+        try:
+            g_systemInitWindow.isActive = False
+            g_systemInitWindow.Hide()
+        except:
+            pass
+
+    # Reset AwakeningEffect
+    if g_awakeningEffect is not None:
+        try:
+            g_awakeningEffect.isActive = False
+            g_awakeningEffect.Hide()
+        except:
+            pass
+
+    # Reset RankUpEffect
+    if g_rankUpEffect is not None:
+        try:
+            g_rankUpEffect.isActive = False
+            g_rankUpEffect.Hide()
+        except:
+            pass
