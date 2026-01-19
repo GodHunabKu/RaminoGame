@@ -2840,7 +2840,9 @@ function hg_lib.process_elite_kill(vnum)
         cmdchat("HunterSpeedKillEnd 1")
     end
 
-    if pc.getqf("hq_emerg_active") == 1 then
+    -- IMPORTANTE: Durante la difesa frattura, NON contare kill per Emergency
+    -- I due sistemi devono rimanere separati
+    if pc.getqf("hq_defense_active") ~= 1 and pc.getqf("hq_emerg_active") == 1 then
         -- Usa la funzione multi-vnum per controllare se questo mob è un target
         if hg_lib.is_vnum_in_emerg_list(vnum) then
             -- Incrementa il contatore kills
@@ -3993,9 +3995,12 @@ function hg_lib.complete_defense_success()
     
     -- Registra partecipazione automatica all'evento (se attivo)
     hg_lib.register_event_participant()
-    
+
     -- CHECK: Se evento "first_rift" attivo, il PRIMO a conquistare vince!
     hg_lib.check_first_rift_winner()
+
+    -- Ripristina UI dell'Emergency vera se c'è ancora una attiva
+    hg_lib.resend_emergency_ui()
 end
 
 function hg_lib.fail_defense(reason)
@@ -4137,6 +4142,9 @@ function hg_lib.fail_defense(reason)
         msg = hg_lib.get_text("defense_failed_retry") or ("DIFESA FALLITA! " .. reason .. " - La frattura Rank " .. frank .. " e' ancora li, puoi riprovare!")
     end
     hg_lib.hunter_speak_color(msg, "RED")
+
+    -- Ripristina UI dell'Emergency vera se c'è ancora una attiva
+    hg_lib.resend_emergency_ui()
 end
 
 function hg_lib.spawn_gate_mob_and_alert(rank_label, fcolor)
