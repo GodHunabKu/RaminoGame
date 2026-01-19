@@ -2839,7 +2839,7 @@ function hg_lib.process_elite_kill(vnum)
         
         pc.setqf("hq_speedkill_active", 0)
         cleartimer("hq_speedkill_timer")
-        cmdchat("HunterSpeedKillEnd 1")
+        hg_lib.party_cmdchat("HunterSpeedKillEnd 1")
     end
 
     -- IMPORTANTE: Durante la difesa frattura, NON contare kill per Emergency
@@ -4283,6 +4283,9 @@ function hg_lib.spawn_gate_mob_and_alert(rank_label, fcolor)
 
                 cleartimer("hq_speedkill_timer")
                 loop_timer("hq_speedkill_timer", 1)
+
+                -- Invia UI Speed Kill a tutti i membri del party
+                hg_lib.party_cmdchat("HunterSpeedKillStart " .. sel_type .. "|" .. emergency_seconds .. "|" .. string.gsub(mob_name, " ", "+"))
 
                 local sk_msg = ">> SFIDA VELOCITA': Abbattilo in " .. emergency_seconds .. "s per DOPPIA GLORIA! <<"
                 -- Notifica tutto il party

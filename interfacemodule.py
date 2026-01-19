@@ -3657,20 +3657,31 @@ class Interface(object):
 	# SPEED KILL SYSTEM
 	# ============================================================
 
-	def HunterSpeedKillStart(self, mobType, duration, color):
-		"""Inizia speed kill challenge"""
-		if self.wndHunterLevel:
-			self.wndHunterLevel.StartSpeedKill(mobType, duration, color)
+	def HunterSpeedKillStart(self, mobType, duration, mobName):
+		"""Inizia speed kill challenge con UI dedicata"""
+		speedKillWnd = hunter_windows.GetSpeedKillWindow()
+		if speedKillWnd:
+			# Determina il tipo di mob per i colori
+			mobTypeKey = "DEFAULT"
+			mobTypeStr = str(mobType).upper()
+			mobNameStr = str(mobName).upper()
+			if "METIN" in mobNameStr:
+				mobTypeKey = "SUPER_METIN"
+			elif "BOSS" in mobTypeStr or mobTypeStr.isdigit():
+				mobTypeKey = "BOSS"
+			speedKillWnd.StartSpeedKill(mobName, duration, mobTypeKey)
 
 	def HunterSpeedKillTimer(self, remainingSeconds):
 		"""Aggiorna timer speed kill"""
-		if self.wndHunterLevel:
-			self.wndHunterLevel.UpdateSpeedKillTimer(remainingSeconds)
+		speedKillWnd = hunter_windows.GetSpeedKillWindow()
+		if speedKillWnd:
+			speedKillWnd.UpdateTimer(remainingSeconds)
 
 	def HunterSpeedKillEnd(self, isSuccess):
 		"""Termina speed kill"""
-		if self.wndHunterLevel:
-			self.wndHunterLevel.EndSpeedKill(isSuccess)
+		speedKillWnd = hunter_windows.GetSpeedKillWindow()
+		if speedKillWnd:
+			speedKillWnd.EndSpeedKill(isSuccess == 1 or isSuccess == "1")
 
 # ==============================================================
 
