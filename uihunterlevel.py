@@ -29,6 +29,7 @@ def T(key, default=None, replacements=None):
 from hunter_core import (
     RANK_THEMES,
     RANK_COLORS,
+    COLOR_SCHEMES,
     GetRankKey,
     GetRankTheme,
     GetRankProgress,
@@ -2354,9 +2355,17 @@ class HunterLevelWindow(ui.ScriptWindow):
     # ========================================================================
 
     def ShowSystemMessage(self, msg, rankKey="E"):
-        """Mostra messaggio del Sistema con colore basato sul rank"""
+        """Mostra messaggio del Sistema con colore basato sul rank o color scheme"""
         if self.systemMsgWnd:
-            color = RANK_COLORS.get(rankKey, 0xFF808080)
+            # Prima prova RANK_COLORS (E,D,C,B,A,S,N)
+            color = RANK_COLORS.get(rankKey, None)
+            if color is None:
+                # Poi prova COLOR_SCHEMES (RED, GOLD, GREEN, BLUE, ORANGE, PURPLE)
+                scheme = COLOR_SCHEMES.get(rankKey.upper() if rankKey else "", None)
+                if scheme:
+                    color = scheme["border"]
+                else:
+                    color = 0xFF808080  # Grigio default
             self.systemMsgWnd.ShowMessage(msg, color)
             # REMOVED: SetRankColor() era ridondante e causava override del colore
     
