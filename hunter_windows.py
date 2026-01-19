@@ -1618,6 +1618,7 @@ class SpeedKillTimerWindow(ui.Window, DraggableMixin):
         self.pulsePhase = 0.0
         self.isActive = False
         self.flashPhase = 0.0
+        self.lastUpdateTime = 0  # Timeout fallback se server non manda End
 
         # Schema colori corrente
         self.colorScheme = SPEEDKILL_COLORS["DEFAULT"]
@@ -1805,6 +1806,7 @@ class SpeedKillTimerWindow(ui.Window, DraggableMixin):
         self.isActive = True
         self.pulsePhase = 0.0
         self.flashPhase = 0.0
+        self.lastUpdateTime = app.GetTime()  # Reset timeout
 
         # Imposta tipo e colori
         self.SetMobType(mobType)
@@ -1829,6 +1831,8 @@ class SpeedKillTimerWindow(ui.Window, DraggableMixin):
         """Aggiorna il timer"""
         if not self.isActive:
             return
+
+        self.lastUpdateTime = app.GetTime()  # Reset timeout
 
         minutes = remainingSeconds // 60
         seconds = remainingSeconds % 60
@@ -1894,6 +1898,14 @@ class SpeedKillTimerWindow(ui.Window, DraggableMixin):
             if currentTime > self.endTime:
                 self.Hide()
                 self.endTime = 0
+                return
+
+        # FALLBACK: Se nessun update ricevuto per 5 secondi mentre attivo,
+        # assume che la kill e' avvenuta e chiudi (server non ha mandato End)
+        if self.isActive and self.lastUpdateTime > 0:
+            if currentTime - self.lastUpdateTime > 5.0:
+                # Assume successo (kill completata senza segnale End)
+                self.EndSpeedKill(True)
                 return
 
         # Effetto pulse sui bordi quando attivo

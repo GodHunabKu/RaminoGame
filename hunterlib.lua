@@ -2625,12 +2625,13 @@ function hg_lib.check_overtake(pid, pname, col_name, added_val, label_nice)
     local new_score = my_score + added_val
     
     -- UNA SOLA query ottimizzata invece di 4 separate
+    -- NOTA: UNION ALL richiede parentesi attorno a ogni SELECT con ORDER BY/LIMIT
     local q = string.format([[
-        SELECT 'above' as type, player_name, %s as score FROM srv1_hunabku.hunter_quest_ranking 
-        WHERE %s > %d ORDER BY %s ASC LIMIT 1
+        (SELECT 'above' as type, player_name, %s as score FROM srv1_hunabku.hunter_quest_ranking
+        WHERE %s > %d ORDER BY %s ASC LIMIT 1)
         UNION ALL
-        SELECT 'below' as type, player_name, %s as score FROM srv1_hunabku.hunter_quest_ranking 
-        WHERE %s < %d AND %s >= %d AND player_id != %d ORDER BY %s DESC LIMIT 1
+        (SELECT 'below' as type, player_name, %s as score FROM srv1_hunabku.hunter_quest_ranking
+        WHERE %s < %d AND %s >= %d AND player_id != %d ORDER BY %s DESC LIMIT 1)
     ]], col_name, col_name, new_score, col_name, col_name, col_name, new_score, col_name, my_score, pid, col_name)
     
     local c, d = mysql_direct_query(q)
@@ -3693,17 +3694,20 @@ end
 
 -- Invia cmdchat a tutti i membri del party (o solo al player se solo)
 function hg_lib.party_cmdchat(cmd)
+    -- SEMPRE invia al player corrente prima (altrimenti potrebbe non riceverlo)
+    cmdchat(cmd)
+
     if party.is_party() then
-        -- Invia a tutti i membri del party
+        -- Poi invia agli altri membri del party
+        local my_pid = pc.get_player_id()
         local pids = {party.get_member_pids()}
         for i, pid in ipairs(pids) do
-            q.begin_other_pc_block(pid)
-            cmdchat(cmd)
-            q.end_other_pc_block()
+            if pid ~= my_pid then
+                q.begin_other_pc_block(pid)
+                cmdchat(cmd)
+                q.end_other_pc_block()
+            end
         end
-    else
-        -- Solo player
-        cmdchat(cmd)
     end
 end
 
