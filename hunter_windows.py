@@ -1378,7 +1378,12 @@ class FractureDefenseWindow(ui.Window, DraggableMixin):
 
     def SetRankColors(self, rank):
         """Imposta i colori in base al rank della frattura"""
-        rank = rank.upper().replace("-RANK", "")
+        if not rank:
+            rank = "E"
+        # Pulisci il rank: rimuovi spazi, "-RANK", e prendi solo la prima lettera
+        rank = str(rank).strip().upper().replace("-RANK", "").replace(" ", "")
+        if len(rank) > 0:
+            rank = rank[0]  # Prendi solo la prima lettera (E, D, C, B, A, S, N)
         if rank not in DEFENSE_RANK_COLORS:
             rank = "E"
 
@@ -1401,6 +1406,9 @@ class FractureDefenseWindow(ui.Window, DraggableMixin):
 
         # Aggiorna glow
         self.glowInner.SetColor(self.colorScheme["glow"])
+
+        # Aggiorna status text color
+        self.statusText.SetPackedFontColor(titleColor)
 
     def StartDefense(self, fractureName, rank, duration, totalMobs):
         """Inizia la difesa di una frattura"""
@@ -1440,15 +1448,29 @@ class FractureDefenseWindow(ui.Window, DraggableMixin):
         if required > 0:
             self.mobsRequired = required
 
-        # Aggiorna testo
-        self.progressText.SetText("%d / %d" % (killed, self.mobsRequired))
-
-        # Aggiorna barra
-        if self.mobsRequired > 0:
-            progress = float(killed) / float(self.mobsRequired)
-            barWidth = int(346 * min(1.0, progress))
-            self.progressBarFill.SetSize(barWidth, 21)
-            self.progressBarGlow.SetSize(barWidth, 10)
+        # Se killed >= required, mostra completato
+        if killed >= self.mobsRequired and self.mobsRequired > 0:
+            self.progressText.SetText("%d / %d - COMPLETATO!" % (self.mobsRequired, self.mobsRequired))
+            self.progressText.SetPackedFontColor(0xFF00FF00)
+            # Barra al 100%
+            self.progressBarFill.SetSize(346, 21)
+            self.progressBarGlow.SetSize(346, 10)
+            self.progressBarFill.SetColor(0xFF00FF00)  # Verde
+            # Status
+            self.statusText.SetText("OBIETTIVO RAGGIUNTO!")
+            self.statusText.SetPackedFontColor(0xFF00FF00)
+            self.statusSubText.SetText("Resisti fino alla fine del timer!")
+        else:
+            # Aggiorna testo normale
+            self.progressText.SetText("%d / %d" % (killed, self.mobsRequired))
+            self.progressText.SetPackedFontColor(0xFFFFFFFF)
+            # Aggiorna barra
+            if self.mobsRequired > 0:
+                progress = float(killed) / float(self.mobsRequired)
+                barWidth = int(346 * min(1.0, progress))
+                self.progressBarFill.SetSize(barWidth, 21)
+                self.progressBarGlow.SetSize(barWidth, 10)
+                self.progressBarFill.SetColor(self.colorScheme["border"])
 
         # Aggiorna wave
         if wave > 0 and wave != self.currentWave:
