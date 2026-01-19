@@ -982,6 +982,11 @@ end
 -- SISTEMA EMERGENZE
 -- Parametri opzionali: description, difficulty, penalty_pts, vnums (stringa con più vnum separati da virgola)
 function hg_lib.start_emergency(title, seconds, mob_vnum, count, description, difficulty, penalty_pts, vnums)
+    -- Non sovrascrivere una Emergency già attiva
+    if pc.getqf("hq_emerg_active") == 1 then
+        return false
+    end
+
     local expire_time = get_time() + seconds
 
     -- Supporto multi-vnum: se vnums è fornito, usa quello, altrimenti usa mob_vnum singolo
