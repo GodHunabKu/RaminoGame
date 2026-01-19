@@ -4040,6 +4040,27 @@ function hg_lib.complete_defense_success()
     pc.setqf("hq_elite_spawn_time", get_time())
     pc.setqf("hq_pending_elite", (pc.getqf("hq_pending_elite") or 0) + 1)
 
+    -- FIX: Aggiorna missioni giornaliere per completamento frattura (TUTTI nel party!)
+    -- Traccia sia "complete_fracture" (generico) che "seal_fracture" (compatibilità)
+    hg_lib.update_mission_progress("complete_fracture", 1, 0)
+    hg_lib.update_mission_progress("seal_fracture", 1, 0)  -- Anche seal per compatibilità con vecchie missioni
+    hg_lib.add_trial_progress("fracture_seal", 1)
+
+    -- FIX: Aggiorna missioni anche per gli altri membri del party
+    if party.is_party() then
+        local my_pid = pc.get_player_id()
+        local pids = {party.get_member_pids()}
+        for i, member_pid in ipairs(pids) do
+            if member_pid ~= my_pid then
+                q.begin_other_pc_block(member_pid)
+                hg_lib.update_mission_progress("complete_fracture", 1, 0)
+                hg_lib.update_mission_progress("seal_fracture", 1, 0)
+                hg_lib.add_trial_progress("fracture_seal", 1)
+                q.end_other_pc_block()
+            end
+        end
+    end
+
     local msg = hg_lib.get_text("defense_success_click") or "FRATTURA CONQUISTATA! Hai 5 minuti per aprirla!"
     hg_lib.party_hunter_speak_color(msg, fcolor)
     hg_lib.party_cmdchat("HunterSystemSpeak " .. fcolor .. "|TOCCA IL PORTALE!")
