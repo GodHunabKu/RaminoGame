@@ -1146,7 +1146,8 @@ end
 -- Cooldown di 5 minuti (300 secondi) tra una notifica e l'altra per lo stesso tipo
 function hg_lib.notify_rival(name, points, label)
     local pid = pc.get_player_id()
-    local cooldown_key = "hq_rival_cooldown_" .. label:gsub("%s+", "_")
+    local label_safe = label or "unknown"
+    local cooldown_key = "hq_rival_cooldown_" .. string.gsub(label_safe, "%s+", "_")
     local last_notify = pc.getqf(cooldown_key) or 0
     local now = get_time()
     local cooldown_duration = 300  -- 5 minuti
