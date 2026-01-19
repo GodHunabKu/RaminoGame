@@ -462,7 +462,7 @@ function hg_lib.is_dungeon_map(map_index)
         map_index = pc.get_map_index()
     end
     -- Normalizza map_index (rimuovi istanza dungeon: 17001 -> 17)
-    local base_map = math.mod(map_index, 10000)
+    local base_map = hg_lib.modulo(map_index, 10000)
     return _G.hunter_dungeon_maps[base_map] == true
 end
 
@@ -470,7 +470,7 @@ function hg_lib.get_map_name(map_index)
     if not map_index then
         map_index = pc.get_map_index()
     end
-    local base_map = math.mod(map_index, 10000)
+    local base_map = hg_lib.modulo(map_index, 10000)
     return _G.hunter_map_names[base_map] or ("Mappa " .. base_map)
 end
 
