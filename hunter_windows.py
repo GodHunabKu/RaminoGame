@@ -1935,184 +1935,212 @@ class SpeedKillTimerWindow(ui.Window, DraggableMixin):
 
 # ═══════════════════════════════════════════════════════════════════════════════
 #  HUNTER TIPS WINDOW - Consigli Hunter con fade elegante
-#  Mostra gli ultimi 5 tips in stile oro, sfumano gradualmente
+#  Mostra UN tip alla volta con layout ampio per testo completo
 # ═══════════════════════════════════════════════════════════════════════════════
 
 class HunterTipsWindow(ui.Window, DraggableMixin):
-    """Finestra per Hunter Tips - Stile oro elegante"""
+    """Finestra per Hunter Tips - Stile oro elegante, 1 tip alla volta"""
 
-    MAX_TIPS = 5
-    TIP_FADE_TIME = 15.0  # Secondi prima che un tip inizi a sfumare
-    TIP_FADE_DURATION = 3.0  # Durata della sfumatura
+    TIP_DISPLAY_TIME = 12.0  # Secondi di visualizzazione
+    TIP_FADE_DURATION = 2.0  # Durata della sfumatura
 
     def __init__(self):
         ui.Window.__init__(self)
-        self.SetSize(320, 160)
+        self.SetSize(420, 85)
         screenWidth = wndMgr.GetScreenWidth()
         screenHeight = wndMgr.GetScreenHeight()
-        # Posizione a sinistra, sotto la minimappa
+        # Posizione a sinistra
         defaultX = 10
-        defaultY = 200
+        defaultY = 250
 
         self.InitDraggable("HunterTipsWindow", defaultX, defaultY)
 
-        # Lista dei tips: [{"text": str, "startTime": float, "alpha": int}]
-        self.tips = []
-        self.tipLabels = []
+        # Stato corrente
+        self.currentTip = ""
+        self.startTime = 0
+        self.alpha = 255
+        self.pulsePhase = 0.0
 
-        # ═══════════ SFONDO SEMI-TRASPARENTE ═══════════
+        # ═══════════ SFONDO PRINCIPALE ═══════════
         self.bgOuter = ui.Bar()
         self.bgOuter.SetParent(self)
         self.bgOuter.SetPosition(0, 0)
-        self.bgOuter.SetSize(320, 160)
-        self.bgOuter.SetColor(0xAA0A0A14)
+        self.bgOuter.SetSize(420, 85)
+        self.bgOuter.SetColor(0xDD0A0A14)
         self.bgOuter.AddFlag("not_pick")
         self.bgOuter.Show()
 
-        # Bordo oro
+        # Glow interno oro
+        self.glowInner = ui.Bar()
+        self.glowInner.SetParent(self)
+        self.glowInner.SetPosition(2, 2)
+        self.glowInner.SetSize(416, 81)
+        self.glowInner.SetColor(0x22FFD700)
+        self.glowInner.AddFlag("not_pick")
+        self.glowInner.Show()
+
+        # Bordi oro animati
         self.borders = []
-        borderColor = 0xAAFFD700
+        borderColor = 0xCCFFD700
         # Top
-        b = ui.Bar(); b.SetParent(self); b.SetPosition(0, 0); b.SetSize(320, 2); b.SetColor(borderColor); b.AddFlag("not_pick"); b.Show()
+        b = ui.Bar(); b.SetParent(self); b.SetPosition(0, 0); b.SetSize(420, 2); b.SetColor(borderColor); b.AddFlag("not_pick"); b.Show()
         self.borders.append(b)
         # Bottom
-        b = ui.Bar(); b.SetParent(self); b.SetPosition(0, 158); b.SetSize(320, 2); b.SetColor(borderColor); b.AddFlag("not_pick"); b.Show()
+        b = ui.Bar(); b.SetParent(self); b.SetPosition(0, 83); b.SetSize(420, 2); b.SetColor(borderColor); b.AddFlag("not_pick"); b.Show()
         self.borders.append(b)
         # Left
-        b = ui.Bar(); b.SetParent(self); b.SetPosition(0, 0); b.SetSize(2, 160); b.SetColor(borderColor); b.AddFlag("not_pick"); b.Show()
+        b = ui.Bar(); b.SetParent(self); b.SetPosition(0, 0); b.SetSize(2, 85); b.SetColor(borderColor); b.AddFlag("not_pick"); b.Show()
         self.borders.append(b)
         # Right
-        b = ui.Bar(); b.SetParent(self); b.SetPosition(318, 0); b.SetSize(2, 160); b.SetColor(borderColor); b.AddFlag("not_pick"); b.Show()
+        b = ui.Bar(); b.SetParent(self); b.SetPosition(418, 0); b.SetSize(2, 85); b.SetColor(borderColor); b.AddFlag("not_pick"); b.Show()
         self.borders.append(b)
 
         # ═══════════ HEADER ═══════════
         self.headerBg = ui.Bar()
         self.headerBg.SetParent(self)
         self.headerBg.SetPosition(2, 2)
-        self.headerBg.SetSize(316, 22)
-        self.headerBg.SetColor(0x66FFD700)
+        self.headerBg.SetSize(416, 20)
+        self.headerBg.SetColor(0x55FFD700)
         self.headerBg.AddFlag("not_pick")
         self.headerBg.Show()
 
+        # Icona lampadina/info
         self.titleIcon = ui.TextLine()
         self.titleIcon.SetParent(self)
-        self.titleIcon.SetPosition(10, 5)
-        self.titleIcon.SetText("[i]")
+        self.titleIcon.SetPosition(10, 4)
+        self.titleIcon.SetText("[!]")
         self.titleIcon.SetPackedFontColor(0xFFFFD700)
+        self.titleIcon.SetOutline()
         self.titleIcon.AddFlag("not_pick")
         self.titleIcon.Show()
 
+        # Titolo
         self.titleText = ui.TextLine()
         self.titleText.SetParent(self)
-        self.titleText.SetPosition(30, 5)
-        self.titleText.SetText("HUNTER TIPS")
+        self.titleText.SetPosition(30, 4)
+        self.titleText.SetText("HUNTER TIP")
         self.titleText.SetPackedFontColor(0xFFFFD700)
         self.titleText.SetOutline()
         self.titleText.AddFlag("not_pick")
         self.titleText.Show()
 
-        # ═══════════ TIPS AREA ═══════════
-        # Crea 5 label per i tips
-        for i in range(self.MAX_TIPS):
-            tipLabel = ui.TextLine()
-            tipLabel.SetParent(self)
-            tipLabel.SetPosition(10, 30 + (i * 25))
-            tipLabel.SetText("")
-            tipLabel.SetPackedFontColor(0xFFFFD700)
-            tipLabel.AddFlag("not_pick")
-            tipLabel.Show()
-            self.tipLabels.append(tipLabel)
+        # ═══════════ AREA TESTO TIP (3 righe) ═══════════
+        self.tipLines = []
+        for i in range(3):
+            tipLine = ui.TextLine()
+            tipLine.SetParent(self)
+            tipLine.SetPosition(12, 28 + (i * 18))
+            tipLine.SetText("")
+            tipLine.SetPackedFontColor(0xFFFFFFFF)
+            tipLine.AddFlag("not_pick")
+            tipLine.Show()
+            self.tipLines.append(tipLine)
 
-        self.pulsePhase = 0.0
         self.Hide()
 
+    def _WrapText(self, text, maxCharsPerLine=55):
+        """Spezza il testo in righe di massimo maxCharsPerLine caratteri"""
+        words = text.split(' ')
+        lines = []
+        currentLine = ""
+
+        for word in words:
+            if len(currentLine) + len(word) + 1 <= maxCharsPerLine:
+                if currentLine:
+                    currentLine += " " + word
+                else:
+                    currentLine = word
+            else:
+                if currentLine:
+                    lines.append(currentLine)
+                currentLine = word
+
+        if currentLine:
+            lines.append(currentLine)
+
+        # Massimo 3 righe
+        return lines[:3]
+
     def AddTip(self, tipText):
-        """Aggiunge un nuovo tip alla lista"""
-        # Rimuovi il prefisso [HUNTER TIP] se presente
-        tipText = tipText.replace("[HUNTER TIP] ", "").replace("[HUNTER TIP]", "")
+        """Mostra un nuovo tip"""
+        # Rimuovi prefissi se presenti
+        tipText = tipText.replace("[HUNTER TIP] ", "").replace("[HUNTER TIP]", "").strip()
 
-        # Tronca se troppo lungo
-        if len(tipText) > 45:
-            tipText = tipText[:42] + "..."
+        self.currentTip = tipText
+        self.startTime = app.GetTime()
+        self.alpha = 255
 
-        # Aggiungi nuovo tip all'inizio
-        newTip = {
-            "text": tipText,
-            "startTime": app.GetTime(),
-            "alpha": 255
-        }
-        self.tips.insert(0, newTip)
-
-        # Mantieni solo MAX_TIPS
-        if len(self.tips) > self.MAX_TIPS:
-            self.tips = self.tips[:self.MAX_TIPS]
+        # Spezza il testo in righe
+        lines = self._WrapText(tipText)
 
         # Aggiorna le label
-        self._UpdateLabels()
-
-        # Mostra la finestra se nascosta
-        if not self.IsShow():
-            self.Show()
-
-    def _UpdateLabels(self):
-        """Aggiorna le label con i tips correnti"""
-        for i, label in enumerate(self.tipLabels):
-            if i < len(self.tips):
-                tip = self.tips[i]
-                label.SetText(tip["text"])
-                alpha = tip.get("alpha", 255)
-                # Colore oro con alpha variabile
-                color = (alpha << 24) | 0x00FFD700
-                label.SetPackedFontColor(color)
+        for i, tipLine in enumerate(self.tipLines):
+            if i < len(lines):
+                tipLine.SetText(lines[i])
+                tipLine.SetPackedFontColor(0xFFFFFFFF)
             else:
-                label.SetText("")
+                tipLine.SetText("")
+
+        # Mostra la finestra
+        self.Show()
+        self.SetTop()
+
+    def Close(self):
+        """Chiude la finestra"""
+        self.currentTip = ""
+        self.startTime = 0
+        self.Hide()
 
     def OnUpdate(self):
         if not self.IsShow():
             return
 
-        currentTime = app.GetTime()
-        hasVisibleTips = False
-
-        # Aggiorna alpha per ogni tip
-        for i, tip in enumerate(self.tips):
-            elapsed = currentTime - tip["startTime"]
-
-            if elapsed < self.TIP_FADE_TIME:
-                # Tip ancora completamente visibile
-                tip["alpha"] = 255
-                hasVisibleTips = True
-            elif elapsed < self.TIP_FADE_TIME + self.TIP_FADE_DURATION:
-                # Tip sta sfumando
-                fadeProgress = (elapsed - self.TIP_FADE_TIME) / self.TIP_FADE_DURATION
-                tip["alpha"] = int(255 * (1.0 - fadeProgress))
-                hasVisibleTips = True
-            else:
-                # Tip completamente sfumato
-                tip["alpha"] = 0
-
-        # Rimuovi tips completamente sfumati
-        self.tips = [t for t in self.tips if t["alpha"] > 0]
-
-        # Aggiorna le label
-        self._UpdateLabels()
-
-        # Nascondi se non ci sono tips visibili
-        if not hasVisibleTips and len(self.tips) == 0:
+        if self.startTime == 0:
             self.Hide()
             return
 
+        currentTime = app.GetTime()
+        elapsed = currentTime - self.startTime
+
+        # Calcola alpha per fade
+        if elapsed < self.TIP_DISPLAY_TIME:
+            # Tip visibile
+            self.alpha = 255
+        elif elapsed < self.TIP_DISPLAY_TIME + self.TIP_FADE_DURATION:
+            # Fase fade out
+            fadeProgress = (elapsed - self.TIP_DISPLAY_TIME) / self.TIP_FADE_DURATION
+            self.alpha = int(255 * (1.0 - fadeProgress))
+        else:
+            # Tip terminato
+            self.Hide()
+            self.startTime = 0
+            return
+
+        # Aggiorna alpha dei testi
+        textColor = (self.alpha << 24) | 0x00FFFFFF
+        goldColor = (self.alpha << 24) | 0x00FFD700
+        for tipLine in self.tipLines:
+            tipLine.SetPackedFontColor(textColor)
+        self.titleText.SetPackedFontColor(goldColor)
+        self.titleIcon.SetPackedFontColor(goldColor)
+
+        # Aggiorna alpha sfondo e bordi
+        bgAlpha = int(self.alpha * 0.87)  # 0xDD = 221/255 = 0.87
+        self.bgOuter.SetColor((bgAlpha << 24) | 0x000A0A14)
+
+        glowAlpha = int(self.alpha * 0.13)  # 0x22 = 34/255 = 0.13
+        self.glowInner.SetColor((glowAlpha << 24) | 0x00FFD700)
+
+        headerAlpha = int(self.alpha * 0.33)  # 0x55
+        self.headerBg.SetColor((headerAlpha << 24) | 0x00FFD700)
+
         # Effetto pulse leggero sui bordi
-        self.pulsePhase += 0.05
+        self.pulsePhase += 0.08
         pulse = (math.sin(self.pulsePhase) + 1.0) / 2.0
-        alpha = int(150 + pulse * 50)
-        borderColor = (alpha << 24) | 0x00FFD700
+        borderAlpha = int(self.alpha * (0.7 + pulse * 0.3))
+        borderColor = (borderAlpha << 24) | 0x00FFD700
         for border in self.borders:
             border.SetColor(borderColor)
-
-    def Close(self):
-        """Chiude la finestra"""
-        self.Hide()
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
