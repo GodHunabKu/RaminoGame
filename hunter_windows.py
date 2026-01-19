@@ -2246,3 +2246,79 @@ def ShowRivalTracker(rivalName, rivalGlory, myGlory, position):
 def ShowOvertake(overtakenName, newPosition):
     """Mostra notifica sorpasso"""
     GetOvertakeWindow().ShowOvertake(overtakenName, newPosition)
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+#  RESET ALL HUNTER WINDOWS - Chiamato su cambio mappa/logout/relog
+# ═══════════════════════════════════════════════════════════════════════════════
+def ResetAllHunterWindows():
+    """Resetta e nasconde tutte le finestre Hunter al cambio mappa/logout/relog"""
+    global g_defenseWindow, g_speedKillWindow, g_hunterTipsWindow
+    global g_emergencyWindow, g_whatIfWindow, g_systemMsgWindow
+    global g_eventWindow, g_rivalWindow, g_overtakeWindow
+
+    # Reset FractureDefenseWindow
+    if g_defenseWindow is not None:
+        try:
+            g_defenseWindow.isActive = False
+            g_defenseWindow.endTime = 0
+            g_defenseWindow.Hide()
+        except:
+            pass
+
+    # Reset SpeedKillTimerWindow
+    if g_speedKillWindow is not None:
+        try:
+            g_speedKillWindow.isActive = False
+            g_speedKillWindow.endTime = 0
+            g_speedKillWindow.lastUpdateTime = 0
+            g_speedKillWindow.Hide()
+        except:
+            pass
+
+    # Reset HunterTipsWindow
+    if g_hunterTipsWindow is not None:
+        try:
+            g_hunterTipsWindow.currentTip = ""
+            g_hunterTipsWindow.startTime = 0
+            g_hunterTipsWindow.Hide()
+        except:
+            pass
+
+    # Reset EmergencyWindow
+    if g_emergencyWindow is not None:
+        try:
+            g_emergencyWindow.Hide()
+        except:
+            pass
+
+    # Reset altri windows
+    if g_whatIfWindow is not None:
+        try:
+            g_whatIfWindow.Hide()
+        except:
+            pass
+
+    if g_systemMsgWindow is not None:
+        try:
+            g_systemMsgWindow.Hide()
+        except:
+            pass
+
+    if g_eventWindow is not None:
+        try:
+            g_eventWindow.Hide()
+        except:
+            pass
+
+    if g_rivalWindow is not None:
+        try:
+            g_rivalWindow.Hide()
+        except:
+            pass
+
+    if g_overtakeWindow is not None:
+        try:
+            g_overtakeWindow.Hide()
+        except:
+            pass

@@ -1231,3 +1231,66 @@ def ShowGateSelected(gateName, rankRequired, hoursLeft, minsLeft):
     if g_gateSelected is None:
         g_gateSelected = GateSelectedEffect()
     g_gateSelected.Start(gateName, rankRequired, hoursLeft, minsLeft)
+
+
+# ==============================================================================
+# RESET ALL GATE EFFECTS - Chiamato su cambio mappa/logout/relog
+# ==============================================================================
+def ResetAllGateEffects():
+    """Resetta e nasconde tutti gli effetti Gate al cambio mappa/logout/relog"""
+    global g_gateEntry, g_gateVictory, g_gateDefeat, g_popup, g_chestOpen, g_partyChest, g_gateSelected
+
+    # Reset GateEntry
+    if g_gateEntry is not None:
+        try:
+            g_gateEntry.isActive = False
+            g_gateEntry.Hide()
+        except:
+            pass
+
+    # Reset GateVictory
+    if g_gateVictory is not None:
+        try:
+            g_gateVictory.isActive = False
+            g_gateVictory.Hide()
+        except:
+            pass
+
+    # Reset GateDefeat
+    if g_gateDefeat is not None:
+        try:
+            g_gateDefeat.isActive = False
+            g_gateDefeat.Hide()
+        except:
+            pass
+
+    # Reset Popup
+    if g_popup is not None:
+        try:
+            g_popup.Hide()
+        except:
+            pass
+
+    # Reset ChestOpen
+    if g_chestOpen is not None:
+        try:
+            g_chestOpen.isActive = False
+            g_chestOpen.Hide()
+        except:
+            pass
+
+    # Reset PartyChest
+    if g_partyChest is not None:
+        try:
+            g_partyChest.isActive = False
+            g_partyChest.Hide()
+        except:
+            pass
+
+    # Reset GateSelected
+    if g_gateSelected is not None:
+        try:
+            g_gateSelected.isActive = False
+            g_gateSelected.Hide()
+        except:
+            pass

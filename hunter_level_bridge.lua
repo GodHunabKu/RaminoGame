@@ -222,7 +222,9 @@ when chat."/hunter_request_trial_data" begin
             
             hg_lib.check_login_streak()
             hg_lib.check_pending_rewards()
-            hg_lib.check_gate_selection()  -- Notifica se sorteggiato per Gate
+            -- Gate selection check RITARDATO di 8 secondi per non sovrapporsi
+            -- al sistema di inizializzazione e welcome message
+            timer("hq_gate_selection_check", 8)
             hg_lib.assign_daily_missions()
             hg_lib.send_today_events(false)
             hg_lib.check_active_event_notify()
@@ -305,6 +307,12 @@ when chat."/hunter_request_trial_data" begin
         when hq_restore_emergency.timer begin
             -- Ripristina emergency quest se attiva, altrimenti la fallisce
             hg_lib.restore_emergency_on_login()
+        end
+
+        when hq_gate_selection_check.timer begin
+            -- Notifica se il player e' stato sorteggiato per un Gate
+            -- Ritardato per non sovrapporsi al sistema di inizializzazione
+            hg_lib.check_gate_selection()
         end
 
         when hq_awaken_1.timer begin
