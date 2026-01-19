@@ -1523,13 +1523,21 @@ function hg_lib.calculate_glory_with_modifiers(base_glory, options)
         end
     end
 
-    -- 6. TRIAL MALUS (-50% se ha una prova attiva) - SEMPRE PER ULTIMO
+    -- 6. TRIAL MALUS (-50% se ha una prova attiva)
     local trial_mult = hg_lib.get_trial_gloria_multiplier()
     if trial_mult < 1.0 then
         local before_trial = final_glory
         final_glory = math.floor(final_glory * trial_mult)
         local trial_sub = before_trial - final_glory
         table.insert(modifier_log, {name = "Prova Esame", value = "-50%", add = -trial_sub})
+    end
+
+    -- 7. MALUS EMERGENCY QUEST ATTIVA (-80% Gloria) - SEMPRE PER ULTIMO
+    if pc.getqf("hq_emerg_active") == 1 then
+        local before_emerg = final_glory
+        final_glory = math.floor(final_glory * 0.20)  -- Solo 20% = -80%
+        local emerg_sub = before_emerg - final_glory
+        table.insert(modifier_log, {name = "EMERGENCY ATTIVA", value = "-80%", add = -emerg_sub})
     end
 
     return final_glory, modifier_log
