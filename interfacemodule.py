@@ -82,6 +82,7 @@ import uiBlend
 # 1. AGGIUNGI QUESTO IMPORT ALL'INIZIO DEL FILE
 # ============================================================
 import uihunterlevel
+import hunter_windows
 if app.ENABLE_MOUNT_COSTUME_SYSTEM:
 	import uiMount
 if app.ENABLE_RESP_SYSTEM:
@@ -3627,23 +3628,30 @@ class Interface(object):
 			self.wndHunterLevel.OnNewDay()
 
 	# ============================================================
-	# FRACTURE DEFENSE SYSTEM
+	# FRACTURE DEFENSE SYSTEM - Usa finestra dedicata
 	# ============================================================
 
-	def HunterFractureDefenseStart(self, fractureName, duration, color):
-		"""Inizia difesa frattura"""
-		if self.wndHunterLevel:
-			self.wndHunterLevel.StartFractureDefense(fractureName, duration, color)
+	def HunterFractureDefenseStart(self, fractureName, duration, rank, totalMobs=0):
+		"""Inizia difesa frattura con finestra dedicata"""
+		defenseWnd = hunter_windows.GetDefenseWindow()
+		if defenseWnd:
+			defenseWnd.StartDefense(fractureName, rank, duration, totalMobs)
+
+	def HunterFractureDefenseUpdate(self, killed, required, wave=0):
+		"""Aggiorna progresso difesa"""
+		defenseWnd = hunter_windows.GetDefenseWindow()
+		if defenseWnd:
+			defenseWnd.UpdateProgress(killed, required, wave)
 
 	def HunterFractureDefenseTimer(self, remainingSeconds):
-		"""Aggiorna timer difesa frattura"""
-		if self.wndHunterLevel:
-			self.wndHunterLevel.UpdateFractureDefenseTimer(remainingSeconds)
+		"""Retrocompatibilita' - vecchio formato timer"""
+		pass  # Non piu' necessario, il timer e' gestito dalla finestra
 
-	def HunterFractureDefenseComplete(self, success, message):
+	def HunterFractureDefenseComplete(self, success, message=""):
 		"""Completa difesa frattura"""
-		if self.wndHunterLevel:
-			self.wndHunterLevel.CompleteFractureDefense(success, message)
+		defenseWnd = hunter_windows.GetDefenseWindow()
+		if defenseWnd:
+			defenseWnd.EndDefense(success == 1 or success == "1")
 
 	# ============================================================
 	# SPEED KILL SYSTEM

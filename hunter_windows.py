@@ -1130,9 +1130,417 @@ class OvertakeWindow(ui.Window):
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
+#  FRACTURE DEFENSE WINDOW - Solo Leveling Style
+#  UI dedicata per la difesa delle fratture, separata dall'Emergency Quest
+# ═══════════════════════════════════════════════════════════════════════════════
+
+# Colori per rank frattura
+DEFENSE_RANK_COLORS = {
+    "E": {"border": 0xFF808080, "glow": 0x44808080, "title": 0xFFAAAAAA, "accent": 0xFF606060},
+    "D": {"border": 0xFF00FF00, "glow": 0x4400FF00, "title": 0xFF55FF55, "accent": 0xFF00CC00},
+    "C": {"border": 0xFF00FFFF, "glow": 0x4400FFFF, "title": 0xFF55FFFF, "accent": 0xFF00CCCC},
+    "B": {"border": 0xFF0088FF, "glow": 0x440088FF, "title": 0xFF55AAFF, "accent": 0xFF0066CC},
+    "A": {"border": 0xFFAA00FF, "glow": 0x44AA00FF, "title": 0xFFCC55FF, "accent": 0xFF8800CC},
+    "S": {"border": 0xFFFF6600, "glow": 0x44FF6600, "title": 0xFFFFAA55, "accent": 0xFFCC5500},
+    "N": {"border": 0xFFFF0000, "glow": 0x44FF0000, "title": 0xFFFF5555, "accent": 0xFFCC0000},
+}
+
+class FractureDefenseWindow(ui.Window, DraggableMixin):
+    """Finestra Difesa Frattura - Solo Leveling Style - Separata dall'Emergency"""
+
+    def __init__(self):
+        ui.Window.__init__(self)
+        self.SetSize(380, 200)
+        screenWidth = wndMgr.GetScreenWidth()
+        defaultX = screenWidth - 400
+        defaultY = 200
+
+        self.InitDraggable("FractureDefenseWindow", defaultX, defaultY)
+
+        # Variabili di stato
+        self.endTime = 0
+        self.startTime = 0
+        self.mobsRequired = 0
+        self.mobsKilled = 0
+        self.currentWave = 0
+        self.totalWaves = 3
+        self.fractureName = ""
+        self.fractureRank = "E"
+        self.pulsePhase = 0.0
+        self.isActive = False
+
+        # Schema colori corrente
+        self.colorScheme = DEFENSE_RANK_COLORS["E"]
+
+        # ═══════════ SFONDO PRINCIPALE ═══════════
+        # Sfondo esterno scuro con bordo colorato
+        self.bgOuter = ui.Bar()
+        self.bgOuter.SetParent(self)
+        self.bgOuter.SetPosition(0, 0)
+        self.bgOuter.SetSize(380, 200)
+        self.bgOuter.SetColor(0xEE0A0A14)
+        self.bgOuter.AddFlag("not_pick")
+        self.bgOuter.Show()
+
+        # Glow interno
+        self.glowInner = ui.Bar()
+        self.glowInner.SetParent(self)
+        self.glowInner.SetPosition(3, 3)
+        self.glowInner.SetSize(374, 194)
+        self.glowInner.SetColor(0x22FFFFFF)
+        self.glowInner.AddFlag("not_pick")
+        self.glowInner.Show()
+
+        # Sfondo interno
+        self.bgInner = ui.Bar()
+        self.bgInner.SetParent(self)
+        self.bgInner.SetPosition(5, 5)
+        self.bgInner.SetSize(370, 190)
+        self.bgInner.SetColor(0xDD080812)
+        self.bgInner.AddFlag("not_pick")
+        self.bgInner.Show()
+
+        # ═══════════ BORDI ANIMATI ═══════════
+        self.borders = []
+        borderColor = self.colorScheme["border"]
+        # Top
+        b = ui.Bar(); b.SetParent(self); b.SetPosition(0, 0); b.SetSize(380, 3); b.SetColor(borderColor); b.AddFlag("not_pick"); b.Show()
+        self.borders.append(b)
+        # Bottom
+        b = ui.Bar(); b.SetParent(self); b.SetPosition(0, 197); b.SetSize(380, 3); b.SetColor(borderColor); b.AddFlag("not_pick"); b.Show()
+        self.borders.append(b)
+        # Left
+        b = ui.Bar(); b.SetParent(self); b.SetPosition(0, 0); b.SetSize(3, 200); b.SetColor(borderColor); b.AddFlag("not_pick"); b.Show()
+        self.borders.append(b)
+        # Right
+        b = ui.Bar(); b.SetParent(self); b.SetPosition(377, 0); b.SetSize(3, 200); b.SetColor(borderColor); b.AddFlag("not_pick"); b.Show()
+        self.borders.append(b)
+
+        # ═══════════ HEADER ═══════════
+        # Icona scudo (simbolo difesa)
+        self.shieldIcon = ui.TextLine()
+        self.shieldIcon.SetParent(self)
+        self.shieldIcon.SetPosition(15, 12)
+        self.shieldIcon.SetText("[#]")
+        self.shieldIcon.SetPackedFontColor(0xFFFFD700)
+        self.shieldIcon.SetOutline()
+        self.shieldIcon.AddFlag("not_pick")
+        self.shieldIcon.Show()
+
+        # Titolo "DIFESA FRATTURA"
+        self.titleLabel = ui.TextLine()
+        self.titleLabel.SetParent(self)
+        self.titleLabel.SetPosition(190, 10)
+        self.titleLabel.SetHorizontalAlignCenter()
+        self.titleLabel.SetText("DIFESA FRATTURA")
+        self.titleLabel.SetPackedFontColor(0xFFFFFFFF)
+        self.titleLabel.SetOutline()
+        self.titleLabel.AddFlag("not_pick")
+        self.titleLabel.Show()
+
+        # Nome frattura
+        self.fractureNameLabel = ui.TextLine()
+        self.fractureNameLabel.SetParent(self)
+        self.fractureNameLabel.SetPosition(190, 28)
+        self.fractureNameLabel.SetHorizontalAlignCenter()
+        self.fractureNameLabel.SetText("")
+        self.fractureNameLabel.SetPackedFontColor(0xFFAAAAAA)
+        self.fractureNameLabel.AddFlag("not_pick")
+        self.fractureNameLabel.Show()
+
+        # Linea separatore header
+        self.headerLine = ui.Bar()
+        self.headerLine.SetParent(self)
+        self.headerLine.SetPosition(10, 48)
+        self.headerLine.SetSize(360, 1)
+        self.headerLine.SetColor(0x66FFFFFF)
+        self.headerLine.AddFlag("not_pick")
+        self.headerLine.Show()
+
+        # ═══════════ TIMER SECTION ═══════════
+        # Background timer
+        self.timerBg = ui.Bar()
+        self.timerBg.SetParent(self)
+        self.timerBg.SetPosition(290, 8)
+        self.timerBg.SetSize(80, 35)
+        self.timerBg.SetColor(0x88000000)
+        self.timerBg.AddFlag("not_pick")
+        self.timerBg.Show()
+
+        self.timerText = ui.TextLine()
+        self.timerText.SetParent(self)
+        self.timerText.SetPosition(330, 18)
+        self.timerText.SetHorizontalAlignCenter()
+        self.timerText.SetText("00:00")
+        self.timerText.SetPackedFontColor(0xFFFFFFFF)
+        self.timerText.SetOutline()
+        self.timerText.AddFlag("not_pick")
+        self.timerText.Show()
+
+        # ═══════════ PROGRESS SECTION ═══════════
+        # Label "PROGRESSO"
+        self.progressLabel = ui.TextLine()
+        self.progressLabel.SetParent(self)
+        self.progressLabel.SetPosition(15, 58)
+        self.progressLabel.SetText("PROGRESSO DIFESA")
+        self.progressLabel.SetPackedFontColor(0xFFCCCCCC)
+        self.progressLabel.AddFlag("not_pick")
+        self.progressLabel.Show()
+
+        # Progress bar background
+        self.progressBarBg = ui.Bar()
+        self.progressBarBg.SetParent(self)
+        self.progressBarBg.SetPosition(15, 78)
+        self.progressBarBg.SetSize(350, 25)
+        self.progressBarBg.SetColor(0xFF1A1A2E)
+        self.progressBarBg.AddFlag("not_pick")
+        self.progressBarBg.Show()
+
+        # Progress bar fill
+        self.progressBarFill = ui.Bar()
+        self.progressBarFill.SetParent(self)
+        self.progressBarFill.SetPosition(17, 80)
+        self.progressBarFill.SetSize(0, 21)
+        self.progressBarFill.SetColor(0xFF00FF00)
+        self.progressBarFill.AddFlag("not_pick")
+        self.progressBarFill.Show()
+
+        # Progress bar glow overlay
+        self.progressBarGlow = ui.Bar()
+        self.progressBarGlow.SetParent(self)
+        self.progressBarGlow.SetPosition(17, 80)
+        self.progressBarGlow.SetSize(0, 10)
+        self.progressBarGlow.SetColor(0x44FFFFFF)
+        self.progressBarGlow.AddFlag("not_pick")
+        self.progressBarGlow.Show()
+
+        # Progress text (0 / 20)
+        self.progressText = ui.TextLine()
+        self.progressText.SetParent(self)
+        self.progressText.SetPosition(190, 82)
+        self.progressText.SetHorizontalAlignCenter()
+        self.progressText.SetText("0 / 0")
+        self.progressText.SetPackedFontColor(0xFFFFFFFF)
+        self.progressText.SetOutline()
+        self.progressText.AddFlag("not_pick")
+        self.progressText.Show()
+
+        # ═══════════ WAVE INDICATORS ═══════════
+        self.waveLabel = ui.TextLine()
+        self.waveLabel.SetParent(self)
+        self.waveLabel.SetPosition(15, 112)
+        self.waveLabel.SetText("WAVE:")
+        self.waveLabel.SetPackedFontColor(0xFFCCCCCC)
+        self.waveLabel.AddFlag("not_pick")
+        self.waveLabel.Show()
+
+        # Wave indicators (piccoli quadrati)
+        self.waveIndicators = []
+        for i in range(5):
+            ind = ui.Bar()
+            ind.SetParent(self)
+            ind.SetPosition(70 + i * 30, 112)
+            ind.SetSize(22, 18)
+            ind.SetColor(0xFF333333)
+            ind.AddFlag("not_pick")
+            ind.Show()
+            self.waveIndicators.append(ind)
+
+        # ═══════════ STATUS MESSAGE ═══════════
+        self.statusBg = ui.Bar()
+        self.statusBg.SetParent(self)
+        self.statusBg.SetPosition(15, 140)
+        self.statusBg.SetSize(350, 50)
+        self.statusBg.SetColor(0x44000000)
+        self.statusBg.AddFlag("not_pick")
+        self.statusBg.Show()
+
+        self.statusText = ui.TextLine()
+        self.statusText.SetParent(self)
+        self.statusText.SetPosition(190, 150)
+        self.statusText.SetHorizontalAlignCenter()
+        self.statusText.SetText("Preparati alla difesa...")
+        self.statusText.SetPackedFontColor(0xFFFFD700)
+        self.statusText.SetOutline()
+        self.statusText.AddFlag("not_pick")
+        self.statusText.Show()
+
+        self.statusSubText = ui.TextLine()
+        self.statusSubText.SetParent(self)
+        self.statusSubText.SetPosition(190, 168)
+        self.statusSubText.SetHorizontalAlignCenter()
+        self.statusSubText.SetText("Uccidi i mob per aprire la frattura!")
+        self.statusSubText.SetPackedFontColor(0xFFAAAAAA)
+        self.statusSubText.AddFlag("not_pick")
+        self.statusSubText.Show()
+
+        self.Hide()
+
+    def SetRankColors(self, rank):
+        """Imposta i colori in base al rank della frattura"""
+        rank = rank.upper().replace("-RANK", "")
+        if rank not in DEFENSE_RANK_COLORS:
+            rank = "E"
+
+        self.fractureRank = rank
+        self.colorScheme = DEFENSE_RANK_COLORS[rank]
+
+        borderColor = self.colorScheme["border"]
+        titleColor = self.colorScheme["title"]
+
+        # Aggiorna bordi
+        for b in self.borders:
+            b.SetColor(borderColor)
+
+        # Aggiorna titolo
+        self.titleLabel.SetPackedFontColor(titleColor)
+        self.fractureNameLabel.SetPackedFontColor(self.colorScheme["accent"])
+
+        # Aggiorna progress bar
+        self.progressBarFill.SetColor(borderColor)
+
+        # Aggiorna glow
+        self.glowInner.SetColor(self.colorScheme["glow"])
+
+    def StartDefense(self, fractureName, rank, duration, totalMobs):
+        """Inizia la difesa di una frattura"""
+        self.fractureName = fractureName
+        self.fractureRank = rank
+        self.mobsRequired = totalMobs
+        self.mobsKilled = 0
+        self.currentWave = 0
+        self.totalWaves = 3
+        self.startTime = app.GetTime()
+        self.endTime = self.startTime + duration
+        self.isActive = True
+
+        # Imposta colori
+        self.SetRankColors(rank)
+
+        # Aggiorna UI
+        self.fractureNameLabel.SetText(fractureName)
+        self.progressText.SetText("0 / %d" % totalMobs)
+        self.statusText.SetText("DIFESA IN CORSO!")
+        self.statusSubText.SetText("Uccidi tutti i mob per aprire la frattura!")
+
+        # Reset wave indicators
+        for ind in self.waveIndicators:
+            ind.SetColor(0xFF333333)
+
+        # Reset progress bar
+        self.progressBarFill.SetSize(0, 21)
+        self.progressBarGlow.SetSize(0, 10)
+
+        self.Show()
+        self.SetTop()
+
+    def UpdateProgress(self, killed, required, wave=0):
+        """Aggiorna il progresso della difesa"""
+        self.mobsKilled = killed
+        if required > 0:
+            self.mobsRequired = required
+
+        # Aggiorna testo
+        self.progressText.SetText("%d / %d" % (killed, self.mobsRequired))
+
+        # Aggiorna barra
+        if self.mobsRequired > 0:
+            progress = float(killed) / float(self.mobsRequired)
+            barWidth = int(346 * min(1.0, progress))
+            self.progressBarFill.SetSize(barWidth, 21)
+            self.progressBarGlow.SetSize(barWidth, 10)
+
+        # Aggiorna wave
+        if wave > 0 and wave != self.currentWave:
+            self.currentWave = wave
+            for i, ind in enumerate(self.waveIndicators):
+                if i < wave:
+                    ind.SetColor(self.colorScheme["border"])
+                else:
+                    ind.SetColor(0xFF333333)
+
+    def EndDefense(self, success):
+        """Termina la difesa"""
+        self.isActive = False
+        self.endTime = 0
+
+        if success:
+            self.statusText.SetText("DIFESA COMPLETATA!")
+            self.statusText.SetPackedFontColor(0xFF00FF00)
+            self.statusSubText.SetText("Tocca il portale per aprire la frattura!")
+            # Bordi verdi lampeggianti
+            for b in self.borders:
+                b.SetColor(0xFF00FF00)
+        else:
+            self.statusText.SetText("DIFESA FALLITA!")
+            self.statusText.SetPackedFontColor(0xFFFF0000)
+            self.statusSubText.SetText("La frattura rimane chiusa...")
+            # Bordi rossi
+            for b in self.borders:
+                b.SetColor(0xFFFF0000)
+
+        # Auto-hide dopo 3 secondi
+        self.endTime = app.GetTime() + 3.0
+
+    def Close(self):
+        """Chiude la finestra"""
+        self.isActive = False
+        self.endTime = 0
+        self.Hide()
+
+    def OnUpdate(self):
+        if not self.IsShow():
+            return
+
+        currentTime = app.GetTime()
+
+        # Auto-close dopo EndDefense
+        if self.endTime > 0 and not self.isActive:
+            if currentTime > self.endTime:
+                self.Hide()
+                self.endTime = 0
+                return
+
+        # Timer countdown
+        if self.isActive and self.endTime > 0:
+            remaining = max(0, self.endTime - currentTime)
+            minutes = int(remaining) // 60
+            seconds = int(remaining) % 60
+            self.timerText.SetText("%02d:%02d" % (minutes, seconds))
+
+            # Colore timer (rosso se poco tempo)
+            if remaining < 10:
+                self.timerText.SetPackedFontColor(0xFFFF0000)
+            elif remaining < 30:
+                self.timerText.SetPackedFontColor(0xFFFFAA00)
+            else:
+                self.timerText.SetPackedFontColor(0xFFFFFFFF)
+
+        # Effetto pulse sui bordi
+        self.pulsePhase += 0.08
+        if self.isActive:
+            pulse = (math.sin(self.pulsePhase) + 1.0) / 2.0
+            baseColor = self.colorScheme["border"]
+            r = ((baseColor >> 16) & 0xFF)
+            g = ((baseColor >> 8) & 0xFF)
+            b = (baseColor & 0xFF)
+
+            # Varia luminosita
+            factor = 0.7 + (pulse * 0.3)
+            r = min(255, int(r * factor))
+            g = min(255, int(g * factor))
+            b = min(255, int(b * factor))
+
+            pulseColor = 0xFF000000 | (r << 16) | (g << 8) | b
+            for border in self.borders:
+                border.SetColor(pulseColor)
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
 #  GLOBAL INSTANCES
 # ═══════════════════════════════════════════════════════════════════════════════
 g_whatIfWindow = None
+g_defenseWindow = None
 g_systemMsgWindow = None
 g_emergencyWindow = None
 g_eventWindow = None
@@ -1175,12 +1583,19 @@ def GetOvertakeWindow():
         g_overtakeWindow = OvertakeWindow()
     return g_overtakeWindow
 
+def GetDefenseWindow():
+    global g_defenseWindow
+    if g_defenseWindow is None:
+        g_defenseWindow = FractureDefenseWindow()
+    return g_defenseWindow
+
 
 # Alias per compatibilità con hunter.py
 GetWhatIfChoiceWindow = GetWhatIfWindow
 GetEmergencyQuestWindow = GetEmergencyWindow
 GetEventStatusWindow = GetEventWindow
 GetRivalTrackerWindow = GetRivalWindow
+GetFractureDefenseWindow = GetDefenseWindow
 
 
 # ═══════════════════════════════════════════════════════════════════════════════

@@ -2787,11 +2787,13 @@ function hg_lib.on_defense_mob_kill(killed_vnum)
     current_killed = current_killed + 1
     game.set_event_flag("hq_defense_killed_" .. fracture_vid, current_killed)
 
-    -- Aggiorna l'UI Emergency con il progresso attuale
+    -- Aggiorna l'UI DIFESA con il progresso attuale
     local total_req = game.get_event_flag("hq_defense_req_" .. fracture_vid) or 0
+    local current_wave = pc.getqf("hq_defense_wave") or 0
     if total_req > 0 then
-        -- Invia update UI solo al player che ha ucciso (non a tutto il party)
-        cmdchat("HunterEmergencyUpdate " .. current_killed)
+        -- Invia update UI a TUTTO il party (non solo al killer)
+        -- Formato: killed|required|wave
+        hg_lib.party_cmdchat("HunterFractureDefenseTimer " .. current_killed .. "|" .. total_req .. "|" .. current_wave)
     end
 end
 
@@ -3672,9 +3674,9 @@ function hg_lib.open_gate(fname, frank, fcolor, pid)
     local difficulty = rank_to_difficulty[frank] or "NORMAL"
     local description = "Uccidi " .. total_mobs_req .. " mob per aprire la frattura!"
 
-    -- Invia popup a TUTTI i membri del party con formato corretto
-    -- Formato: title|seconds|vnum|count|description|difficulty|penalty
-    hg_lib.party_cmdchat("HunterEmergency " .. hg_lib.clean_str(defense_title) .. "|" .. duration .. "|0|" .. total_mobs_req .. "|" .. hg_lib.clean_str(description) .. "|" .. difficulty .. "|0")
+    -- Invia UI DIFESA FRATTURA dedicata (separata dall'Emergency Quest)
+    -- Formato: fracture_name|duration|rank|totalMobs
+    hg_lib.party_cmdchat("HunterFractureDefenseStart " .. hg_lib.clean_str(defense_title) .. "|" .. duration .. "|" .. frank .. "|" .. total_mobs_req)
 
     local msg = hg_lib.get_text("defense_start", {SECONDS = duration}, "UCCIDI TUTTI I MOB! Hai " .. duration .. " secondi!")
     hg_lib.party_hunter_speak_color(msg, fcolor)
@@ -3932,10 +3934,10 @@ function hg_lib.complete_defense_success()
 
     pc.setqf("hq_defense_active", 0)
     cleartimer("hq_defense_timer")
-    
-    -- Invia chiusura popup a tutto il party
-    hg_lib.party_cmdchat("HunterEmergencyClose success")
-    
+
+    -- Invia chiusura UI DIFESA a tutto il party
+    hg_lib.party_cmdchat("HunterFractureDefenseComplete 1")
+
     -- Reset flag su TUTTI i membri del party
     if party.is_party() then
         local success_msg = hg_lib.get_text("DEFENSE_SUCCESS", nil, "[HUNTER] DIFESA COMPLETATA CON SUCCESSO!")
@@ -4044,10 +4046,10 @@ function hg_lib.fail_defense(reason)
 
     pc.setqf("hq_defense_active", 0)
     cleartimer("hq_defense_timer")
-    
-    -- Invia chiusura popup a tutto il party
-    hg_lib.party_cmdchat("HunterEmergencyClose failed")
-    
+
+    -- Invia chiusura UI DIFESA a tutto il party
+    hg_lib.party_cmdchat("HunterFractureDefenseComplete 0")
+
     -- Reset flag su TUTTI i membri del party
     if party.is_party() then
         if destroy_on_fail then

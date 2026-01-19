@@ -3883,25 +3883,42 @@ class GameWindow(ui.ScriptWindow):
 	# ============================================================
 
 	def __HunterFractureDefenseStart(self, args):
-		"""Inizia difesa frattura: fracture_name|duration|color"""
+		"""Inizia difesa frattura: fracture_name|duration|rank|totalMobs"""
 		try:
 			parts = args.split("|")
-			if len(parts) >= 3:
+			if len(parts) >= 4:
 				fractureName = parts[0].replace("+", " ")
 				duration = int(parts[1])
-				color = parts[2]
+				rank = parts[2].strip()
+				totalMobs = int(parts[3])
 				if self.interface:
-					self.interface.HunterFractureDefenseStart(fractureName, duration, color)
+					self.interface.HunterFractureDefenseStart(fractureName, duration, rank, totalMobs)
+			elif len(parts) >= 3:
+				# Retrocompatibilita' con vecchio formato
+				fractureName = parts[0].replace("+", " ")
+				duration = int(parts[1])
+				rank = parts[2].strip()
+				if self.interface:
+					self.interface.HunterFractureDefenseStart(fractureName, duration, rank, 0)
 		except Exception as e:
 			import dbg
 			dbg.TraceError("HunterFractureDefenseStart error: " + str(e))
 
-	def __HunterFractureDefenseTimer(self, remaining):
-		"""Aggiorna timer difesa frattura"""
+	def __HunterFractureDefenseTimer(self, args):
+		"""Aggiorna progresso difesa: killed|required|wave"""
 		try:
-			remainingSeconds = int(remaining)
-			if self.interface:
-				self.interface.HunterFractureDefenseTimer(remainingSeconds)
+			parts = args.split("|")
+			if len(parts) >= 3:
+				killed = int(parts[0])
+				required = int(parts[1])
+				wave = int(parts[2])
+				if self.interface:
+					self.interface.HunterFractureDefenseUpdate(killed, required, wave)
+			elif len(parts) == 1:
+				# Retrocompatibilita' con vecchio formato (solo timer)
+				remainingSeconds = int(parts[0])
+				if self.interface:
+					self.interface.HunterFractureDefenseTimer(remainingSeconds)
 		except Exception as e:
 			import dbg
 			dbg.TraceError("HunterFractureDefenseTimer error: " + str(e))
@@ -3915,6 +3932,10 @@ class GameWindow(ui.ScriptWindow):
 				message = parts[1].replace("+", " ")
 				if self.interface:
 					self.interface.HunterFractureDefenseComplete(success, message)
+			elif len(parts) == 1:
+				success = int(parts[0])
+				if self.interface:
+					self.interface.HunterFractureDefenseComplete(success, "")
 		except Exception as e:
 			import dbg
 			dbg.TraceError("HunterFractureDefenseComplete error: " + str(e))
