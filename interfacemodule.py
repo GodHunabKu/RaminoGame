@@ -3683,6 +3683,12 @@ class Interface(object):
 		if speedKillWnd:
 			speedKillWnd.EndSpeedKill(isSuccess == 1 or isSuccess == "1")
 
+	def HunterShowTip(self, tipText):
+		"""Mostra un tip nella finestra Hunter Tips"""
+		tipsWnd = hunter_windows.GetHunterTipsWindow()
+		if tipsWnd:
+			tipsWnd.AddTip(tipText)
+
 # ==============================================================
 
 	def ToggleHunterLevelWindow(self):

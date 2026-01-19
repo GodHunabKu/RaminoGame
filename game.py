@@ -2413,6 +2413,7 @@ class GameWindow(ui.ScriptWindow):
 		serverCommandList["HunterSpeedKillStart"]          = self.__HunterSpeedKillStart
 		serverCommandList["HunterSpeedKillTimer"]          = self.__HunterSpeedKillTimer
 		serverCommandList["HunterSpeedKillEnd"]            = self.__HunterSpeedKillEnd
+		serverCommandList["HunterTip"]                     = self.__HunterTip
 
 		# Daily Missions & Events System
 		serverCommandList["HunterMissionsCount"]     = self.__HunterMissionsCount
@@ -3977,6 +3978,15 @@ class GameWindow(ui.ScriptWindow):
 		except Exception as e:
 			import dbg
 			dbg.TraceError("HunterSpeedKillEnd error: " + str(e))
+
+	def __HunterTip(self, tipText):
+		"""Mostra un tip nella finestra Hunter Tips"""
+		try:
+			if self.interface:
+				self.interface.HunterShowTip(tipText.replace("+", " "))
+		except Exception as e:
+			import dbg
+			dbg.TraceError("HunterTip error: " + str(e))
 
 	# ============================================================
 	# HUNTER SYSTEM - GATE DUNGEON HANDLERS

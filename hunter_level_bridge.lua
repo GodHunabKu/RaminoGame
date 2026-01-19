@@ -457,12 +457,15 @@ when chat."/hunter_request_trial_data" begin
         end
 
         when hunter_tips_timer.timer begin
-            local last = game.get_event_flag("hunter_last_tip_time") or 0
-            if get_time() - last < 10 then return end
+            -- Invia tip individuale al player (non piu' notice_all che spamma la chat)
+            local pid = pc.get_player_id()
+            local last = pc.getqf("hq_last_tip_time") or 0
+            if get_time() - last < 60 then return end  -- Cooldown 60 sec per player
             local c, d = mysql_direct_query("SELECT tip_text FROM srv1_hunabku.hunter_quest_tips ORDER BY RAND() LIMIT 1")
-            if c > 0 and d[1] then 
-                notice_all("|cffFFD700[HUNTER TIP]|r " .. d[1].tip_text)
-                game.set_event_flag("hunter_last_tip_time", get_time()) 
+            if c > 0 and d[1] then
+                local tip_text = string.gsub(d[1].tip_text, " ", "+")
+                cmdchat("HunterTip " .. tip_text)
+                pc.setqf("hq_last_tip_time", get_time())
             end
         end
 
