@@ -1378,7 +1378,12 @@ class FractureDefenseWindow(ui.Window, DraggableMixin):
 
     def SetRankColors(self, rank):
         """Imposta i colori in base al rank della frattura"""
-        rank = rank.upper().replace("-RANK", "")
+        if not rank:
+            rank = "E"
+        # Pulisci il rank: rimuovi spazi, "-RANK", e prendi solo la prima lettera
+        rank = str(rank).strip().upper().replace("-RANK", "").replace(" ", "")
+        if len(rank) > 0:
+            rank = rank[0]  # Prendi solo la prima lettera (E, D, C, B, A, S, N)
         if rank not in DEFENSE_RANK_COLORS:
             rank = "E"
 
@@ -1401,6 +1406,9 @@ class FractureDefenseWindow(ui.Window, DraggableMixin):
 
         # Aggiorna glow
         self.glowInner.SetColor(self.colorScheme["glow"])
+
+        # Aggiorna status text color
+        self.statusText.SetPackedFontColor(titleColor)
 
     def StartDefense(self, fractureName, rank, duration, totalMobs):
         """Inizia la difesa di una frattura"""
@@ -1440,15 +1448,29 @@ class FractureDefenseWindow(ui.Window, DraggableMixin):
         if required > 0:
             self.mobsRequired = required
 
-        # Aggiorna testo
-        self.progressText.SetText("%d / %d" % (killed, self.mobsRequired))
-
-        # Aggiorna barra
-        if self.mobsRequired > 0:
-            progress = float(killed) / float(self.mobsRequired)
-            barWidth = int(346 * min(1.0, progress))
-            self.progressBarFill.SetSize(barWidth, 21)
-            self.progressBarGlow.SetSize(barWidth, 10)
+        # Se killed >= required, mostra completato
+        if killed >= self.mobsRequired and self.mobsRequired > 0:
+            self.progressText.SetText("%d / %d - COMPLETATO!" % (self.mobsRequired, self.mobsRequired))
+            self.progressText.SetPackedFontColor(0xFF00FF00)
+            # Barra al 100%
+            self.progressBarFill.SetSize(346, 21)
+            self.progressBarGlow.SetSize(346, 10)
+            self.progressBarFill.SetColor(0xFF00FF00)  # Verde
+            # Status
+            self.statusText.SetText("OBIETTIVO RAGGIUNTO!")
+            self.statusText.SetPackedFontColor(0xFF00FF00)
+            self.statusSubText.SetText("Resisti fino alla fine del timer!")
+        else:
+            # Aggiorna testo normale
+            self.progressText.SetText("%d / %d" % (killed, self.mobsRequired))
+            self.progressText.SetPackedFontColor(0xFFFFFFFF)
+            # Aggiorna barra
+            if self.mobsRequired > 0:
+                progress = float(killed) / float(self.mobsRequired)
+                barWidth = int(346 * min(1.0, progress))
+                self.progressBarFill.SetSize(barWidth, 21)
+                self.progressBarGlow.SetSize(barWidth, 10)
+                self.progressBarFill.SetColor(self.colorScheme["border"])
 
         # Aggiorna wave
         if wave > 0 and wave != self.currentWave:
@@ -1537,6 +1559,369 @@ class FractureDefenseWindow(ui.Window, DraggableMixin):
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
+#  SPEED KILL TIMER WINDOW - Solo Leveling Style
+#  UI per Speed Kill challenge (Boss e Super Metin)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+# Colori per tipo di mob
+SPEEDKILL_COLORS = {
+    "BOSS": {
+        "border": 0xFFFF0000,
+        "glow": 0x66FF0000,
+        "title": 0xFFFF4444,
+        "accent": 0xFFCC0000,
+        "timer_bg": 0xAA440000,
+        "icon": "[X]",
+        "label": "BOSS HUNT"
+    },
+    "SUPER_METIN": {
+        "border": 0xFFFF8800,
+        "glow": 0x66FF8800,
+        "title": 0xFFFFAA44,
+        "accent": 0xFFCC6600,
+        "timer_bg": 0xAA443300,
+        "icon": "[*]",
+        "label": "METIN STRIKE"
+    },
+    "DEFAULT": {
+        "border": 0xFFFFD700,
+        "glow": 0x66FFD700,
+        "title": 0xFFFFFF55,
+        "accent": 0xFFCCAA00,
+        "timer_bg": 0xAA444400,
+        "icon": "[!]",
+        "label": "SPEED KILL"
+    }
+}
+
+
+class SpeedKillTimerWindow(ui.Window, DraggableMixin):
+    """Finestra Speed Kill Timer - Solo Leveling Style"""
+
+    def __init__(self):
+        ui.Window.__init__(self)
+        self.SetSize(320, 130)
+        screenWidth = wndMgr.GetScreenWidth()
+        screenHeight = wndMgr.GetScreenHeight()
+        # Posizione in alto a destra
+        defaultX = screenWidth - 340
+        defaultY = 80
+
+        self.InitDraggable("SpeedKillTimerWindow", defaultX, defaultY)
+
+        # Variabili di stato
+        self.endTime = 0
+        self.startTime = 0
+        self.totalDuration = 0
+        self.mobName = ""
+        self.mobType = "DEFAULT"
+        self.pulsePhase = 0.0
+        self.isActive = False
+        self.flashPhase = 0.0
+
+        # Schema colori corrente
+        self.colorScheme = SPEEDKILL_COLORS["DEFAULT"]
+
+        # ═══════════ SFONDO PRINCIPALE ═══════════
+        # Sfondo esterno scuro
+        self.bgOuter = ui.Bar()
+        self.bgOuter.SetParent(self)
+        self.bgOuter.SetPosition(0, 0)
+        self.bgOuter.SetSize(320, 130)
+        self.bgOuter.SetColor(0xEE0A0A14)
+        self.bgOuter.AddFlag("not_pick")
+        self.bgOuter.Show()
+
+        # Glow interno
+        self.glowInner = ui.Bar()
+        self.glowInner.SetParent(self)
+        self.glowInner.SetPosition(3, 3)
+        self.glowInner.SetSize(314, 124)
+        self.glowInner.SetColor(0x22FF0000)
+        self.glowInner.AddFlag("not_pick")
+        self.glowInner.Show()
+
+        # Sfondo interno
+        self.bgInner = ui.Bar()
+        self.bgInner.SetParent(self)
+        self.bgInner.SetPosition(5, 5)
+        self.bgInner.SetSize(310, 120)
+        self.bgInner.SetColor(0xDD080812)
+        self.bgInner.AddFlag("not_pick")
+        self.bgInner.Show()
+
+        # ═══════════ BORDI ANIMATI ═══════════
+        self.borders = []
+        borderColor = 0xFFFF0000
+        # Top
+        b = ui.Bar(); b.SetParent(self); b.SetPosition(0, 0); b.SetSize(320, 3); b.SetColor(borderColor); b.AddFlag("not_pick"); b.Show()
+        self.borders.append(b)
+        # Bottom
+        b = ui.Bar(); b.SetParent(self); b.SetPosition(0, 127); b.SetSize(320, 3); b.SetColor(borderColor); b.AddFlag("not_pick"); b.Show()
+        self.borders.append(b)
+        # Left
+        b = ui.Bar(); b.SetParent(self); b.SetPosition(0, 0); b.SetSize(3, 130); b.SetColor(borderColor); b.AddFlag("not_pick"); b.Show()
+        self.borders.append(b)
+        # Right
+        b = ui.Bar(); b.SetParent(self); b.SetPosition(317, 0); b.SetSize(3, 130); b.SetColor(borderColor); b.AddFlag("not_pick"); b.Show()
+        self.borders.append(b)
+
+        # ═══════════ HEADER ═══════════
+        # Icona target
+        self.targetIcon = ui.TextLine()
+        self.targetIcon.SetParent(self)
+        self.targetIcon.SetPosition(15, 12)
+        self.targetIcon.SetText("[X]")
+        self.targetIcon.SetPackedFontColor(0xFFFF0000)
+        self.targetIcon.SetOutline()
+        self.targetIcon.AddFlag("not_pick")
+        self.targetIcon.Show()
+
+        # Label tipo (BOSS HUNT / METIN STRIKE)
+        self.typeLabel = ui.TextLine()
+        self.typeLabel.SetParent(self)
+        self.typeLabel.SetPosition(160, 10)
+        self.typeLabel.SetHorizontalAlignCenter()
+        self.typeLabel.SetText("SPEED KILL")
+        self.typeLabel.SetPackedFontColor(0xFFFFFFFF)
+        self.typeLabel.SetOutline()
+        self.typeLabel.AddFlag("not_pick")
+        self.typeLabel.Show()
+
+        # Sottotitolo "GLORIA x2"
+        self.bonusLabel = ui.TextLine()
+        self.bonusLabel.SetParent(self)
+        self.bonusLabel.SetPosition(160, 26)
+        self.bonusLabel.SetHorizontalAlignCenter()
+        self.bonusLabel.SetText(">>> GLORIA x2 <<<")
+        self.bonusLabel.SetPackedFontColor(0xFFFFD700)
+        self.bonusLabel.AddFlag("not_pick")
+        self.bonusLabel.Show()
+
+        # Linea separatore header
+        self.headerLine = ui.Bar()
+        self.headerLine.SetParent(self)
+        self.headerLine.SetPosition(10, 44)
+        self.headerLine.SetSize(300, 1)
+        self.headerLine.SetColor(0x88FFFFFF)
+        self.headerLine.AddFlag("not_pick")
+        self.headerLine.Show()
+
+        # ═══════════ TARGET NAME ═══════════
+        self.targetNameLabel = ui.TextLine()
+        self.targetNameLabel.SetParent(self)
+        self.targetNameLabel.SetPosition(160, 52)
+        self.targetNameLabel.SetHorizontalAlignCenter()
+        self.targetNameLabel.SetText("")
+        self.targetNameLabel.SetPackedFontColor(0xFFFFFFFF)
+        self.targetNameLabel.SetOutline()
+        self.targetNameLabel.AddFlag("not_pick")
+        self.targetNameLabel.Show()
+
+        # ═══════════ TIMER DISPLAY ═══════════
+        # Background timer grande
+        self.timerBg = ui.Bar()
+        self.timerBg.SetParent(self)
+        self.timerBg.SetPosition(60, 72)
+        self.timerBg.SetSize(200, 45)
+        self.timerBg.SetColor(0xAA330000)
+        self.timerBg.AddFlag("not_pick")
+        self.timerBg.Show()
+
+        # Timer grande
+        self.timerText = ui.TextLine()
+        self.timerText.SetParent(self)
+        self.timerText.SetPosition(160, 80)
+        self.timerText.SetHorizontalAlignCenter()
+        self.timerText.SetText("00:00")
+        self.timerText.SetPackedFontColor(0xFFFFFFFF)
+        self.timerText.SetOutline()
+        self.timerText.AddFlag("not_pick")
+        self.timerText.Show()
+
+        # Timer progress bar
+        self.timerProgressBg = ui.Bar()
+        self.timerProgressBg.SetParent(self)
+        self.timerProgressBg.SetPosition(65, 105)
+        self.timerProgressBg.SetSize(190, 8)
+        self.timerProgressBg.SetColor(0xFF1A1A2E)
+        self.timerProgressBg.AddFlag("not_pick")
+        self.timerProgressBg.Show()
+
+        self.timerProgressFill = ui.Bar()
+        self.timerProgressFill.SetParent(self)
+        self.timerProgressFill.SetPosition(65, 105)
+        self.timerProgressFill.SetSize(190, 8)
+        self.timerProgressFill.SetColor(0xFFFF0000)
+        self.timerProgressFill.AddFlag("not_pick")
+        self.timerProgressFill.Show()
+
+        self.Hide()
+
+    def SetMobType(self, mobType):
+        """Imposta il tipo di mob e i colori"""
+        mobType = str(mobType).upper().replace(" ", "_")
+        if mobType not in SPEEDKILL_COLORS:
+            # Prova a determinare dal nome
+            if "BOSS" in mobType:
+                mobType = "BOSS"
+            elif "METIN" in mobType:
+                mobType = "SUPER_METIN"
+            else:
+                mobType = "DEFAULT"
+
+        self.mobType = mobType
+        self.colorScheme = SPEEDKILL_COLORS[mobType]
+
+        borderColor = self.colorScheme["border"]
+        titleColor = self.colorScheme["title"]
+        glowColor = self.colorScheme["glow"]
+
+        # Aggiorna bordi
+        for b in self.borders:
+            b.SetColor(borderColor)
+
+        # Aggiorna icona e label
+        self.targetIcon.SetText(self.colorScheme["icon"])
+        self.targetIcon.SetPackedFontColor(borderColor)
+        self.typeLabel.SetText(self.colorScheme["label"])
+        self.typeLabel.SetPackedFontColor(titleColor)
+
+        # Aggiorna glow
+        self.glowInner.SetColor(glowColor)
+
+        # Aggiorna timer background
+        self.timerBg.SetColor(self.colorScheme["timer_bg"])
+
+        # Aggiorna progress bar
+        self.timerProgressFill.SetColor(borderColor)
+
+    def StartSpeedKill(self, mobName, duration, mobType="DEFAULT"):
+        """Inizia la sfida Speed Kill"""
+        self.mobName = mobName.replace("+", " ")
+        self.totalDuration = duration
+        self.startTime = app.GetTime()
+        self.endTime = self.startTime + duration
+        self.isActive = True
+        self.pulsePhase = 0.0
+        self.flashPhase = 0.0
+
+        # Imposta tipo e colori
+        self.SetMobType(mobType)
+
+        # Aggiorna UI
+        self.targetNameLabel.SetText("[ %s ]" % self.mobName)
+        self.targetNameLabel.SetPackedFontColor(self.colorScheme["title"])
+
+        # Timer iniziale
+        minutes = duration // 60
+        seconds = duration % 60
+        self.timerText.SetText("%02d:%02d" % (minutes, seconds))
+        self.timerText.SetPackedFontColor(0xFFFFFFFF)
+
+        # Progress bar al 100%
+        self.timerProgressFill.SetSize(190, 8)
+
+        self.Show()
+        self.SetTop()
+
+    def UpdateTimer(self, remainingSeconds):
+        """Aggiorna il timer"""
+        if not self.isActive:
+            return
+
+        minutes = remainingSeconds // 60
+        seconds = remainingSeconds % 60
+        self.timerText.SetText("%02d:%02d" % (minutes, seconds))
+
+        # Aggiorna progress bar
+        if self.totalDuration > 0:
+            progress = float(remainingSeconds) / float(self.totalDuration)
+            barWidth = int(190 * progress)
+            self.timerProgressFill.SetSize(max(0, barWidth), 8)
+
+        # Colore timer basato sul tempo rimanente
+        if remainingSeconds <= 10:
+            self.timerText.SetPackedFontColor(0xFFFF0000)
+        elif remainingSeconds <= 30:
+            self.timerText.SetPackedFontColor(0xFFFF8800)
+        else:
+            self.timerText.SetPackedFontColor(0xFFFFFFFF)
+
+    def EndSpeedKill(self, success):
+        """Termina la sfida"""
+        self.isActive = False
+
+        if success:
+            # Successo!
+            self.typeLabel.SetText("SUCCESS!")
+            self.typeLabel.SetPackedFontColor(0xFF00FF00)
+            self.bonusLabel.SetText("GLORIA x2 OTTENUTA!")
+            self.bonusLabel.SetPackedFontColor(0xFF00FF00)
+            self.timerText.SetText("VITTORIA!")
+            self.timerText.SetPackedFontColor(0xFF00FF00)
+            for b in self.borders:
+                b.SetColor(0xFF00FF00)
+            self.glowInner.SetColor(0x6600FF00)
+        else:
+            # Fallito
+            self.typeLabel.SetText("TIME OUT!")
+            self.typeLabel.SetPackedFontColor(0xFFFF0000)
+            self.bonusLabel.SetText("Gloria normale...")
+            self.bonusLabel.SetPackedFontColor(0xFF888888)
+            self.timerText.SetText("FALLITO")
+            self.timerText.SetPackedFontColor(0xFFFF0000)
+            for b in self.borders:
+                b.SetColor(0xFFFF0000)
+
+        # Auto-hide dopo 3 secondi
+        self.endTime = app.GetTime() + 3.0
+
+    def Close(self):
+        """Chiude la finestra"""
+        self.isActive = False
+        self.endTime = 0
+        self.Hide()
+
+    def OnUpdate(self):
+        if not self.IsShow():
+            return
+
+        currentTime = app.GetTime()
+
+        # Auto-close dopo EndSpeedKill
+        if self.endTime > 0 and not self.isActive:
+            if currentTime > self.endTime:
+                self.Hide()
+                self.endTime = 0
+                return
+
+        # Effetto pulse sui bordi quando attivo
+        if self.isActive:
+            self.pulsePhase += 0.12
+            pulse = (math.sin(self.pulsePhase) + 1.0) / 2.0
+            baseColor = self.colorScheme["border"]
+            r = ((baseColor >> 16) & 0xFF)
+            g = ((baseColor >> 8) & 0xFF)
+            b = (baseColor & 0xFF)
+
+            # Varia luminosita
+            factor = 0.6 + (pulse * 0.4)
+            r = min(255, int(r * factor))
+            g = min(255, int(g * factor))
+            b = min(255, int(b * factor))
+
+            pulseColor = 0xFF000000 | (r << 16) | (g << 8) | b
+            for border in self.borders:
+                border.SetColor(pulseColor)
+
+            # Flash bonus label
+            self.flashPhase += 0.15
+            flashAlpha = int(200 + 55 * math.sin(self.flashPhase))
+            self.bonusLabel.SetPackedFontColor((flashAlpha << 24) | 0x00FFD700)
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
 #  GLOBAL INSTANCES
 # ═══════════════════════════════════════════════════════════════════════════════
 g_whatIfWindow = None
@@ -1546,6 +1931,7 @@ g_emergencyWindow = None
 g_eventWindow = None
 g_rivalWindow = None
 g_overtakeWindow = None
+g_speedKillWindow = None
 
 def GetWhatIfWindow():
     global g_whatIfWindow
@@ -1589,6 +1975,12 @@ def GetDefenseWindow():
         g_defenseWindow = FractureDefenseWindow()
     return g_defenseWindow
 
+def GetSpeedKillWindow():
+    global g_speedKillWindow
+    if g_speedKillWindow is None:
+        g_speedKillWindow = SpeedKillTimerWindow()
+    return g_speedKillWindow
+
 
 # Alias per compatibilità con hunter.py
 GetWhatIfChoiceWindow = GetWhatIfWindow
@@ -1596,6 +1988,7 @@ GetEmergencyQuestWindow = GetEmergencyWindow
 GetEventStatusWindow = GetEventWindow
 GetRivalTrackerWindow = GetRivalWindow
 GetFractureDefenseWindow = GetDefenseWindow
+GetSpeedKillTimerWindow = GetSpeedKillWindow
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
