@@ -2144,6 +2144,308 @@ class HunterTipsWindow(ui.Window, DraggableMixin):
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
+#  HUNTER NOTIFICATION WINDOW - Sistema notifiche senza spam chat
+# ═══════════════════════════════════════════════════════════════════════════════
+
+class HunterNotificationWindow(ui.Window, DraggableMixin):
+    """
+    Finestra notifiche Hunter - Stile moderno con coda messaggi
+    Usata per: vincitori eventi, achievement claims, rank changes, system messages
+    """
+
+    NOTIFICATION_DISPLAY_TIME = 8.0  # Secondi di visualizzazione per notifica
+    NOTIFICATION_FADE_DURATION = 1.5  # Durata fade in/out
+
+    # Color schemes per diversi tipi di notifica
+    NOTIFICATION_TYPES = {
+        "winner": {
+            "border": 0xFFFFD700,    # Gold
+            "glow": 0x44FFD700,      # Gold glow
+            "title": 0xFFFFE455,     # Light gold
+            "header_bg": 0x55FFD700, # Gold background
+            "icon": "[*]",
+            "title_text": "VINCITORE"
+        },
+        "achievement": {
+            "border": 0xFF00FF00,    # Green
+            "glow": 0x4400FF00,      # Green glow
+            "title": 0xFF55FF55,     # Light green
+            "header_bg": 0x5500CC00, # Green background
+            "icon": "[+]",
+            "title_text": "TRAGUARDO"
+        },
+        "rank": {
+            "border": 0xFFAA00FF,    # Purple
+            "glow": 0x44AA00FF,      # Purple glow
+            "title": 0xFFCC55FF,     # Light purple
+            "header_bg": 0x558800CC, # Purple background
+            "icon": "[^]",
+            "title_text": "GRADO"
+        },
+        "system": {
+            "border": 0xFF0088FF,    # Blue
+            "glow": 0x440088FF,      # Blue glow
+            "title": 0xFF55AAFF,     # Light blue
+            "header_bg": 0x550066CC, # Blue background
+            "icon": "[!]",
+            "title_text": "SISTEMA"
+        },
+        "event": {
+            "border": 0xFFFF8800,    # Orange
+            "glow": 0x44FF8800,      # Orange glow
+            "title": 0xFFFFAA55,     # Light orange
+            "header_bg": 0x55CC6600, # Orange background
+            "icon": "[E]",
+            "title_text": "EVENTO"
+        }
+    }
+
+    def __init__(self):
+        ui.Window.__init__(self)
+        self.SetSize(450, 90)
+        screenWidth = wndMgr.GetScreenWidth()
+        screenHeight = wndMgr.GetScreenHeight()
+        # Posizione in alto a sinistra (sopra tips)
+        defaultX = 10
+        defaultY = 150
+
+        self.InitDraggable("HunterNotificationWindow", defaultX, defaultY)
+
+        # Sistema di coda notifiche
+        self.notificationQueue = []  # Lista di dict con {type, message}
+        self.currentNotification = None
+        self.startTime = 0
+        self.alpha = 0  # Parte da 0 per fade-in
+        self.pulsePhase = 0.0
+        self.currentType = "system"  # Tipo corrente
+
+        # ═══════════ SFONDO PRINCIPALE ═══════════
+        self.bgOuter = ui.Bar()
+        self.bgOuter.SetParent(self)
+        self.bgOuter.SetPosition(0, 0)
+        self.bgOuter.SetSize(450, 90)
+        self.bgOuter.SetColor(0xDD0A0A14)
+        self.bgOuter.AddFlag("not_pick")
+        self.bgOuter.Show()
+
+        # Glow interno (colore dinamico)
+        self.glowInner = ui.Bar()
+        self.glowInner.SetParent(self)
+        self.glowInner.SetPosition(2, 2)
+        self.glowInner.SetSize(446, 86)
+        self.glowInner.SetColor(0x220088FF)
+        self.glowInner.AddFlag("not_pick")
+        self.glowInner.Show()
+
+        # Bordi animati (colore dinamico)
+        self.borders = []
+        # Top
+        b = ui.Bar(); b.SetParent(self); b.SetPosition(0, 0); b.SetSize(450, 2); b.SetColor(0xCC0088FF); b.AddFlag("not_pick"); b.Show()
+        self.borders.append(b)
+        # Bottom
+        b = ui.Bar(); b.SetParent(self); b.SetPosition(0, 88); b.SetSize(450, 2); b.SetColor(0xCC0088FF); b.AddFlag("not_pick"); b.Show()
+        self.borders.append(b)
+        # Left
+        b = ui.Bar(); b.SetParent(self); b.SetPosition(0, 0); b.SetSize(2, 90); b.SetColor(0xCC0088FF); b.AddFlag("not_pick"); b.Show()
+        self.borders.append(b)
+        # Right
+        b = ui.Bar(); b.SetParent(self); b.SetPosition(448, 0); b.SetSize(2, 90); b.SetColor(0xCC0088FF); b.AddFlag("not_pick"); b.Show()
+        self.borders.append(b)
+
+        # ═══════════ HEADER ═══════════
+        self.headerBg = ui.Bar()
+        self.headerBg.SetParent(self)
+        self.headerBg.SetPosition(2, 2)
+        self.headerBg.SetSize(446, 22)
+        self.headerBg.SetColor(0x550088FF)
+        self.headerBg.AddFlag("not_pick")
+        self.headerBg.Show()
+
+        # Icona dinamica
+        self.titleIcon = ui.TextLine()
+        self.titleIcon.SetParent(self)
+        self.titleIcon.SetPosition(10, 5)
+        self.titleIcon.SetText("[!]")
+        self.titleIcon.SetPackedFontColor(0xFF0088FF)
+        self.titleIcon.SetOutline()
+        self.titleIcon.AddFlag("not_pick")
+        self.titleIcon.Show()
+
+        # Titolo dinamico
+        self.titleText = ui.TextLine()
+        self.titleText.SetParent(self)
+        self.titleText.SetPosition(30, 5)
+        self.titleText.SetText("NOTIFICA")
+        self.titleText.SetPackedFontColor(0xFF0088FF)
+        self.titleText.SetOutline()
+        self.titleText.AddFlag("not_pick")
+        self.titleText.Show()
+
+        # ═══════════ AREA TESTO NOTIFICA (3 righe) ═══════════
+        self.messageLines = []
+        for i in range(3):
+            msgLine = ui.TextLine()
+            msgLine.SetParent(self)
+            msgLine.SetPosition(12, 30 + (i * 19))
+            msgLine.SetText("")
+            msgLine.SetPackedFontColor(0xFFFFFFFF)
+            msgLine.AddFlag("not_pick")
+            msgLine.Show()
+            self.messageLines.append(msgLine)
+
+        self.Hide()
+
+    def _WrapText(self, text, maxCharsPerLine=60):
+        """Spezza il testo in righe di massimo maxCharsPerLine caratteri"""
+        words = text.split(' ')
+        lines = []
+        currentLine = ""
+
+        for word in words:
+            if len(currentLine) + len(word) + 1 <= maxCharsPerLine:
+                if currentLine:
+                    currentLine += " " + word
+                else:
+                    currentLine = word
+            else:
+                if currentLine:
+                    lines.append(currentLine)
+                currentLine = word
+
+        if currentLine:
+            lines.append(currentLine)
+
+        # Massimo 3 righe
+        return lines[:3]
+
+    def AddNotification(self, notificationType, message):
+        """
+        Aggiunge una notifica alla coda
+        Args:
+            notificationType: "winner", "achievement", "rank", "system", "event"
+            message: Testo del messaggio
+        """
+        # Valida tipo
+        if notificationType not in self.NOTIFICATION_TYPES:
+            notificationType = "system"
+
+        # Aggiungi a coda
+        self.notificationQueue.append({
+            "type": notificationType,
+            "message": message
+        })
+
+        # Se non sta già mostrando una notifica, mostra subito
+        if self.currentNotification is None:
+            self._ShowNextNotification()
+
+    def _ShowNextNotification(self):
+        """Mostra la prossima notifica dalla coda"""
+        if len(self.notificationQueue) == 0:
+            self.currentNotification = None
+            self.Hide()
+            return
+
+        # Prendi la prima dalla coda
+        notification = self.notificationQueue.pop(0)
+        self.currentNotification = notification
+        self.currentType = notification["type"]
+        self.startTime = app.GetTime()
+        self.alpha = 0  # Fade-in da 0
+
+        # Ottieni colori per questo tipo
+        colors = self.NOTIFICATION_TYPES[self.currentType]
+
+        # Aggiorna header
+        self.titleIcon.SetText(colors["icon"])
+        self.titleText.SetText(colors["title_text"])
+
+        # Spezza testo in righe
+        lines = self._WrapText(notification["message"])
+
+        # Aggiorna le label
+        for i, msgLine in enumerate(self.messageLines):
+            if i < len(lines):
+                msgLine.SetText(lines[i])
+            else:
+                msgLine.SetText("")
+
+        # Mostra la finestra
+        self.Show()
+        self.SetTop()
+
+    def Close(self):
+        """Chiude la finestra e pulisce la coda"""
+        self.notificationQueue = []
+        self.currentNotification = None
+        self.startTime = 0
+        self.Hide()
+
+    def OnUpdate(self):
+        if not self.IsShow():
+            return
+
+        if self.currentNotification is None:
+            self.Hide()
+            return
+
+        currentTime = app.GetTime()
+        elapsed = currentTime - self.startTime
+
+        # Calcola alpha per fade-in/fade-out
+        if elapsed < self.NOTIFICATION_FADE_DURATION:
+            # Fase fade-in
+            fadeProgress = elapsed / self.NOTIFICATION_FADE_DURATION
+            self.alpha = int(255 * fadeProgress)
+        elif elapsed < self.NOTIFICATION_DISPLAY_TIME:
+            # Notifica visibile
+            self.alpha = 255
+        elif elapsed < self.NOTIFICATION_DISPLAY_TIME + self.NOTIFICATION_FADE_DURATION:
+            # Fase fade-out
+            fadeProgress = (elapsed - self.NOTIFICATION_DISPLAY_TIME) / self.NOTIFICATION_FADE_DURATION
+            self.alpha = int(255 * (1.0 - fadeProgress))
+        else:
+            # Notifica terminata, mostra prossima
+            self._ShowNextNotification()
+            return
+
+        # Ottieni colori per tipo corrente
+        colors = self.NOTIFICATION_TYPES[self.currentType]
+
+        # Aggiorna alpha dei testi
+        textColor = (self.alpha << 24) | 0x00FFFFFF
+        titleColor = (self.alpha << 24) | (colors["title"] & 0x00FFFFFF)
+
+        for msgLine in self.messageLines:
+            msgLine.SetPackedFontColor(textColor)
+        self.titleText.SetPackedFontColor(titleColor)
+        self.titleIcon.SetPackedFontColor(titleColor)
+
+        # Aggiorna alpha sfondo
+        bgAlpha = int(self.alpha * 0.87)  # 0xDD
+        self.bgOuter.SetColor((bgAlpha << 24) | 0x000A0A14)
+
+        # Aggiorna glow con colore tipo
+        glowAlpha = int(self.alpha * 0.13)  # 0x22
+        glowColorBase = colors["glow"] & 0x00FFFFFF
+        self.glowInner.SetColor((glowAlpha << 24) | glowColorBase)
+
+        # Aggiorna header background
+        headerAlpha = int(self.alpha * 0.33)  # 0x55
+        headerColorBase = colors["header_bg"] & 0x00FFFFFF
+        self.headerBg.SetColor((headerAlpha << 24) | headerColorBase)
+
+        # Effetto pulse sui bordi
+        self.pulsePhase += 0.08
+        pulse = (math.sin(self.pulsePhase) + 1.0) / 2.0
+        borderAlpha = int(self.alpha * (0.7 + pulse * 0.3))
+        borderColorBase = colors["border"] & 0x00FFFFFF
+        borderColor = (borderAlpha << 24) | borderColorBase
+        for border in self.borders:
+            border.SetColor(borderColor)
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
 #  GLOBAL INSTANCES
 # ═══════════════════════════════════════════════════════════════════════════════
 g_whatIfWindow = None
@@ -2155,6 +2457,7 @@ g_rivalWindow = None
 g_overtakeWindow = None
 g_speedKillWindow = None
 g_hunterTipsWindow = None
+g_hunterNotificationWindow = None
 
 def GetWhatIfWindow():
     global g_whatIfWindow
@@ -2210,6 +2513,12 @@ def GetHunterTipsWindow():
         g_hunterTipsWindow = HunterTipsWindow()
     return g_hunterTipsWindow
 
+def GetHunterNotificationWindow():
+    global g_hunterNotificationWindow
+    if g_hunterNotificationWindow is None:
+        g_hunterNotificationWindow = HunterNotificationWindow()
+    return g_hunterNotificationWindow
+
 
 # Alias per compatibilità con hunter.py
 GetWhatIfChoiceWindow = GetWhatIfWindow
@@ -2253,7 +2562,7 @@ def ShowOvertake(overtakenName, newPosition):
 # ═══════════════════════════════════════════════════════════════════════════════
 def ResetAllHunterWindows():
     """Resetta e nasconde tutte le finestre Hunter al cambio mappa/logout/relog"""
-    global g_defenseWindow, g_speedKillWindow, g_hunterTipsWindow
+    global g_defenseWindow, g_speedKillWindow, g_hunterTipsWindow, g_hunterNotificationWindow
     global g_emergencyWindow, g_whatIfWindow, g_systemMsgWindow
     global g_eventWindow, g_rivalWindow, g_overtakeWindow
 
@@ -2282,6 +2591,16 @@ def ResetAllHunterWindows():
             g_hunterTipsWindow.currentTip = ""
             g_hunterTipsWindow.startTime = 0
             g_hunterTipsWindow.Hide()
+        except:
+            pass
+
+    # Reset HunterNotificationWindow
+    if g_hunterNotificationWindow is not None:
+        try:
+            g_hunterNotificationWindow.notificationQueue = []
+            g_hunterNotificationWindow.currentNotification = None
+            g_hunterNotificationWindow.startTime = 0
+            g_hunterNotificationWindow.Hide()
         except:
             pass
 

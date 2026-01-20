@@ -3707,6 +3707,17 @@ class Interface(object):
 		if tipsWnd:
 			tipsWnd.AddTip(tipText)
 
+	def HunterNotification(self, notificationType, message):
+		"""
+		Mostra una notifica nella finestra Hunter Notification
+		Args:
+			notificationType: "winner", "achievement", "rank", "system", "event"
+			message: Testo del messaggio
+		"""
+		notifWnd = hunter_windows.GetHunterNotificationWindow()
+		if notifWnd:
+			notifWnd.AddNotification(notificationType, message)
+
 # ==============================================================
 
 	def ToggleHunterLevelWindow(self):

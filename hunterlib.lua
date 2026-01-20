@@ -27,6 +27,67 @@ function hg_lib.clean_str(str)
     return result
 end
 
+-- SISTEMA NOTIFICHE UI (no spam chat)
+function hg_lib.send_notification(player_pid, notif_type, message)
+    --[[
+        Invia una notifica alla finestra HunterNotification del client
+        Args:
+            player_pid: PID del giocatore (0 per player corrente)
+            notif_type: Tipo notifica ("winner", "achievement", "rank", "system", "event")
+            message: Testo del messaggio
+
+        Esempio:
+            hg_lib.send_notification(0, "achievement", "Hai completato il traguardo: Cacciatore Esperto!")
+            hg_lib.send_notification(pid, "winner", "Hai vinto l'evento Elite Hunt con 150 punti!")
+    ]]
+
+    local pid = player_pid or 0
+    if pid == 0 then
+        pid = pc.get_player_id()
+    end
+
+    -- Valida tipo notifica
+    local valid_types = {
+        ["winner"] = true,
+        ["achievement"] = true,
+        ["rank"] = true,
+        ["system"] = true,
+        ["event"] = true
+    }
+
+    if not valid_types[notif_type] then
+        notif_type = "system"
+    end
+
+    -- Pulisci messaggio per cmdchat (spazi -> +)
+    local clean_msg = hg_lib.clean_str(message)
+
+    -- Invia comando al client
+    if pid > 0 then
+        q.begin_other_pc_block(pid)
+        cmdchat("HunterNotification " .. notif_type .. " " .. clean_msg)
+        q.end_other_pc_block()
+    end
+end
+
+function hg_lib.send_notification_to_party(notif_type, message)
+    --[[
+        Invia una notifica a tutti i membri del party
+        Esempio:
+            hg_lib.send_notification_to_party("event", "Il party ha completato la frattura!")
+    ]]
+    if not party.is_party() then
+        -- Solo il player corrente
+        hg_lib.send_notification(0, notif_type, message)
+        return
+    end
+
+    local pids = {party.get_member_pids()}
+    for i, member_pid in ipairs(pids) do
+        hg_lib.send_notification(member_pid, notif_type, message)
+    end
+end
+
 -- STORAGE MULTI-VNUM PER EMERGENCY (max 5 vnums come flags separati)
 -- pc.setqf accetta SOLO interi, non stringhe!
 function hg_lib.set_emerg_vnums(vnum_str)
@@ -1025,6 +1086,10 @@ function hg_lib.start_emergency(title, seconds, mob_vnum, count, description, di
 
     -- Setta flag su TUTTI i membri del party (o solo player se solo)
     if party.is_party() then
+        local leader_pid = party.get_leader_pid()
+        -- PERFORMANCE FIX: Setta flag party globale per evitare loop inutili
+        game.set_event_flag("hq_party_emergency_" .. leader_pid, 1)
+
         local pids = {party.get_member_pids()}
         for i, member_pid in ipairs(pids) do
             q.begin_other_pc_block(member_pid)
@@ -1074,6 +1139,10 @@ function hg_lib.end_emergency(status)
 
     -- Pulisci flag su TUTTI i membri del party
     if party.is_party() then
+        local leader_pid = party.get_leader_pid()
+        -- PERFORMANCE FIX: Clear flag party globale
+        game.set_event_flag("hq_party_emergency_" .. leader_pid, 0)
+
         local pids = {party.get_member_pids()}
         for i, member_pid in ipairs(pids) do
             q.begin_other_pc_block(member_pid)
@@ -2165,14 +2234,26 @@ function hg_lib.check_event_end_and_draw()
             
             -- Se siamo esattamente al minuto di fine evento (finestra di 1 minuto)
             if current_total >= end_total and current_total < end_total + 1 then
-                -- Controlla se non abbiamo gia estratto oggi
+                -- FIX RACE CONDITION: Usa event_flag come lock per evitare multiple esecuzioni
+                local lock_flag = "hq_event_draw_lock_" .. event_id
+                local is_locked = game.get_event_flag(lock_flag) or 0
+
+                if is_locked == 1 then
+                    -- Già in corso di estrazione da un altro player, skip
+                    return
+                end
+
+                -- Acquisisci il lock (valido 2 minuti)
+                game.set_event_flag(lock_flag, 1)
+
+                -- Controlla se non abbiamo gia estratto oggi (DB check)
                 local today = os.date("%Y-%m-%d")
                 local check_q = string.format(
                     "SELECT id FROM srv1_hunabku.hunter_event_winners WHERE event_id=%d AND DATE(won_at)='%s'",
                     event_id, today
                 )
                 local wc = mysql_direct_query(check_q)
-                
+
                 if wc == 0 then
                     -- Non ancora estratto, procedi
                     notice_all("|cffFFD700[HUNTER " .. hg_lib.get_text("EVENT", nil, "EVENTO") .. "]|r " .. hg_lib.get_text("EVENT_ENDED", {EVENT = e.event_name}, "L'evento " .. e.event_name .. " e terminato!"))
@@ -2183,6 +2264,9 @@ function hg_lib.check_event_end_and_draw()
                         notice_all("|cffFF6600[" .. hg_lib.get_text("EVENT", nil, "EVENTO") .. "]|r " .. hg_lib.get_text("NO_PARTICIPANTS", nil, "Nessun partecipante oggi. Nessun vincitore."))
                     end
                 end
+
+                -- Rilascia il lock dopo 2 minuti (120 secondi)
+                timer("hq_release_event_lock_" .. event_id, 120, "game.set_event_flag('" .. lock_flag .. "', 0)")
             end
         end
     end
@@ -2703,45 +2787,50 @@ end
 function hg_lib.on_emergency_kill(vnum)
     local emerg_active = pc.getqf("hq_emerg_active") or 0
 
-    -- SE NON HA EMERGENCY LOCALE, CONTROLLA SE IL SUO PARTY HA UNA EMERGENCY ATTIVA
+    -- PERFORMANCE FIX: Usa flag party invece di iterare membri ad ogni kill
     if emerg_active ~= 1 then
         if party.is_party() then
-            -- Controlla se qualche membro del party ha l'emergency attiva con questo vnum
-            local pids = {party.get_member_pids()}
-            for i, member_pid in ipairs(pids) do
-                q.begin_other_pc_block(member_pid)
-                local member_active = pc.getqf("hq_emerg_active") or 0
-                local member_vnum = pc.getqf("hq_emerg_vnum") or 0
-                local member_vnums = hg_lib.get_emerg_vnums()  -- Legge i vnums del membro
-                q.end_other_pc_block()
+            local leader_pid = party.get_leader_pid()
+            local party_has_emergency = game.get_event_flag("hq_party_emergency_" .. leader_pid) or 0
 
-                -- Supporto multi-vnum: controlla se il vnum ucciso è valido
-                local vnum_matches = hg_lib.is_vnum_in_list(vnum, member_vnums)
-                if not vnum_matches and member_vnum ~= 0 then
-                    vnum_matches = (member_vnum == vnum)
-                end
-
-                if member_active == 1 and vnum_matches then
-                    -- Un membro del party ha l'emergency attiva! Eredita i flag
+            -- Se il party HA emergency attiva, cerca il membro owner
+            if party_has_emergency == 1 then
+                local pids = {party.get_member_pids()}
+                for i, member_pid in ipairs(pids) do
                     q.begin_other_pc_block(member_pid)
-                    local req = pc.getqf("hq_emerg_req") or 1
-                    local expire = pc.getqf("hq_emerg_expire") or 0
-                    local reward_pts = pc.getqf("hq_emerg_reward_pts") or 0
-                    local penalty_pts = pc.getqf("hq_emerg_penalty_pts") or 0
-                    local emerg_id = pc.getqf("hq_emerg_id") or 0
+                    local member_active = pc.getqf("hq_emerg_active") or 0
+                    local member_vnum = pc.getqf("hq_emerg_vnum") or 0
+                    local member_vnums = hg_lib.get_emerg_vnums()
                     q.end_other_pc_block()
 
-                    pc.setqf("hq_emerg_active", 1)
-                    pc.setqf("hq_emerg_vnum", member_vnum)
-                    hg_lib.set_emerg_vnums(member_vnums)  -- Copia i vnums al player corrente
-                    pc.setqf("hq_emerg_req", req)
-                    pc.setqf("hq_emerg_cur", 0)
-                    pc.setqf("hq_emerg_expire", expire)
-                    pc.setqf("hq_emerg_reward_pts", reward_pts)
-                    pc.setqf("hq_emerg_penalty_pts", penalty_pts)
-                    pc.setqf("hq_emerg_id", emerg_id)
-                    emerg_active = 1
-                    break
+                    -- Supporto multi-vnum: controlla se il vnum ucciso è valido
+                    local vnum_matches = hg_lib.is_vnum_in_list(vnum, member_vnums)
+                    if not vnum_matches and member_vnum ~= 0 then
+                        vnum_matches = (member_vnum == vnum)
+                    end
+
+                    if member_active == 1 and vnum_matches then
+                        -- Un membro del party ha l'emergency attiva! Eredita i flag
+                        q.begin_other_pc_block(member_pid)
+                        local req = pc.getqf("hq_emerg_req") or 1
+                        local expire = pc.getqf("hq_emerg_expire") or 0
+                        local reward_pts = pc.getqf("hq_emerg_reward_pts") or 0
+                        local penalty_pts = pc.getqf("hq_emerg_penalty_pts") or 0
+                        local emerg_id = pc.getqf("hq_emerg_id") or 0
+                        q.end_other_pc_block()
+
+                        pc.setqf("hq_emerg_active", 1)
+                        pc.setqf("hq_emerg_vnum", member_vnum)
+                        hg_lib.set_emerg_vnums(member_vnums)
+                        pc.setqf("hq_emerg_req", req)
+                        pc.setqf("hq_emerg_cur", 0)
+                        pc.setqf("hq_emerg_expire", expire)
+                        pc.setqf("hq_emerg_reward_pts", reward_pts)
+                        pc.setqf("hq_emerg_penalty_pts", penalty_pts)
+                        pc.setqf("hq_emerg_id", emerg_id)
+                        emerg_active = 1
+                        break
+                    end
                 end
             end
         end
@@ -3347,7 +3436,10 @@ function hg_lib.open_chest(chest_vnum)
     
     -- PERFORMANCE: Accumula Trial progress invece di query immediata
     hg_lib.add_trial_progress("chest_open", 1)
-    
+
+    -- Aggiorna missioni giornaliere per apertura bauli
+    hg_lib.update_mission_progress("open_chest", 1, chest_vnum)
+
     -- EFFETTO EPICO CLIENT 
     -- Formato: vnum|glory|name|color|itemName|jackpotGlory|jackpotItems
     local effect_data = chest_vnum .. "|" .. final_glory .. "|" .. hg_lib.clean_str(chest_name) .. "|" .. color_code
@@ -3471,6 +3563,9 @@ function hg_lib.give_chest_reward()
 
         -- PERFORMANCE: Accumula Trial progress invece di query immediata
         hg_lib.add_trial_progress("chest_open", 1)
+
+        -- Aggiorna missioni giornaliere per apertura bauli (reward auto-open)
+        hg_lib.update_mission_progress("open_chest", 1, 0)
         -- ==========================
     end
 end
@@ -4444,6 +4539,74 @@ function hg_lib.send_all_data()
 end
 
 -- ============================================================
+-- MEMORY LEAK CLEANUP - Pulizia periodica tabelle globali
+-- Previene memory leak rimuovendo entry vecchie/inutilizzate
+-- ============================================================
+function hg_lib.cleanup_global_tables()
+    local now = get_time()
+    local cleanup_threshold = 3600  -- 1 ora
+
+    -- 1. Pulisci hunter_temp_gate_data (dati gate temporanei)
+    if _G.hunter_temp_gate_data then
+        local count_before = 0
+        local count_after = 0
+        for pid, data in pairs(_G.hunter_temp_gate_data) do
+            count_before = count_before + 1
+            -- Rimuovi se più vecchio di 1 ora
+            if data.timestamp and (now - data.timestamp > cleanup_threshold) then
+                _G.hunter_temp_gate_data[pid] = nil
+            else
+                count_after = count_after + 1
+            end
+        end
+        if count_before > count_after then
+            -- Log cleanup (opzionale)
+            -- syschat("Cleanup: hunter_temp_gate_data " .. (count_before - count_after) .. " entries removed")
+        end
+    end
+
+    -- 2. Pulisci hunter_mission_buffer (buffer missioni per player offline)
+    if _G.hunter_mission_buffer then
+        -- Qui non possiamo controllare se il player è online facilmente
+        -- Quindi rimuoviamo solo buffer molto vecchi (usa throttle timestamp)
+        for pid, buffer in pairs(_G.hunter_mission_buffer) do
+            -- Se il buffer è vuoto, rimuovilo
+            local is_empty = true
+            for k, v in pairs(buffer) do
+                is_empty = false
+                break
+            end
+            if is_empty then
+                _G.hunter_mission_buffer[pid] = nil
+            end
+        end
+    end
+
+    -- 3. Pulisci hunter_mission_throttle (timestamp vecchi)
+    if _G.hunter_mission_throttle then
+        for key, timestamp in pairs(_G.hunter_mission_throttle) do
+            -- Rimuovi timestamp più vecchi di 1 ora
+            if now - timestamp > cleanup_threshold then
+                _G.hunter_mission_throttle[key] = nil
+            end
+        end
+    end
+
+    -- 4. Pulisci hunter_player_data_cache (timestamp vecchi)
+    if _G.hunter_player_data_cache then
+        for pid, timestamp in pairs(_G.hunter_player_data_cache) do
+            -- Rimuovi timestamp più vecchi di 10 minuti
+            if now - timestamp > 600 then
+                _G.hunter_player_data_cache[pid] = nil
+            end
+        end
+    end
+
+    -- NOTE: hunter_elite_cache, hunter_defense_waves_cache sono cache statiche,
+    -- non crescono nel tempo quindi non serve cleanup
+end
+
+-- ============================================================
 -- OTTIMIZZAZIONE send_player_data - Throttling per ridurre carico
 -- Con 300K kill/min, questa funzione era chiamata troppo spesso
 -- NUOVA VERSIONE: Throttle 3 secondi + UNA query invece di 3
@@ -5299,11 +5462,9 @@ function hg_lib.on_mob_kill(mob_vnum)
     
     -- ORA fai il flush (una sola volta, con tutti i dati nel buffer)
     hg_lib.flush_mission_buffer(pid)
-    
-    -- Se è un elite, controlla completamento trial
-    if mob_info ~= nil then
-        hg_lib.check_trial_completion_status()
-    end
+
+    -- PERFORMANCE FIX: Trial completion check rimosso da qui (troppo spam)
+    -- Ora controllato solo dal timer da 5 minuti o al completamento effettivo
 end
 
 function hg_lib.check_trial_completion_status()
