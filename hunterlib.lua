@@ -5399,10 +5399,9 @@ function hg_lib.on_fracture_seal()
 
     -- 2. Aggiorna Missioni anche per tutti i membri del party
     if party.is_party() then
-        local my_pid = pc.get_player_id()
         local pids = {party.get_member_pids()}
         for i, member_pid in ipairs(pids) do
-            if member_pid ~= my_pid then
+            if member_pid ~= pid then
                 q.begin_other_pc_block(member_pid)
                 hg_lib.update_mission_progress("seal_fracture", 1, 0)
                 hg_lib.add_trial_progress("fracture_seal", 1)
