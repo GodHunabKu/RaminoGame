@@ -3712,11 +3712,14 @@ class Interface(object):
 		Mostra una notifica nella finestra Hunter Notification
 		Args:
 			notificationType: "winner", "achievement", "rank", "system", "event"
-			message: Testo del messaggio
+			message: Testo del messaggio (con + al posto degli spazi)
 		"""
+		# Converti + di nuovo in spazi (da Lua clean_str)
+		cleanMessage = message.replace("+", " ") if message else ""
+
 		notifWnd = hunter_windows.GetHunterNotificationWindow()
 		if notifWnd:
-			notifWnd.AddNotification(notificationType, message)
+			notifWnd.AddNotification(notificationType, cleanMessage)
 
 # ==============================================================
 
