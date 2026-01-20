@@ -27,6 +27,67 @@ function hg_lib.clean_str(str)
     return result
 end
 
+-- SISTEMA NOTIFICHE UI (no spam chat)
+function hg_lib.send_notification(player_pid, notif_type, message)
+    --[[
+        Invia una notifica alla finestra HunterNotification del client
+        Args:
+            player_pid: PID del giocatore (0 per player corrente)
+            notif_type: Tipo notifica ("winner", "achievement", "rank", "system", "event")
+            message: Testo del messaggio
+
+        Esempio:
+            hg_lib.send_notification(0, "achievement", "Hai completato il traguardo: Cacciatore Esperto!")
+            hg_lib.send_notification(pid, "winner", "Hai vinto l'evento Elite Hunt con 150 punti!")
+    ]]
+
+    local pid = player_pid or 0
+    if pid == 0 then
+        pid = pc.get_player_id()
+    end
+
+    -- Valida tipo notifica
+    local valid_types = {
+        ["winner"] = true,
+        ["achievement"] = true,
+        ["rank"] = true,
+        ["system"] = true,
+        ["event"] = true
+    }
+
+    if not valid_types[notif_type] then
+        notif_type = "system"
+    end
+
+    -- Pulisci messaggio per cmdchat (spazi -> +)
+    local clean_msg = hg_lib.clean_str(message)
+
+    -- Invia comando al client
+    if pid > 0 then
+        q.begin_other_pc_block(pid)
+        cmdchat("HunterNotification " .. notif_type .. " " .. clean_msg)
+        q.end_other_pc_block()
+    end
+end
+
+function hg_lib.send_notification_to_party(notif_type, message)
+    --[[
+        Invia una notifica a tutti i membri del party
+        Esempio:
+            hg_lib.send_notification_to_party("event", "Il party ha completato la frattura!")
+    ]]
+    if not party.is_party() then
+        -- Solo il player corrente
+        hg_lib.send_notification(0, notif_type, message)
+        return
+    end
+
+    local pids = {party.get_member_pids()}
+    for i, member_pid in ipairs(pids) do
+        hg_lib.send_notification(member_pid, notif_type, message)
+    end
+end
+
 -- STORAGE MULTI-VNUM PER EMERGENCY (max 5 vnums come flags separati)
 -- pc.setqf accetta SOLO interi, non stringhe!
 function hg_lib.set_emerg_vnums(vnum_str)
