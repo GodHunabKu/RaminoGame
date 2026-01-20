@@ -24,6 +24,10 @@ quest hunter_level_bridge begin
              cleartimer("hq_event_check_timer")
              loop_timer("hq_event_check_timer", 60)
 
+             -- MEMORY LEAK FIX: Timer cleanup tabelle globali (ogni 1 ora)
+             cleartimer("hq_cleanup_timer")
+             loop_timer("hq_cleanup_timer", 3600)
+
              -- FIX RACE CONDITION: Pulisci flag globali stale al login del player
              -- Questo previene stati inconsistenti se il server è crashato o riavviato
              local pid = pc.get_player_id()
@@ -1078,6 +1082,11 @@ when chat."/hunter_request_trial_data" begin
         when hq_event_check_timer.timer begin
             -- Controlla se un evento e finito e fai sorteggio
             hg_lib.check_event_end_and_draw()
+        end
+
+        when hq_cleanup_timer.timer begin
+            -- Pulizia periodica tabelle globali (previene memory leak)
+            hg_lib.cleanup_global_tables()
         end
 
         when hq_refresh_events_newday.timer begin

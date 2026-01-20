@@ -4478,6 +4478,74 @@ function hg_lib.send_all_data()
 end
 
 -- ============================================================
+-- MEMORY LEAK CLEANUP - Pulizia periodica tabelle globali
+-- Previene memory leak rimuovendo entry vecchie/inutilizzate
+-- ============================================================
+function hg_lib.cleanup_global_tables()
+    local now = get_time()
+    local cleanup_threshold = 3600  -- 1 ora
+
+    -- 1. Pulisci hunter_temp_gate_data (dati gate temporanei)
+    if _G.hunter_temp_gate_data then
+        local count_before = 0
+        local count_after = 0
+        for pid, data in pairs(_G.hunter_temp_gate_data) do
+            count_before = count_before + 1
+            -- Rimuovi se più vecchio di 1 ora
+            if data.timestamp and (now - data.timestamp > cleanup_threshold) then
+                _G.hunter_temp_gate_data[pid] = nil
+            else
+                count_after = count_after + 1
+            end
+        end
+        if count_before > count_after then
+            -- Log cleanup (opzionale)
+            -- syschat("Cleanup: hunter_temp_gate_data " .. (count_before - count_after) .. " entries removed")
+        end
+    end
+
+    -- 2. Pulisci hunter_mission_buffer (buffer missioni per player offline)
+    if _G.hunter_mission_buffer then
+        -- Qui non possiamo controllare se il player è online facilmente
+        -- Quindi rimuoviamo solo buffer molto vecchi (usa throttle timestamp)
+        for pid, buffer in pairs(_G.hunter_mission_buffer) do
+            -- Se il buffer è vuoto, rimuovilo
+            local is_empty = true
+            for k, v in pairs(buffer) do
+                is_empty = false
+                break
+            end
+            if is_empty then
+                _G.hunter_mission_buffer[pid] = nil
+            end
+        end
+    end
+
+    -- 3. Pulisci hunter_mission_throttle (timestamp vecchi)
+    if _G.hunter_mission_throttle then
+        for key, timestamp in pairs(_G.hunter_mission_throttle) do
+            -- Rimuovi timestamp più vecchi di 1 ora
+            if now - timestamp > cleanup_threshold then
+                _G.hunter_mission_throttle[key] = nil
+            end
+        end
+    end
+
+    -- 4. Pulisci hunter_player_data_cache (timestamp vecchi)
+    if _G.hunter_player_data_cache then
+        for pid, timestamp in pairs(_G.hunter_player_data_cache) do
+            -- Rimuovi timestamp più vecchi di 10 minuti
+            if now - timestamp > 600 then
+                _G.hunter_player_data_cache[pid] = nil
+            end
+        end
+    end
+
+    -- NOTE: hunter_elite_cache, hunter_defense_waves_cache sono cache statiche,
+    -- non crescono nel tempo quindi non serve cleanup
+end
+
+-- ============================================================
 -- OTTIMIZZAZIONE send_player_data - Throttling per ridurre carico
 -- Con 300K kill/min, questa funzione era chiamata troppo spesso
 -- NUOVA VERSIONE: Throttle 3 secondi + UNA query invece di 3
