@@ -2155,6 +2155,7 @@ class HunterNotificationWindow(ui.Window, DraggableMixin):
 
     NOTIFICATION_DISPLAY_TIME = 8.0  # Secondi di visualizzazione per notifica
     NOTIFICATION_FADE_DURATION = 1.5  # Durata fade in/out
+    MAX_QUEUE_SIZE = 10  # Limite massimo notifiche in coda (MEMORY LEAK PROTECTION)
 
     # Color schemes per diversi tipi di notifica
     NOTIFICATION_TYPES = {
@@ -2328,6 +2329,11 @@ class HunterNotificationWindow(ui.Window, DraggableMixin):
         # Valida tipo
         if notificationType not in self.NOTIFICATION_TYPES:
             notificationType = "system"
+
+        # MEMORY LEAK PROTECTION: Limita dimensione coda
+        # Se la coda è piena, rimuovi le notifiche più vecchie
+        while len(self.notificationQueue) >= self.MAX_QUEUE_SIZE:
+            self.notificationQueue.pop(0)  # Rimuovi la più vecchia
 
         # Aggiungi a coda
         self.notificationQueue.append({
