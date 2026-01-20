@@ -1025,6 +1025,10 @@ function hg_lib.start_emergency(title, seconds, mob_vnum, count, description, di
 
     -- Setta flag su TUTTI i membri del party (o solo player se solo)
     if party.is_party() then
+        local leader_pid = party.get_leader_pid()
+        -- PERFORMANCE FIX: Setta flag party globale per evitare loop inutili
+        game.set_event_flag("hq_party_emergency_" .. leader_pid, 1)
+
         local pids = {party.get_member_pids()}
         for i, member_pid in ipairs(pids) do
             q.begin_other_pc_block(member_pid)
@@ -1074,6 +1078,10 @@ function hg_lib.end_emergency(status)
 
     -- Pulisci flag su TUTTI i membri del party
     if party.is_party() then
+        local leader_pid = party.get_leader_pid()
+        -- PERFORMANCE FIX: Clear flag party globale
+        game.set_event_flag("hq_party_emergency_" .. leader_pid, 0)
+
         local pids = {party.get_member_pids()}
         for i, member_pid in ipairs(pids) do
             q.begin_other_pc_block(member_pid)
@@ -2718,45 +2726,50 @@ end
 function hg_lib.on_emergency_kill(vnum)
     local emerg_active = pc.getqf("hq_emerg_active") or 0
 
-    -- SE NON HA EMERGENCY LOCALE, CONTROLLA SE IL SUO PARTY HA UNA EMERGENCY ATTIVA
+    -- PERFORMANCE FIX: Usa flag party invece di iterare membri ad ogni kill
     if emerg_active ~= 1 then
         if party.is_party() then
-            -- Controlla se qualche membro del party ha l'emergency attiva con questo vnum
-            local pids = {party.get_member_pids()}
-            for i, member_pid in ipairs(pids) do
-                q.begin_other_pc_block(member_pid)
-                local member_active = pc.getqf("hq_emerg_active") or 0
-                local member_vnum = pc.getqf("hq_emerg_vnum") or 0
-                local member_vnums = hg_lib.get_emerg_vnums()  -- Legge i vnums del membro
-                q.end_other_pc_block()
+            local leader_pid = party.get_leader_pid()
+            local party_has_emergency = game.get_event_flag("hq_party_emergency_" .. leader_pid) or 0
 
-                -- Supporto multi-vnum: controlla se il vnum ucciso è valido
-                local vnum_matches = hg_lib.is_vnum_in_list(vnum, member_vnums)
-                if not vnum_matches and member_vnum ~= 0 then
-                    vnum_matches = (member_vnum == vnum)
-                end
-
-                if member_active == 1 and vnum_matches then
-                    -- Un membro del party ha l'emergency attiva! Eredita i flag
+            -- Se il party HA emergency attiva, cerca il membro owner
+            if party_has_emergency == 1 then
+                local pids = {party.get_member_pids()}
+                for i, member_pid in ipairs(pids) do
                     q.begin_other_pc_block(member_pid)
-                    local req = pc.getqf("hq_emerg_req") or 1
-                    local expire = pc.getqf("hq_emerg_expire") or 0
-                    local reward_pts = pc.getqf("hq_emerg_reward_pts") or 0
-                    local penalty_pts = pc.getqf("hq_emerg_penalty_pts") or 0
-                    local emerg_id = pc.getqf("hq_emerg_id") or 0
+                    local member_active = pc.getqf("hq_emerg_active") or 0
+                    local member_vnum = pc.getqf("hq_emerg_vnum") or 0
+                    local member_vnums = hg_lib.get_emerg_vnums()
                     q.end_other_pc_block()
 
-                    pc.setqf("hq_emerg_active", 1)
-                    pc.setqf("hq_emerg_vnum", member_vnum)
-                    hg_lib.set_emerg_vnums(member_vnums)  -- Copia i vnums al player corrente
-                    pc.setqf("hq_emerg_req", req)
-                    pc.setqf("hq_emerg_cur", 0)
-                    pc.setqf("hq_emerg_expire", expire)
-                    pc.setqf("hq_emerg_reward_pts", reward_pts)
-                    pc.setqf("hq_emerg_penalty_pts", penalty_pts)
-                    pc.setqf("hq_emerg_id", emerg_id)
-                    emerg_active = 1
-                    break
+                    -- Supporto multi-vnum: controlla se il vnum ucciso è valido
+                    local vnum_matches = hg_lib.is_vnum_in_list(vnum, member_vnums)
+                    if not vnum_matches and member_vnum ~= 0 then
+                        vnum_matches = (member_vnum == vnum)
+                    end
+
+                    if member_active == 1 and vnum_matches then
+                        -- Un membro del party ha l'emergency attiva! Eredita i flag
+                        q.begin_other_pc_block(member_pid)
+                        local req = pc.getqf("hq_emerg_req") or 1
+                        local expire = pc.getqf("hq_emerg_expire") or 0
+                        local reward_pts = pc.getqf("hq_emerg_reward_pts") or 0
+                        local penalty_pts = pc.getqf("hq_emerg_penalty_pts") or 0
+                        local emerg_id = pc.getqf("hq_emerg_id") or 0
+                        q.end_other_pc_block()
+
+                        pc.setqf("hq_emerg_active", 1)
+                        pc.setqf("hq_emerg_vnum", member_vnum)
+                        hg_lib.set_emerg_vnums(member_vnums)
+                        pc.setqf("hq_emerg_req", req)
+                        pc.setqf("hq_emerg_cur", 0)
+                        pc.setqf("hq_emerg_expire", expire)
+                        pc.setqf("hq_emerg_reward_pts", reward_pts)
+                        pc.setqf("hq_emerg_penalty_pts", penalty_pts)
+                        pc.setqf("hq_emerg_id", emerg_id)
+                        emerg_active = 1
+                        break
+                    end
                 end
             end
         end
@@ -5320,11 +5333,9 @@ function hg_lib.on_mob_kill(mob_vnum)
     
     -- ORA fai il flush (una sola volta, con tutti i dati nel buffer)
     hg_lib.flush_mission_buffer(pid)
-    
-    -- Se è un elite, controlla completamento trial
-    if mob_info ~= nil then
-        hg_lib.check_trial_completion_status()
-    end
+
+    -- PERFORMANCE FIX: Trial completion check rimosso da qui (troppo spam)
+    -- Ora controllato solo dal timer da 5 minuti o al completamento effettivo
 end
 
 function hg_lib.check_trial_completion_status()
