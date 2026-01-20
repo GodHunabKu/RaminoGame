@@ -2165,14 +2165,26 @@ function hg_lib.check_event_end_and_draw()
             
             -- Se siamo esattamente al minuto di fine evento (finestra di 1 minuto)
             if current_total >= end_total and current_total < end_total + 1 then
-                -- Controlla se non abbiamo gia estratto oggi
+                -- FIX RACE CONDITION: Usa event_flag come lock per evitare multiple esecuzioni
+                local lock_flag = "hq_event_draw_lock_" .. event_id
+                local is_locked = game.get_event_flag(lock_flag) or 0
+
+                if is_locked == 1 then
+                    -- Già in corso di estrazione da un altro player, skip
+                    return
+                end
+
+                -- Acquisisci il lock (valido 2 minuti)
+                game.set_event_flag(lock_flag, 1)
+
+                -- Controlla se non abbiamo gia estratto oggi (DB check)
                 local today = os.date("%Y-%m-%d")
                 local check_q = string.format(
                     "SELECT id FROM srv1_hunabku.hunter_event_winners WHERE event_id=%d AND DATE(won_at)='%s'",
                     event_id, today
                 )
                 local wc = mysql_direct_query(check_q)
-                
+
                 if wc == 0 then
                     -- Non ancora estratto, procedi
                     notice_all("|cffFFD700[HUNTER " .. hg_lib.get_text("EVENT", nil, "EVENTO") .. "]|r " .. hg_lib.get_text("EVENT_ENDED", {EVENT = e.event_name}, "L'evento " .. e.event_name .. " e terminato!"))
@@ -2183,6 +2195,9 @@ function hg_lib.check_event_end_and_draw()
                         notice_all("|cffFF6600[" .. hg_lib.get_text("EVENT", nil, "EVENTO") .. "]|r " .. hg_lib.get_text("NO_PARTICIPANTS", nil, "Nessun partecipante oggi. Nessun vincitore."))
                     end
                 end
+
+                -- Rilascia il lock dopo 2 minuti (120 secondi)
+                timer("hq_release_event_lock_" .. event_id, 120, "game.set_event_flag('" .. lock_flag .. "', 0)")
             end
         end
     end
@@ -3347,7 +3362,10 @@ function hg_lib.open_chest(chest_vnum)
     
     -- PERFORMANCE: Accumula Trial progress invece di query immediata
     hg_lib.add_trial_progress("chest_open", 1)
-    
+
+    -- Aggiorna missioni giornaliere per apertura bauli
+    hg_lib.update_mission_progress("open_chest", 1, chest_vnum)
+
     -- EFFETTO EPICO CLIENT 
     -- Formato: vnum|glory|name|color|itemName|jackpotGlory|jackpotItems
     local effect_data = chest_vnum .. "|" .. final_glory .. "|" .. hg_lib.clean_str(chest_name) .. "|" .. color_code
@@ -3471,6 +3489,9 @@ function hg_lib.give_chest_reward()
 
         -- PERFORMANCE: Accumula Trial progress invece di query immediata
         hg_lib.add_trial_progress("chest_open", 1)
+
+        -- Aggiorna missioni giornaliere per apertura bauli (reward auto-open)
+        hg_lib.update_mission_progress("open_chest", 1, 0)
         -- ==========================
     end
 end
