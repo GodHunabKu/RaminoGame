@@ -62,16 +62,16 @@ function hg_lib.send_notification(player_pid, notif_type, message)
     -- Pulisci messaggio per cmdchat (spazi -> +)
     local clean_msg = hg_lib.clean_str(message)
 
-    -- Invia comando al client
+    -- Invia comando al client (usa | come separatore, non spazio)
     if pid > 0 then
         local current_pid = pc.get_player_id()
         if pid == current_pid then
             -- Player corrente, non serve begin_other_pc_block
-            cmdchat("HunterNotification " .. notif_type .. " " .. clean_msg)
+            cmdchat("HunterNotification " .. notif_type .. "|" .. clean_msg)
         else
             -- Altro player, usa begin_other_pc_block
             q.begin_other_pc_block(pid)
-            cmdchat("HunterNotification " .. notif_type .. " " .. clean_msg)
+            cmdchat("HunterNotification " .. notif_type .. "|" .. clean_msg)
             q.end_other_pc_block()
         end
     end
