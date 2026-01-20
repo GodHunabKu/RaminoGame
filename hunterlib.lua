@@ -607,14 +607,15 @@ function hg_lib.security_log(log_type, severity, action, details)
     local pname = pc.get_name()
     local map_idx = pc.get_map_index()
     local px, py = pc.get_x(), pc.get_y()
-    
-    -- Escape strings per SQL
+
+    -- Escape strings per SQL (SECURITY FIX)
+    local safe_pname = mysql_escape_string(pname)
     local safe_action = string.gsub(action or "", "'", "''")
     local safe_details = string.gsub(details or "", "'", "''")
-    
+
     local q = string.format(
         "CALL srv1_hunabku.sp_hunter_log(%d, '%s', '%s', '%s', '%s', '%s', %d, %d, %d)",
-        pid, pname, log_type, severity, safe_action, safe_details, map_idx, px, py
+        pid, safe_pname, log_type, severity, safe_action, safe_details, map_idx, px, py
     )
     mysql_direct_query(q)
 end
@@ -5166,8 +5167,10 @@ function hg_lib.assign_daily_missions()
     if rc > 0 and rd[1] then pts = tonumber(rd[1].total_points) or 0 end
     local rank_idx = hg_lib.get_rank_index(pts)
     local rank_letter = hg_lib.get_rank_letter(rank_idx)
-        
-    mysql_direct_query("CALL srv1_hunabku.sp_assign_daily_missions(" .. pid .. ", '" .. rank_letter .. "', '" .. pname .. "')")
+
+    -- SECURITY FIX: Escape player name to prevent SQL injection
+    local safe_pname = mysql_escape_string(pname)
+    mysql_direct_query("CALL srv1_hunabku.sp_assign_daily_missions(" .. pid .. ", '" .. rank_letter .. "', '" .. safe_pname .. "')")
         
     local vc, vd = mysql_direct_query("SELECT COUNT(*) as cnt FROM srv1_hunabku.hunter_player_missions WHERE player_id=" .. pid .. " AND assigned_date='" .. today .. "' AND status='active'")
     local inserted_count = 0
