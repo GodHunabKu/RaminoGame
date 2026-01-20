@@ -5825,18 +5825,47 @@ function hg_lib.shop_buy_item(item_id)
         return
     end
 
+    -- ANTI-EXPLOIT: Lock per prevenire double-click
+    local lock_key = "hq_shop_lock"
+    if pc.getqf(lock_key) == 1 then
+        syschat("|cffFF6600[SHOP]|r Attendi qualche secondo...")
+        return
+    end
+    pc.setqf(lock_key, 1)
+
     -- Controlla inventario
     if pc.count_empty_inventory(0) < 1 then
+        pc.setqf(lock_key, 0)
         hg_lib.syschat_t("SHOP_INV_FULL", "Inventario pieno!", nil, "FF0000")
         return
     end
 
-    -- Esegui acquisto
+    -- CRITICAL FIX: Dai item PRIMA di sottrarre punti (atomic operation)
+    -- Se give_item2 fallisce, non sottraiamo punti
+    local success = pc.give_item2(item_vnum, item_count)
+
+    if not success or success == 0 then
+        pc.setqf(lock_key, 0)
+        syschat("|cffFF0000[SHOP]|r Errore durante la consegna. Contatta un GM.")
+        hg_lib.log_error("SHOP", "give_item2 failed", "item_id=" .. item_id .. " vnum=" .. item_vnum)
+        return
+    end
+
+    -- Item dato con successo, ora sottrai punti
     mysql_direct_query("UPDATE srv1_hunabku.hunter_quest_ranking SET spendable_points = spendable_points - " .. price .. " WHERE player_id=" .. pid)
-    pc.give_item2(item_vnum, item_count)
+
+    -- LOG TRANSAZIONE (AUDIT TRAIL)
+    local pname = mysql_escape_string(pc.get_name())
+    mysql_direct_query(string.format(
+        "INSERT INTO srv1_hunabku.hunter_shop_purchases (player_id, player_name, item_id, item_vnum, item_count, price_paid, purchased_at) VALUES (%d, '%s', %d, %d, %d, %d, NOW())",
+        pid, pname, item_id, item_vnum, item_count, price
+    ))
 
     syschat("|cff00FF00[SHOP]|r " .. hg_lib.get_text("SHOP_PURCHASED", {ITEM = item_name, COUNT = item_count}, "Acquistato: " .. item_name .. " x" .. item_count))
     syschat("|cffFFD700[SHOP]|r -" .. price .. " " .. hg_lib.get_text("SPENDABLE_GLORY", nil, "Gloria Spendibile"))
+
+    -- Rilascia lock dopo 2 secondi
+    timer("hq_shop_unlock", 2, "pc.setqf('hq_shop_lock', 0)")
     
     -- Aggiorna UI
     hg_lib.send_player_data()
@@ -5944,18 +5973,40 @@ function hg_lib.claim_achievement(ach_id)
         return
     end
 
+    -- ANTI-EXPLOIT: Lock per prevenire double-click
+    local lock_key = "hq_ach_lock"
+    if pc.getqf(lock_key) == 1 then
+        syschat("|cffFF6600[ACHIEVEMENT]|r Attendi qualche secondo...")
+        return
+    end
+    pc.setqf(lock_key, 1)
+
     -- Controlla inventario
     if pc.count_empty_inventory(0) < 1 then
+        pc.setqf(lock_key, 0)
         hg_lib.syschat_t("ACH_INV_FULL", "Inventario pieno!", nil, "FF0000")
         return
     end
 
-    -- Riscuoti
+    -- CRITICAL FIX: Dai item PRIMA di marcare come claimed
+    -- Se give_item2 fallisce, il player può ritentare
+    local success = pc.give_item2(reward_vnum, reward_count)
+
+    if not success or success == 0 then
+        pc.setqf(lock_key, 0)
+        syschat("|cffFF0000[ACHIEVEMENT]|r Errore durante la consegna. Contatta un GM.")
+        hg_lib.log_error("ACHIEVEMENT", "give_item2 failed", "ach_id=" .. ach_id .. " vnum=" .. reward_vnum)
+        return
+    end
+
+    -- Item dato con successo, ora marca come claimed
     mysql_direct_query("INSERT INTO srv1_hunabku.hunter_achievements_claimed (player_id, achievement_id, claimed_at) VALUES (" .. pid .. ", " .. ach_id .. ", NOW())")
-    pc.give_item2(reward_vnum, reward_count)
 
     syschat("|cff00FF00[" .. hg_lib.get_text("ACHIEVEMENT", nil, "TRAGUARDO") .. "]|r " .. ach_name .. " " .. hg_lib.get_text("COMPLETED", nil, "completato") .. "!")
     syschat("|cffFFD700[" .. hg_lib.get_text("REWARD", nil, "RICOMPENSA") .. "]|r " .. hg_lib.get_text("ACH_RECEIVED", {COUNT = reward_count}, "Ricevuto x" .. reward_count .. " oggetto!"))
+
+    -- Rilascia lock dopo 2 secondi
+    timer("hq_ach_unlock", 2, "pc.setqf('hq_ach_lock', 0)")
     
     -- Aggiorna UI
     cmdchat("HunterAchievementClaimed " .. ach_id)
@@ -5963,28 +6014,53 @@ end
 
 function hg_lib.smart_claim_all()
     local pid = pc.get_player_id()
+
+    -- ANTI-EXPLOIT: Lock per prevenire double-click
+    local lock_key = "hq_smart_claim_lock"
+    if pc.getqf(lock_key) == 1 then
+        syschat("|cffFF6600[SMART CLAIM]|r Attendi qualche secondo...")
+        return
+    end
+    pc.setqf(lock_key, 1)
+
     local achievements = hg_lib.get_player_achievements(pid)
     local claimed_count = 0
-    
+    local failed_count = 0
+
     for _, a in ipairs(achievements) do
         if a.unlocked and not a.claimed then
-            -- Controlla inventario
+            -- CRITICAL FIX: Controlla inventario AD OGNI iterazione
             if pc.count_empty_inventory(0) < 1 then
                 syschat("|cffFF6600[SMART CLAIM]|r " .. hg_lib.get_text("SMART_INV_FULL", {COUNT = claimed_count}, "Inventario pieno! Riscossi " .. claimed_count .. " traguardi."))
+                pc.setqf(lock_key, 0)
                 return
             end
 
-            -- Riscuoti
-            mysql_direct_query("INSERT INTO srv1_hunabku.hunter_achievements_claimed (player_id, achievement_id, claimed_at) VALUES (" .. pid .. ", " .. a.id .. ", NOW())")
-            pc.give_item2(a.reward_vnum, a.reward_count)
-            claimed_count = claimed_count + 1
+            -- CRITICAL FIX: Dai item PRIMA di marcare come claimed
+            local success = pc.give_item2(a.reward_vnum, a.reward_count)
+
+            if success and success ~= 0 then
+                -- Item dato con successo, marca come claimed
+                mysql_direct_query("INSERT INTO srv1_hunabku.hunter_achievements_claimed (player_id, achievement_id, claimed_at) VALUES (" .. pid .. ", " .. a.id .. ", NOW())")
+                claimed_count = claimed_count + 1
+            else
+                -- Fallito, logga e continua
+                hg_lib.log_error("SMART_CLAIM", "give_item2 failed", "ach_id=" .. a.id)
+                failed_count = failed_count + 1
+            end
         end
     end
-    
+
     if claimed_count > 0 then
         syschat("|cff00FF00[SMART CLAIM]|r " .. hg_lib.get_text("SMART_CLAIMED", {COUNT = claimed_count}, "Riscossi " .. claimed_count .. " traguardi!"))
+        if failed_count > 0 then
+            syschat("|cffFF6600[SMART CLAIM]|r " .. failed_count .. " traguardi non riscossi (errore). Contatta un GM.")
+        end
     else
         hg_lib.syschat_t("SMART_NONE", "Nessun traguardo da riscuotere.", nil, "FFD700")
     end
+
+    -- Rilascia lock dopo 3 secondi
+    timer("hq_smart_claim_unlock", 3, "pc.setqf('hq_smart_claim_lock', 0)")
 end
 
