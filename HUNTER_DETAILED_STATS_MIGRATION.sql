@@ -45,11 +45,7 @@ ADD COLUMN `defense_losses` INT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Fracture de
 ALTER TABLE `hunter_quest_ranking`
 ADD COLUMN `elite_kills` INT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Elite mob kills' AFTER `defense_losses`;
 
--- Create indexes for frequently queried detailed stats
-CREATE INDEX `idx_boss_kills_total` ON `hunter_quest_ranking`(
-    (`boss_kills_easy` + `boss_kills_medium` + `boss_kills_hard` + `boss_kills_elite`) DESC
-) COMMENT 'Index for total boss kills leaderboard';
-
+-- Create indexes for frequently queried detailed stats (simple columns only)
 CREATE INDEX `idx_elite_kills` ON `hunter_quest_ranking`(`elite_kills` DESC) COMMENT 'Index for elite kills leaderboard';
 
 CREATE INDEX `idx_defense_wins` ON `hunter_quest_ranking`(`defense_wins` DESC) COMMENT 'Index for defense wins leaderboard';
