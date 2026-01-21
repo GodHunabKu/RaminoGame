@@ -331,8 +331,33 @@ function hg_lib.flush_ranking_updates()
     local pending_chests = tonumber(pc.getqf("hq_pending_chests")) or 0
     local pending_fractures = tonumber(pc.getqf("hq_pending_fractures")) or 0
 
-    -- Flush ranking solo se c'è qualcosa
-    if pending_total_pts > 0 or pending_total_kills > 0 or pending_metins > 0 or pending_chests > 0 or pending_fractures > 0 then
+    -- DETAILED STATS: Recupera tutti i pending dettagliati
+    local pending_chest_e = tonumber(pc.getqf("hq_pending_chest_e")) or 0
+    local pending_chest_d = tonumber(pc.getqf("hq_pending_chest_d")) or 0
+    local pending_chest_c = tonumber(pc.getqf("hq_pending_chest_c")) or 0
+    local pending_chest_b = tonumber(pc.getqf("hq_pending_chest_b")) or 0
+    local pending_chest_a = tonumber(pc.getqf("hq_pending_chest_a")) or 0
+    local pending_chest_s = tonumber(pc.getqf("hq_pending_chest_s")) or 0
+    local pending_chest_n = tonumber(pc.getqf("hq_pending_chest_n")) or 0
+    local pending_boss_easy = tonumber(pc.getqf("hq_pending_boss_easy")) or 0
+    local pending_boss_medium = tonumber(pc.getqf("hq_pending_boss_medium")) or 0
+    local pending_boss_hard = tonumber(pc.getqf("hq_pending_boss_hard")) or 0
+    local pending_boss_elite = tonumber(pc.getqf("hq_pending_boss_elite")) or 0
+    local pending_metin_normal = tonumber(pc.getqf("hq_pending_metin_normal")) or 0
+    local pending_metin_special = tonumber(pc.getqf("hq_pending_metin_special")) or 0
+    local pending_defense_wins = tonumber(pc.getqf("hq_pending_defense_wins")) or 0
+    local pending_defense_losses = tonumber(pc.getqf("hq_pending_defense_losses")) or 0
+    local pending_elite_kills = tonumber(pc.getqf("hq_pending_elite_kills")) or 0
+
+    -- Check se c'è qualcosa da flushare (base o detailed)
+    local has_pending = pending_total_pts > 0 or pending_total_kills > 0 or pending_metins > 0 or pending_chests > 0 or pending_fractures > 0
+    local has_detailed = pending_chest_e > 0 or pending_chest_d > 0 or pending_chest_c > 0 or pending_chest_b > 0 or pending_chest_a > 0 or
+                         pending_chest_s > 0 or pending_chest_n > 0 or pending_boss_easy > 0 or pending_boss_medium > 0 or pending_boss_hard > 0 or
+                         pending_boss_elite > 0 or pending_metin_normal > 0 or pending_metin_special > 0 or pending_defense_wins > 0 or
+                         pending_defense_losses > 0 or pending_elite_kills > 0
+
+    -- Flush ranking se c'è qualcosa
+    if has_pending or has_detailed then
         local q = "UPDATE srv1_hunabku.hunter_quest_ranking SET "
         q = q .. "total_points = total_points + " .. pending_total_pts .. ", "
         q = q .. "spendable_points = spendable_points + " .. pending_spendable_pts .. ", "
@@ -343,12 +368,29 @@ function hg_lib.flush_ranking_updates()
         q = q .. "weekly_kills = weekly_kills + " .. pending_weekly_kills .. ", "
         q = q .. "total_metins = total_metins + " .. pending_metins .. ", "
         q = q .. "total_chests = total_chests + " .. pending_chests .. ", "
-        q = q .. "total_fractures = total_fractures + " .. pending_fractures .. " "
+        q = q .. "total_fractures = total_fractures + " .. pending_fractures .. ", "
+        -- DETAILED STATS
+        q = q .. "chests_e = chests_e + " .. pending_chest_e .. ", "
+        q = q .. "chests_d = chests_d + " .. pending_chest_d .. ", "
+        q = q .. "chests_c = chests_c + " .. pending_chest_c .. ", "
+        q = q .. "chests_b = chests_b + " .. pending_chest_b .. ", "
+        q = q .. "chests_a = chests_a + " .. pending_chest_a .. ", "
+        q = q .. "chests_s = chests_s + " .. pending_chest_s .. ", "
+        q = q .. "chests_n = chests_n + " .. pending_chest_n .. ", "
+        q = q .. "boss_kills_easy = boss_kills_easy + " .. pending_boss_easy .. ", "
+        q = q .. "boss_kills_medium = boss_kills_medium + " .. pending_boss_medium .. ", "
+        q = q .. "boss_kills_hard = boss_kills_hard + " .. pending_boss_hard .. ", "
+        q = q .. "boss_kills_elite = boss_kills_elite + " .. pending_boss_elite .. ", "
+        q = q .. "metin_kills_normal = metin_kills_normal + " .. pending_metin_normal .. ", "
+        q = q .. "metin_kills_special = metin_kills_special + " .. pending_metin_special .. ", "
+        q = q .. "defense_wins = defense_wins + " .. pending_defense_wins .. ", "
+        q = q .. "defense_losses = defense_losses + " .. pending_defense_losses .. ", "
+        q = q .. "elite_kills = elite_kills + " .. pending_elite_kills .. " "
         q = q .. "WHERE player_id = " .. pid
 
         mysql_direct_query(q)
 
-        -- Reset accumulatori
+        -- Reset accumulatori base
         pc.setqf("hq_pending_total_pts", 0)
         pc.setqf("hq_pending_spendable_pts", 0)
         pc.setqf("hq_pending_daily_pts", 0)
@@ -359,11 +401,28 @@ function hg_lib.flush_ranking_updates()
         pc.setqf("hq_pending_metins", 0)
         pc.setqf("hq_pending_chests", 0)
         pc.setqf("hq_pending_fractures", 0)
+        -- Reset accumulatori detailed
+        pc.setqf("hq_pending_chest_e", 0)
+        pc.setqf("hq_pending_chest_d", 0)
+        pc.setqf("hq_pending_chest_c", 0)
+        pc.setqf("hq_pending_chest_b", 0)
+        pc.setqf("hq_pending_chest_a", 0)
+        pc.setqf("hq_pending_chest_s", 0)
+        pc.setqf("hq_pending_chest_n", 0)
+        pc.setqf("hq_pending_boss_easy", 0)
+        pc.setqf("hq_pending_boss_medium", 0)
+        pc.setqf("hq_pending_boss_hard", 0)
+        pc.setqf("hq_pending_boss_elite", 0)
+        pc.setqf("hq_pending_metin_normal", 0)
+        pc.setqf("hq_pending_metin_special", 0)
+        pc.setqf("hq_pending_defense_wins", 0)
+        pc.setqf("hq_pending_defense_losses", 0)
+        pc.setqf("hq_pending_elite_kills", 0)
     end
-    
+
     -- SEMPRE flush Trial progress (una sola volta)
     hg_lib.flush_trial_progress()
-    
+
     -- Security: Save session snapshot for anomaly detection
     hg_lib.save_session_snapshot()
 end
@@ -3014,8 +3073,8 @@ function hg_lib.process_elite_kill(vnum)
         local pending = pc.getqf("hq_pending_elite") or 0
         if pending > 0 then pc.setqf("hq_pending_elite", pending - 1) end
 
-        -- DETAILED STATS: Incrementa elite kills per il killer
-        mysql_direct_query("UPDATE srv1_hunabku.hunter_quest_ranking SET elite_kills = elite_kills + 1 WHERE player_id = " .. pid)
+        -- DETAILED STATS: Accumula elite kills (pending flush)
+        pc.setqf("hq_pending_elite_kills", (pc.getqf("hq_pending_elite_kills") or 0) + 1)
 
         hg_lib.check_achievements()
         hg_lib.send_player_data()
@@ -3126,8 +3185,8 @@ function hg_lib.process_elite_kill(vnum)
     local pending = pc.getqf("hq_pending_elite") or 0
     if pending > 0 then pc.setqf("hq_pending_elite", pending - 1) end
 
-    -- DETAILED STATS: Incrementa elite kills
-    mysql_direct_query("UPDATE srv1_hunabku.hunter_quest_ranking SET elite_kills = elite_kills + 1 WHERE player_id = " .. pid)
+    -- DETAILED STATS: Accumula elite kills (pending flush)
+    pc.setqf("hq_pending_elite_kills", (pc.getqf("hq_pending_elite_kills") or 0) + 1)
 
     local msg = hg_lib.get_text("target_eliminated", {NAME = mob_info.name, POINTS = base_pts}) or ("BERSAGLIO ELIMINATO: " .. mob_info.name .. " | +" .. base_pts .. " GLORIA")
     hg_lib.hunter_speak_color(msg, mob_info.rank_color or "BLUE")
@@ -3448,11 +3507,12 @@ function hg_lib.open_chest(chest_vnum)
     -- Statistiche
     pc.setqf("hq_pending_chests", (pc.getqf("hq_pending_chests") or 0) + 1)
 
-    -- DETAILED STATS: Traccia baule per grado
-    local grade_columns = {[1]="chests_e", [2]="chests_d", [3]="chests_c", [4]="chests_b", [5]="chests_a", [6]="chests_s", [7]="chests_n"}
-    local grade_col = grade_columns[rank_tier]
-    if grade_col then
-        mysql_direct_query("UPDATE srv1_hunabku.hunter_quest_ranking SET " .. grade_col .. " = " .. grade_col .. " + 1 WHERE player_id = " .. pid)
+    -- DETAILED STATS: Accumula baule per grado (pending flush)
+    local grade_keys = {[1]="hq_pending_chest_e", [2]="hq_pending_chest_d", [3]="hq_pending_chest_c",
+                        [4]="hq_pending_chest_b", [5]="hq_pending_chest_a", [6]="hq_pending_chest_s", [7]="hq_pending_chest_n"}
+    local grade_key = grade_keys[rank_tier]
+    if grade_key then
+        pc.setqf(grade_key, (pc.getqf(grade_key) or 0) + 1)
     end
 
     -- PERFORMANCE: Accumula Trial progress invece di query immediata
@@ -3486,10 +3546,14 @@ function hg_lib.open_chest(chest_vnum)
             syschat("|cffFF00FF*** BONUS! |r|cff00FF00" .. jackpot_items .. "|r")
         end
     end
-    
-    -- Verifica completamento trial
-    hg_lib.check_trial_completion_status()
-    
+
+    -- FIX: NON controllare trial completion qui!
+    -- Aprire bauli e' un'azione normale (daily quest, farming, etc.)
+    -- Il check trial viene fatto solo da:
+    --   1. on_fracture_seal() - perche' le fratture sono parte della trial
+    --   2. Timer periodico (ogni 5 min se trial attiva)
+    --   3. Apertura manuale UI Trial
+
     -- Aggiorna dati client
     hg_lib.send_player_data()
 end
@@ -4156,16 +4220,16 @@ function hg_lib.complete_defense_success()
     pc.setqf("hq_elite_spawn_time", get_time())
     pc.setqf("hq_pending_elite", (pc.getqf("hq_pending_elite") or 0) + 1)
 
-    -- DETAILED STATS: Incrementa defense wins per tutti i membri del party
+    -- DETAILED STATS: Accumula defense wins (pending flush)
     if party.is_party() then
         local pids = {party.get_member_pids()}
         for i, member_pid in ipairs(pids) do
             q.begin_other_pc_block(member_pid)
-            mysql_direct_query("UPDATE srv1_hunabku.hunter_quest_ranking SET defense_wins = defense_wins + 1 WHERE player_id = " .. member_pid)
+            pc.setqf("hq_pending_defense_wins", (pc.getqf("hq_pending_defense_wins") or 0) + 1)
             q.end_other_pc_block()
         end
     else
-        mysql_direct_query("UPDATE srv1_hunabku.hunter_quest_ranking SET defense_wins = defense_wins + 1 WHERE player_id = " .. pid)
+        pc.setqf("hq_pending_defense_wins", (pc.getqf("hq_pending_defense_wins") or 0) + 1)
     end
 
     local msg = hg_lib.get_text("defense_success_click") or "FRATTURA CONQUISTATA! Hai 5 minuti per aprirla!"
@@ -4322,16 +4386,16 @@ function hg_lib.fail_defense(reason)
     end
     hg_lib.hunter_speak_color(msg, "RED")
 
-    -- DETAILED STATS: Incrementa defense losses per tutti i membri del party
+    -- DETAILED STATS: Accumula defense losses (pending flush)
     if party.is_party() then
         local pids = {party.get_member_pids()}
         for i, member_pid in ipairs(pids) do
             q.begin_other_pc_block(member_pid)
-            mysql_direct_query("UPDATE srv1_hunabku.hunter_quest_ranking SET defense_losses = defense_losses + 1 WHERE player_id = " .. member_pid)
+            pc.setqf("hq_pending_defense_losses", (pc.getqf("hq_pending_defense_losses") or 0) + 1)
             q.end_other_pc_block()
         end
     else
-        mysql_direct_query("UPDATE srv1_hunabku.hunter_quest_ranking SET defense_losses = defense_losses + 1 WHERE player_id = " .. pid)
+        pc.setqf("hq_pending_defense_losses", (pc.getqf("hq_pending_defense_losses") or 0) + 1)
     end
 
     -- Ripristina UI dell'Emergency vera se c'è ancora una attiva
@@ -5526,14 +5590,30 @@ end
 
 function hg_lib.check_trial_completion_status()
     local pid = pc.get_player_id()
-    
+
+    -- SECURITY: Throttle check (max 1 volta ogni 30 secondi per player)
+    -- Previene spam di notifiche e riduce carico DB
+    local last_check = pc.getqf("hq_last_trial_check") or 0
+    local now = get_time()
+    if (now - last_check) < 30 then
+        return  -- Troppo presto dal last check
+    end
+    pc.setqf("hq_last_trial_check", now)
+
+    -- Verifica se il player ha una trial attiva
+    -- Non vogliamo sorprendere il player con notifiche inaspettate!
+    local c, d = mysql_direct_query("SELECT 1 FROM srv1_hunabku.hunter_player_trials WHERE player_id=" .. pid .. " AND status='in_progress' LIMIT 1")
+    if c == 0 then
+        return  -- Nessuna trial attiva, skip check
+    end
+
     -- IMPORTANTE: Prima flush i trial pendenti per avere dati aggiornati
     -- Necessario per rilevare completamento in tempo reale
     local boss_kills = pc.getqf("hq_trial_boss_kill") or 0
     local metin_kills = pc.getqf("hq_trial_metin_kill") or 0
     local chest_opens = pc.getqf("hq_trial_chest_open") or 0
     local fracture_seals = pc.getqf("hq_trial_fracture_seal") or 0
-    
+
     -- Se ci sono valori pendenti, flush prima del check
     if boss_kills > 0 or metin_kills > 0 or chest_opens > 0 or fracture_seals > 0 then
         local flush_q = string.format([[
@@ -5589,19 +5669,19 @@ function hg_lib.on_boss_kill(boss_vnum)
     -- PERFORMANCE: Accumula Trial progress invece di query immediata
     hg_lib.add_trial_progress("boss_kill", 1)
 
-    -- DETAILED STATS: Traccia boss per difficoltà basata sui punti
+    -- DETAILED STATS: Accumula boss per difficoltà (pending flush)
     local mob_info = hg_lib.get_mob_info(boss_vnum)
     if mob_info then
         local base_points = mob_info.base_points or 0
-        local difficulty_col = "boss_kills_easy"  -- Default
+        local difficulty_key = "hq_pending_boss_easy"  -- Default
         if base_points > 5000 then
-            difficulty_col = "boss_kills_elite"
+            difficulty_key = "hq_pending_boss_elite"
         elseif base_points > 1500 then
-            difficulty_col = "boss_kills_hard"
+            difficulty_key = "hq_pending_boss_hard"
         elseif base_points > 500 then
-            difficulty_col = "boss_kills_medium"
+            difficulty_key = "hq_pending_boss_medium"
         end
-        mysql_direct_query("UPDATE srv1_hunabku.hunter_quest_ranking SET " .. difficulty_col .. " = " .. difficulty_col .. " + 1 WHERE player_id = " .. pid)
+        pc.setqf(difficulty_key, (pc.getqf(difficulty_key) or 0) + 1)
     end
 
     -- CHECK: Se evento "first_boss" attivo, il PRIMO a uccidere vince!
@@ -5615,12 +5695,12 @@ function hg_lib.on_metin_kill(metin_vnum)
     -- PERFORMANCE: Accumula Trial progress invece di query immediata
     hg_lib.add_trial_progress("metin_kill", 1)
 
-    -- DETAILED STATS: Traccia metin per tipo basato sui punti
+    -- DETAILED STATS: Accumula metin per tipo (pending flush)
     local mob_info = hg_lib.get_mob_info(metin_vnum)
     if mob_info then
         local base_points = mob_info.base_points or 0
-        local metin_col = base_points > 1000 and "metin_kills_special" or "metin_kills_normal"
-        mysql_direct_query("UPDATE srv1_hunabku.hunter_quest_ranking SET " .. metin_col .. " = " .. metin_col .. " + 1 WHERE player_id = " .. pid)
+        local metin_key = base_points > 1000 and "hq_pending_metin_special" or "hq_pending_metin_normal"
+        pc.setqf(metin_key, (pc.getqf(metin_key) or 0) + 1)
     end
 end
 
