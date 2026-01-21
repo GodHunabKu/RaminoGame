@@ -217,7 +217,13 @@ class HunterLevelWindow(ui.ScriptWindow):
             "pending_daily_reward": 0,
             "pending_weekly_reward": 0,
             "daily_pos": 0,
-            "weekly_pos": 0
+            "weekly_pos": 0,
+            # Detailed stats
+            "chests_e": 0, "chests_d": 0, "chests_c": 0, "chests_b": 0,
+            "chests_a": 0, "chests_s": 0, "chests_n": 0,
+            "boss_kills_easy": 0, "boss_kills_medium": 0, "boss_kills_hard": 0, "boss_kills_elite": 0,
+            "metin_kills_normal": 0, "metin_kills_special": 0,
+            "defense_wins": 0, "defense_losses": 0, "elite_kills": 0
         }
         
         self.rankingData = {
@@ -1092,7 +1098,8 @@ class HunterLevelWindow(ui.ScriptWindow):
             self.__CBar(5, y, 420, 25, 0x33FFAA00)
 
             streak_icon = "[***]" if streak >= 30 else "[**]" if streak >= 7 else "[*]"
-            self.__CText(T("STREAK", "%s SERIE CONSECUTIVA: %d giorni | Bonus: +%d%%" % (streak_icon, streak, int(streak_bonus * 100))), 15, y + 6, streak_color)
+            # streak_bonus arriva già come percentuale (12, non 0.12)
+            self.__CText(T("STREAK", "%s SERIE CONSECUTIVA: %d giorni | Bonus: +%d%%" % (streak_icon, streak, int(streak_bonus))), 15, y + 6, streak_color)
             y += 30
 
         # ============================================================
@@ -1120,12 +1127,14 @@ class HunterLevelWindow(ui.ScriptWindow):
         self.__CText(T("POWER_VALUE", "Rango: %s | Potere: %s" % (power_rank, FormatNumber(power_level))), 15, y + 3, GOLD_COLOR)
 
         # Calcola bonus totale giornaliero (rank bonus + streak)
+        # streak_bonus arriva già come percentuale (12, non 0.12)
         rank_bonuses = {"N": 1.12, "S": 1.10, "A": 1.07, "B": 1.05, "C": 1.03, "D": 1.01, "E": 1.0}
         rank_bonus = rank_bonuses.get(self.currentRankKey, 1.0)
-        total_daily_bonus = ((rank_bonus - 1.0) + streak_bonus) * 100
+        rank_bonus_pct = (rank_bonus - 1.0) * 100  # Converti rank_bonus a percentuale
+        total_daily_bonus = rank_bonus_pct + streak_bonus  # Somma due percentuali
 
         if total_daily_bonus > 0:
-            self.__CText(T("DAILY_BONUS", "Bonus Giornaliero Totale: +%.1f%% (Rango: +%.0f%% | Streak: +%.0f%%)" % (total_daily_bonus, (rank_bonus - 1.0) * 100, streak_bonus * 100)), 15, y + 18, 0xFFFFAA55)
+            self.__CText(T("DAILY_BONUS", "Bonus Giornaliero Totale: +%.1f%% (Rango: +%.0f%% | Streak: +%.0f%%)" % (total_daily_bonus, rank_bonus_pct, streak_bonus)), 15, y + 18, 0xFFFFAA55)
         y += 40
 
         self.__CSep(5, y)
@@ -1180,6 +1189,81 @@ class HunterLevelWindow(ui.ScriptWindow):
         self.__CText(T("STATS_FRACTURES", "Fratture: %d" % self.playerData["total_fractures"]), 15, y, t["accent"])
         self.__CText("Metin: %d" % self.playerData["total_metins"], 160, y, 0xFFFFA500)
         self.__CText(T("STATS_CHESTS", "Bauli: %d" % self.playerData["total_chests"]), 300, y, GOLD_COLOR)
+        y += 28
+
+        self.__CSep(5, y)
+        y += 15
+
+        # ============================================================
+        # BAULI PER GRADO
+        # ============================================================
+        self.__CText(T("STATS_CHESTS_BY_GRADE", "[ BAULI PER GRADO ]"), 5, y, 0xFFFFD700)
+        y += 22
+
+        # Riga 1: E, D, C, B
+        chest_colors = {"E": 0xFF00FF00, "D": 0xFF0088FF, "C": 0xFFFF8800, "B": 0xFFFF0000,
+                       "A": 0xFFFFD700, "S": 0xFFAA00FF, "N": 0xFFFFFFFF}
+        self.__CText("E: %d" % self.playerData.get("chests_e", 0), 15, y, chest_colors["E"])
+        self.__CText("D: %d" % self.playerData.get("chests_d", 0), 80, y, chest_colors["D"])
+        self.__CText("C: %d" % self.playerData.get("chests_c", 0), 145, y, chest_colors["C"])
+        self.__CText("B: %d" % self.playerData.get("chests_b", 0), 210, y, chest_colors["B"])
+        y += 20
+
+        # Riga 2: A, S, N
+        self.__CText("A: %d" % self.playerData.get("chests_a", 0), 15, y, chest_colors["A"])
+        self.__CText("S: %d" % self.playerData.get("chests_s", 0), 80, y, chest_colors["S"])
+        self.__CText("N: %d" % self.playerData.get("chests_n", 0), 145, y, chest_colors["N"])
+        y += 28
+
+        self.__CSep(5, y)
+        y += 15
+
+        # ============================================================
+        # BOSS & ELITE
+        # ============================================================
+        self.__CText(T("STATS_BOSS_KILLS", "[ BOSS ELIMINATI ]"), 5, y, 0xFFFF0000)
+        y += 22
+
+        total_boss = (self.playerData.get("boss_kills_easy", 0) + self.playerData.get("boss_kills_medium", 0) +
+                     self.playerData.get("boss_kills_hard", 0) + self.playerData.get("boss_kills_elite", 0))
+        self.__CText("Totale Boss: %d" % total_boss, 15, y, 0xFFFFAA55)
+        y += 20
+
+        self.__CText("Facili: %d" % self.playerData.get("boss_kills_easy", 0), 15, y, 0xFF00FF88)
+        self.__CText("Medi: %d" % self.playerData.get("boss_kills_medium", 0), 110, y, 0xFF00AAFF)
+        self.__CText("Difficili: %d" % self.playerData.get("boss_kills_hard", 0), 205, y, 0xFFFF8800)
+        self.__CText("Elite: %d" % self.playerData.get("boss_kills_elite", 0), 320, y, 0xFFFF00FF)
+        y += 20
+
+        self.__CText(T("STATS_ELITE_TOTAL", "Elite Totali: %d" % self.playerData.get("elite_kills", 0)), 15, y, 0xFFFFD700)
+        y += 28
+
+        self.__CSep(5, y)
+        y += 15
+
+        # ============================================================
+        # METIN & DEFENSE
+        # ============================================================
+        self.__CText(T("STATS_METIN_DEFENSE", "[ METIN & DIFESE ]"), 5, y, 0xFF00AAFF)
+        y += 22
+
+        # Metin
+        metin_normal = self.playerData.get("metin_kills_normal", 0)
+        metin_special = self.playerData.get("metin_kills_special", 0)
+        self.__CText("Metin Normali: %d" % metin_normal, 15, y, t["text_value"])
+        self.__CText("Metin Speciali: %d" % metin_special, 200, y, 0xFFFF8800)
+        y += 20
+
+        # Defense Win Rate
+        defense_wins = self.playerData.get("defense_wins", 0)
+        defense_losses = self.playerData.get("defense_losses", 0)
+        defense_total = defense_wins + defense_losses
+        if defense_total > 0:
+            win_rate = int((defense_wins * 100.0) / defense_total)
+            win_color = 0xFF00FF88 if win_rate >= 70 else 0xFFFFAA55 if win_rate >= 50 else 0xFFFF4444
+            self.__CText("Difese: %d Vinte | %d Perse | Win Rate: %d%%" % (defense_wins, defense_losses, win_rate), 15, y, win_color)
+        else:
+            self.__CText("Difese: Nessuna difesa completata", 15, y, t["text_muted"])
     
     def __LoadShop(self):
         t = self.theme

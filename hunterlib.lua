@@ -3013,7 +3013,10 @@ function hg_lib.process_elite_kill(vnum)
         
         local pending = pc.getqf("hq_pending_elite") or 0
         if pending > 0 then pc.setqf("hq_pending_elite", pending - 1) end
-        
+
+        -- DETAILED STATS: Incrementa elite kills per il killer
+        mysql_direct_query("UPDATE srv1_hunabku.hunter_quest_ranking SET elite_kills = elite_kills + 1 WHERE player_id = " .. pid)
+
         hg_lib.check_achievements()
         hg_lib.send_player_data()
         return  -- Esce perche' la distribuzione party e' gia' stata fatta
@@ -3122,10 +3125,13 @@ function hg_lib.process_elite_kill(vnum)
         
     local pending = pc.getqf("hq_pending_elite") or 0
     if pending > 0 then pc.setqf("hq_pending_elite", pending - 1) end
-        
+
+    -- DETAILED STATS: Incrementa elite kills
+    mysql_direct_query("UPDATE srv1_hunabku.hunter_quest_ranking SET elite_kills = elite_kills + 1 WHERE player_id = " .. pid)
+
     local msg = hg_lib.get_text("target_eliminated", {NAME = mob_info.name, POINTS = base_pts}) or ("BERSAGLIO ELIMINATO: " .. mob_info.name .. " | +" .. base_pts .. " GLORIA")
     hg_lib.hunter_speak_color(msg, mob_info.rank_color or "BLUE")
-        
+
     hg_lib.check_achievements()
     hg_lib.send_player_data()
 end
@@ -3441,7 +3447,14 @@ function hg_lib.open_chest(chest_vnum)
     
     -- Statistiche
     pc.setqf("hq_pending_chests", (pc.getqf("hq_pending_chests") or 0) + 1)
-    
+
+    -- DETAILED STATS: Traccia baule per grado
+    local grade_columns = {[1]="chests_e", [2]="chests_d", [3]="chests_c", [4]="chests_b", [5]="chests_a", [6]="chests_s", [7]="chests_n"}
+    local grade_col = grade_columns[rank_tier]
+    if grade_col then
+        mysql_direct_query("UPDATE srv1_hunabku.hunter_quest_ranking SET " .. grade_col .. " = " .. grade_col .. " + 1 WHERE player_id = " .. pid)
+    end
+
     -- PERFORMANCE: Accumula Trial progress invece di query immediata
     hg_lib.add_trial_progress("chest_open", 1)
 
@@ -4143,6 +4156,18 @@ function hg_lib.complete_defense_success()
     pc.setqf("hq_elite_spawn_time", get_time())
     pc.setqf("hq_pending_elite", (pc.getqf("hq_pending_elite") or 0) + 1)
 
+    -- DETAILED STATS: Incrementa defense wins per tutti i membri del party
+    if party.is_party() then
+        local pids = {party.get_member_pids()}
+        for i, member_pid in ipairs(pids) do
+            q.begin_other_pc_block(member_pid)
+            mysql_direct_query("UPDATE srv1_hunabku.hunter_quest_ranking SET defense_wins = defense_wins + 1 WHERE player_id = " .. member_pid)
+            q.end_other_pc_block()
+        end
+    else
+        mysql_direct_query("UPDATE srv1_hunabku.hunter_quest_ranking SET defense_wins = defense_wins + 1 WHERE player_id = " .. pid)
+    end
+
     local msg = hg_lib.get_text("defense_success_click") or "FRATTURA CONQUISTATA! Hai 5 minuti per aprirla!"
     hg_lib.party_hunter_speak_color(msg, fcolor)
     hg_lib.party_cmdchat("HunterSystemSpeak " .. fcolor .. "|TOCCA IL PORTALE!")
@@ -4296,6 +4321,18 @@ function hg_lib.fail_defense(reason)
         msg = hg_lib.get_text("defense_failed_retry") or ("DIFESA FALLITA! " .. reason .. " - La frattura Rank " .. frank .. " e' ancora li, puoi riprovare!")
     end
     hg_lib.hunter_speak_color(msg, "RED")
+
+    -- DETAILED STATS: Incrementa defense losses per tutti i membri del party
+    if party.is_party() then
+        local pids = {party.get_member_pids()}
+        for i, member_pid in ipairs(pids) do
+            q.begin_other_pc_block(member_pid)
+            mysql_direct_query("UPDATE srv1_hunabku.hunter_quest_ranking SET defense_losses = defense_losses + 1 WHERE player_id = " .. member_pid)
+            q.end_other_pc_block()
+        end
+    else
+        mysql_direct_query("UPDATE srv1_hunabku.hunter_quest_ranking SET defense_losses = defense_losses + 1 WHERE player_id = " .. pid)
+    end
 
     -- Ripristina UI dell'Emergency vera se c'è ancora una attiva
     hg_lib.resend_emergency_ui()
@@ -4634,13 +4671,17 @@ function hg_lib.send_player_data(force)
     
     -- PERFORMANCE: UNA SOLA query con subquery invece di 3 separate
     local q = string.format([[
-        SELECT 
+        SELECT
             r.total_points, r.spendable_points, r.daily_points, r.weekly_points,
             r.total_kills, r.daily_kills, r.weekly_kills,
             r.total_fractures, r.total_chests, r.total_metins,
             r.pending_daily_reward, r.pending_weekly_reward,
             (SELECT COUNT(*) FROM srv1_hunabku.hunter_quest_ranking WHERE daily_points > r.daily_points) + 1 as pos_d,
-            (SELECT COUNT(*) FROM srv1_hunabku.hunter_quest_ranking WHERE weekly_points > r.weekly_points) + 1 as pos_w
+            (SELECT COUNT(*) FROM srv1_hunabku.hunter_quest_ranking WHERE weekly_points > r.weekly_points) + 1 as pos_w,
+            r.chests_e, r.chests_d, r.chests_c, r.chests_b, r.chests_a, r.chests_s, r.chests_n,
+            r.boss_kills_easy, r.boss_kills_medium, r.boss_kills_hard, r.boss_kills_elite,
+            r.metin_kills_normal, r.metin_kills_special,
+            r.defense_wins, r.defense_losses, r.elite_kills
         FROM srv1_hunabku.hunter_quest_ranking r
         WHERE r.player_id = %d
     ]], pid)
@@ -4657,21 +4698,27 @@ function hg_lib.send_player_data(force)
         local pos_d = dp > 0 and (tonumber(d[1].pos_d) or 0) or 0
         local pos_w = wp > 0 and (tonumber(d[1].pos_w) or 0) or 0
             
-        local pkt = hg_lib.clean_str(pc.get_name()) .. "|" .. 
-            total_pts .. "|" .. 
+        local pkt = hg_lib.clean_str(pc.get_name()) .. "|" ..
+            total_pts .. "|" ..
             (tonumber(d[1].spendable_points) or 0) .. "|" ..
-            dp .. "|" .. wp .. "|" .. 
+            dp .. "|" .. wp .. "|" ..
             (tonumber(d[1].total_kills) or 0) .. "|" ..
-            (tonumber(d[1].daily_kills) or 0) .. "|" .. 
-            (tonumber(d[1].weekly_kills) or 0) .. "|" .. 
+            (tonumber(d[1].daily_kills) or 0) .. "|" ..
+            (tonumber(d[1].weekly_kills) or 0) .. "|" ..
             (pc.getqf("hq_login_streak") or 0) .. "|" ..
-            (pc.getqf("hq_streak_bonus") or 0) .. "|" .. 
-            (tonumber(d[1].total_fractures) or 0) .. "|" .. 
+            (pc.getqf("hq_streak_bonus") or 0) .. "|" ..
+            (tonumber(d[1].total_fractures) or 0) .. "|" ..
             (tonumber(d[1].total_chests) or 0) .. "|" ..
-            (tonumber(d[1].total_metins) or 0) .. "|" .. 
-            (tonumber(d[1].pending_daily_reward) or 0) .. "|" .. 
+            (tonumber(d[1].total_metins) or 0) .. "|" ..
+            (tonumber(d[1].pending_daily_reward) or 0) .. "|" ..
             (tonumber(d[1].pending_weekly_reward) or 0) .. "|" ..
-            pos_d .. "|" .. pos_w
+            pos_d .. "|" .. pos_w .. "|" ..
+            (tonumber(d[1].chests_e) or 0) .. "|" .. (tonumber(d[1].chests_d) or 0) .. "|" .. (tonumber(d[1].chests_c) or 0) .. "|" ..
+            (tonumber(d[1].chests_b) or 0) .. "|" .. (tonumber(d[1].chests_a) or 0) .. "|" .. (tonumber(d[1].chests_s) or 0) .. "|" .. (tonumber(d[1].chests_n) or 0) .. "|" ..
+            (tonumber(d[1].boss_kills_easy) or 0) .. "|" .. (tonumber(d[1].boss_kills_medium) or 0) .. "|" .. (tonumber(d[1].boss_kills_hard) or 0) .. "|" .. (tonumber(d[1].boss_kills_elite) or 0) .. "|" ..
+            (tonumber(d[1].metin_kills_normal) or 0) .. "|" .. (tonumber(d[1].metin_kills_special) or 0) .. "|" ..
+            (tonumber(d[1].defense_wins) or 0) .. "|" .. (tonumber(d[1].defense_losses) or 0) .. "|" ..
+            (tonumber(d[1].elite_kills) or 0)
         cmdchat("HunterPlayerData " .. pkt)
     end
 end
@@ -5541,6 +5588,22 @@ function hg_lib.on_boss_kill(boss_vnum)
     hg_lib.update_mission_progress("kill_boss", 1, boss_vnum)
     -- PERFORMANCE: Accumula Trial progress invece di query immediata
     hg_lib.add_trial_progress("boss_kill", 1)
+
+    -- DETAILED STATS: Traccia boss per difficoltà basata sui punti
+    local mob_info = hg_lib.get_mob_info(boss_vnum)
+    if mob_info then
+        local base_points = mob_info.base_points or 0
+        local difficulty_col = "boss_kills_easy"  -- Default
+        if base_points > 5000 then
+            difficulty_col = "boss_kills_elite"
+        elseif base_points > 1500 then
+            difficulty_col = "boss_kills_hard"
+        elseif base_points > 500 then
+            difficulty_col = "boss_kills_medium"
+        end
+        mysql_direct_query("UPDATE srv1_hunabku.hunter_quest_ranking SET " .. difficulty_col .. " = " .. difficulty_col .. " + 1 WHERE player_id = " .. pid)
+    end
+
     -- CHECK: Se evento "first_boss" attivo, il PRIMO a uccidere vince!
     hg_lib.check_first_boss_winner(boss_vnum)
 end
@@ -5551,6 +5614,14 @@ function hg_lib.on_metin_kill(metin_vnum)
     hg_lib.update_mission_progress("kill_metin", 1, metin_vnum)
     -- PERFORMANCE: Accumula Trial progress invece di query immediata
     hg_lib.add_trial_progress("metin_kill", 1)
+
+    -- DETAILED STATS: Traccia metin per tipo basato sui punti
+    local mob_info = hg_lib.get_mob_info(metin_vnum)
+    if mob_info then
+        local base_points = mob_info.base_points or 0
+        local metin_col = base_points > 1000 and "metin_kills_special" or "metin_kills_normal"
+        mysql_direct_query("UPDATE srv1_hunabku.hunter_quest_ranking SET " .. metin_col .. " = " .. metin_col .. " + 1 WHERE player_id = " .. pid)
+    end
 end
 
 function hg_lib.on_fracture_seal()
