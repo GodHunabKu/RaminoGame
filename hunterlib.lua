@@ -390,6 +390,13 @@ function hg_lib.flush_ranking_updates()
 
         mysql_direct_query(q)
 
+        -- KARMA INTEGRATION: Assegna karma proporzionale alla gloria flushed
+        -- Formula: 1 gloria = 0.1 karma display (100 gloria = 10 karma display = 1 alignment)
+        local karma_alignment = math.floor(pending_total_pts / 10)
+        if karma_alignment > 0 then
+            pc.change_alignment(karma_alignment)
+        end
+
         -- Reset accumulatori base
         pc.setqf("hq_pending_total_pts", 0)
         pc.setqf("hq_pending_spendable_pts", 0)
@@ -1751,6 +1758,18 @@ function hg_lib.award_glory_to_player(player_id, glory_amount)
         "UPDATE srv1_hunabku.hunter_quest_ranking SET total_points = total_points + %d, spendable_points = spendable_points + %d, daily_points = daily_points + %d, weekly_points = weekly_points + %d WHERE player_id = %d",
         glory_amount, glory_amount, glory_amount, glory_amount, player_id
     ))
+
+    -- KARMA INTEGRATION: Assegna karma proporzionale alla gloria
+    -- Formula: 1 gloria = 0.1 karma display (100 gloria = 10 karma display = 1 alignment)
+    local karma_alignment = math.floor(glory_amount / 10)
+    if karma_alignment > 0 then
+        -- Cerca il player online e assegna karma
+        q.begin_other_pc_block(player_id)
+        if pc.get_player_id() == player_id then
+            pc.change_alignment(karma_alignment)
+        end
+        q.end_other_pc_block()
+    end
 end
 
 -- Notifica tutti i membri del party della distribuzione Gloria
@@ -2251,9 +2270,19 @@ function hg_lib.draw_event_winner(event_id)
         local congrats_msg = hg_lib.get_text("EVENT_CONGRATS", {EVENT = event_name}, "Congratulazioni al vincitore dell'evento " .. event_name .. "!")
         notice_all("|cff00FF00" .. congrats_msg .. "|r")
 
-        -- Se il vincitore è il player corrente, mostra syschat dettagliato
-        local current_pid = pc.get_player_id()
-        if current_pid == winner_id then
+        -- NOTIFICA UI al vincitore (se online)
+        local winner_clean = hg_lib.clean_str(winner_name)
+        local event_clean = hg_lib.clean_str(event_name)
+
+        -- Cerca il vincitore tra i giocatori online e invia UI
+        local winner_found = false
+        q.begin_other_pc_block(winner_id)
+        if pc.get_player_id() == winner_id then
+            winner_found = true
+            -- UI popup per il vincitore
+            cmdchat("HunterEventWinner " .. winner_clean .. "|" .. glory_prize .. "|" .. event_clean .. "|1")
+
+            -- Syschat dettagliato per il vincitore
             syschat("|cffFFD700=============================================|r")
             hg_lib.syschat_t("EVENT_LOTTERY_TITLE", "[!!!] HAI VINTO L'ESTRAZIONE! [!!!]", nil, "FFD700")
             syschat("|cffFFD700=============================================|r")
@@ -2267,6 +2296,7 @@ function hg_lib.draw_event_winner(event_id)
             syschat("|cffFFD700=============================================|r")
             hg_lib.hunter_speak_color("CONGRATULAZIONI! HAI VINTO +" .. glory_prize .. " GLORIA!", "GOLD")
         end
+        q.end_other_pc_block()
         
         return winner_name, glory_prize
     end
@@ -2299,8 +2329,8 @@ function hg_lib.check_event_end_and_draw()
             local start_total = start_hour * 60 + start_minute
             local end_total = start_total + duration
             
-            -- Se siamo esattamente al minuto di fine evento (finestra di 1 minuto)
-            if current_total >= end_total and current_total < end_total + 1 then
+            -- Se siamo al minuto di fine evento (finestra di 2 minuti per sicurezza)
+            if current_total >= end_total and current_total < end_total + 2 then
                 -- FIX RACE CONDITION: Usa event_flag come lock per evitare multiple esecuzioni
                 local lock_flag = "hq_event_draw_lock_" .. event_id
                 local is_locked = game.get_event_flag(lock_flag) or 0
@@ -2333,7 +2363,8 @@ function hg_lib.check_event_end_and_draw()
                 end
 
                 -- Rilascia il lock dopo 2 minuti (120 secondi)
-                timer("hq_release_event_lock_" .. event_id, 120, "game.set_event_flag('" .. lock_flag .. "', 0)")
+                pc.setqf("hq_pending_lock_flag", lock_flag)
+                timer("hq_release_event_lock", 120)
             end
         end
     end
@@ -2825,10 +2856,25 @@ function hg_lib.check_overtake(pid, pname, col_name, added_val, label_nice)
                 if row.type == "above" then
                     hg_lib.notify_rival(row.player_name, diff, label_nice)
                 elseif row.type == "below" then
-                    -- Segna che abbiamo superato qualcuno (senza query UPDATE immediata)
-                    -- L'update verrà fatto nel flush periodico
+                    -- Segna che abbiamo superato qualcuno
+                    -- SOLO per daily/weekly e SOLO se siamo in TOP 10 (per evitare spam)
                     if col_name == "daily_points" or col_name == "weekly_points" then
-                        cmdchat("HunterOvertake " .. hg_lib.clean_str(row.player_name) .. "|0")
+                        -- Calcola la posizione corretta in classifica
+                        local pos_col = (col_name == "daily_points") and "daily_points" or "weekly_points"
+                        local pos_q = string.format(
+                            "SELECT COUNT(*) + 1 as position FROM srv1_hunabku.hunter_quest_ranking WHERE %s > %d",
+                            pos_col, new_score
+                        )
+                        local pc, pd = mysql_direct_query(pos_q)
+                        local position = 999
+                        if pc > 0 and pd[1] then
+                            position = tonumber(pd[1].position) or 999
+                        end
+
+                        -- SOLO notifica se sei in TOP 10 (altrimenti troppo spam)
+                        if position <= 10 then
+                            cmdchat("HunterOvertake " .. hg_lib.clean_str(row.player_name) .. "|" .. position)
+                        end
                     end
                 end
             end
@@ -3776,10 +3822,8 @@ function hg_lib.spawn_fracture()
 end
 
 function hg_lib.open_gate(fname, frank, fcolor, pid)
-    if pc.getqf("hq_defense_active") == 1 then
-        syschat("|cffFF0000[" .. hg_lib.get_text("CONFLICT", nil, "CONFLITTO") .. "]|r " .. hg_lib.get_text("CONFLICT_DEFENSE", nil, "Stai gia' difendendo un'altra frattura!"))
-        return
-    end
+    -- NOTA: Il check hq_defense_active e' stato spostato nei punti di chiamata
+    -- per evitare errori quando la frattura e' gia' stata conquistata
 
     -- Prova npc.get_vid(), se fallisce usa il VID salvato dal click
     local fracture_vid = npc.get_vid()
@@ -4621,10 +4665,17 @@ function hg_lib.finalize_gate_opening(vid)
     -- Ora il punto viene dato solo quando la frattura si apre effettivamente
     hg_lib.on_fracture_seal()
     -- ===================================
-        
+
     hg_lib.spawn_gate_mob_and_alert(frank, fcolor)
-    npc.purge() -- L'NPC sparisce, quindi non puo' essere riusata
-        
+
+    -- FIX: Usa purge_vid() invece di npc.purge() per garantire rimozione anche se context invalido
+    -- Questo previene che la frattura riappaia dopo logout/login del player
+    if vid and vid > 0 then
+        purge_vid(vid)
+    else
+        npc.purge()  -- Fallback se VID non disponibile
+    end
+
     pc.setqf("hq_elite_spawn_time", get_time())
 end
 
@@ -5216,7 +5267,19 @@ function hg_lib.apply_mission_penalties()
                 -- Sottrai penalità SOLO da total_points (non da spendable_points)
                 -- Usa GREATEST per non andare sotto 0
                 mysql_direct_query("UPDATE srv1_hunabku.hunter_quest_ranking SET total_points = GREATEST(0, total_points - " .. penalty .. ") WHERE player_id = " .. player_id)
-                
+
+                -- KARMA INTEGRATION: Sottrai karma proporzionale alla penalità
+                -- Formula: 1 gloria penalty = 0.1 karma penalty (100 gloria = 10 karma = 1 alignment)
+                local karma_penalty = math.floor(penalty / 10)
+                if karma_penalty > 0 then
+                    -- Cerca il player online e sottrai karma
+                    q.begin_other_pc_block(player_id)
+                    if pc.get_player_id() == player_id then
+                        pc.change_alignment(-karma_penalty)  -- Negativo per sottrarre
+                    end
+                    q.end_other_pc_block()
+                end
+
                 -- Marca la missione come 'failed'
                 mysql_direct_query("UPDATE srv1_hunabku.hunter_player_missions SET status = 'failed' WHERE id = " .. mission.id)
             end
@@ -6016,7 +6079,7 @@ function hg_lib.shop_buy_item(item_id)
     syschat("|cffFFD700[SHOP]|r -" .. price .. " " .. hg_lib.get_text("SPENDABLE_GLORY", nil, "Gloria Spendibile"))
 
     -- Rilascia lock dopo 2 secondi
-    timer("hq_shop_unlock", 2, "pc.setqf('hq_shop_lock', 0)")
+    timer("hq_shop_unlock", 2)
     
     -- Aggiorna UI
     hg_lib.send_player_data()
@@ -6157,7 +6220,7 @@ function hg_lib.claim_achievement(ach_id)
     syschat("|cffFFD700[" .. hg_lib.get_text("REWARD", nil, "RICOMPENSA") .. "]|r " .. hg_lib.get_text("ACH_RECEIVED", {COUNT = reward_count}, "Ricevuto x" .. reward_count .. " oggetto!"))
 
     -- Rilascia lock dopo 2 secondi
-    timer("hq_ach_unlock", 2, "pc.setqf('hq_ach_lock', 0)")
+    timer("hq_ach_unlock", 2)
     
     -- Aggiorna UI
     cmdchat("HunterAchievementClaimed " .. ach_id)
@@ -6212,6 +6275,6 @@ function hg_lib.smart_claim_all()
     end
 
     -- Rilascia lock dopo 3 secondi
-    timer("hq_smart_claim_unlock", 3, "pc.setqf('hq_smart_claim_lock', 0)")
+    timer("hq_smart_claim_unlock", 3)
 end
 
