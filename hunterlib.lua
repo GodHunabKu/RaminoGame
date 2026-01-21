@@ -4654,7 +4654,9 @@ function hg_lib.finalize_gate_opening(vid)
         local leader_pid = party.get_leader_pid()
         game.set_event_flag("hq_party_defense_vid_" .. leader_pid, 0)
     else
+        -- Player solo: pulisci tutte le flag di difesa
         pc.setqf("hq_defense_fracture_vid", 0)
+        pc.setqf("hq_defense_active", 0)
     end
         
     game.set_event_flag("hq_gate_lock_"..vid, 0)
