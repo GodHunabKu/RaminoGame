@@ -89,11 +89,13 @@ Ogni rank ti dà un **bonus permanente** su tutta la gloria guadagnata:
 Ogni giorno alle **05:00** il Sistema ti assegna **3 missioni** basate sul tuo rank.
 
 ### 📋 Tipi di Missioni
-- **Kill Boss** - Uccidi X boss elite
-- **Destroy Metin** - Distruggi X Metin stones
-- **Seal Fractures** - Sigilla X fratture
+- **Kill Boss** - Uccidi X boss elite (progresso individuale)
+- **Destroy Metin** - Distruggi X Metin stones (progresso individuale)
+- **Seal Fractures** - Sigilla X fratture (**condiviso in party!**)
 - **Speed Kill** - Uccidi mostri in < 60 secondi
-- **Open Chests** - Apri X bauli dimensionali
+- **Open Chests** - Apri X bauli dimensionali (progresso individuale)
+
+> **Party Tip**: Solo le missioni "Seal Fractures" condividono il progresso con tutti i membri del party. Boss, Metin e Bauli richiedono che ogni membro completi individualmente le proprie azioni.
 
 ### 🎁 Ricompense
 - **Singola missione**: 100-300 gloria (varia per rank)
@@ -248,13 +250,13 @@ La **Gloria** è la valuta del Sistema. Guadagni gloria uccidendo mostri, comple
 
 | Azione | Gloria Base | Modificatori |
 |--------|------------|--------------|
-| Kill Boss Elite | 10-50 | +Rank bonus, +Streak, +Speed Kill |
+| Kill Boss Elite | 10-50 | +Rank bonus, +Streak |
 | Destroy Metin | 8-35 | +Rank bonus, +Streak |
 | Sigilla Frattura | 100-1200 | +Rank (E=100, S=800, N=1200) |
 | Apri Baule | 20-70 | +Rank bonus |
 | Missione Giornaliera | 100-300 | x1.5 se tutte complete |
-| Speed Kill (Boss <60s) | +200 | Bonus extra |
-| Speed Kill (Metin <300s) | +80 | Bonus extra |
+| Speed Kill (Boss <60s) | +300 | Bonus extra (Emergency Quest) |
+| Speed Kill (Metin <300s) | +150 | Bonus extra (Emergency Quest) |
 | Emergency Quest | 150-1200 | Difficoltà-based |
 | Evento (partecipazione) | 20-60 | Tipo evento |
 | Evento (vincitore) | 100-500 | Estrazione casuale |
@@ -268,11 +270,11 @@ Gloria Finale = Gloria Base × (1 + Bonus Rank) × (1 + Bonus Streak) × Moltipl
 **Esempio:**
 - Uccidi boss = 50 gloria base
 - Sei Rank S (+10%)
-- Hai streak 7 giorni (+7%)
+- Hai streak 7 giorni (+10%)
 - Hai completato tutte le missioni (x1.5)
 
 ```
-50 × 1.10 × 1.07 × 1.5 = 88.3 gloria
+50 × 1.10 × 1.10 × 1.5 = 90.75 gloria
 ```
 
 ### 💰 Gloria Spendibile vs Totale
@@ -353,9 +355,9 @@ Lo **Streak** è il numero di giorni consecutivi in cui fai login e completi alm
 
 | Giorni Streak | Bonus Gloria |
 |--------------|-------------|
-| 3 giorni | +3% |
-| 7 giorni | +7% |
-| 30 giorni | +12% |
+| 3 giorni | +5% |
+| 7 giorni | +10% |
+| 30 giorni | +20% |
 
 ### Come Funziona
 - **Inizio**: Login giorno 1 → Streak = 1
@@ -365,13 +367,13 @@ Lo **Streak** è il numero di giorni consecutivi in cui fai login e completi alm
 
 ### 💡 Consigli Streak
 - Fai **almeno 1 missione** al giorno (anche la più facile)
-- Streak 30 giorni = **+12% gloria** permanente finché mantieni streak
+- Streak 30 giorni = **+20% gloria** permanente finché mantieni streak
 - Si **somma** con bonus Rank!
 
 **Esempio totale bonus:**
 - Rank S: +10%
-- Streak 30 giorni: +12%
-- **TOTALE: +22% gloria su TUTTO!**
+- Streak 30 giorni: +20%
+- **TOTALE: +30% gloria su TUTTO!**
 
 ---
 
@@ -403,7 +405,7 @@ Lo **Streak** è il numero di giorni consecutivi in cui fai login e completi alm
 1. **Fai TUTTE le missioni giornaliere** - Il bonus x1.5 è fondamentale
 2. **Partecipa a TUTTI gli eventi possibili** - Gloria gratuita
 3. **Compra Scanner fratture** (1k gloria) - Fai più fratture al giorno
-4. **Mantieni lo streak** - +3% poi +7% è ottimo all'inizio
+4. **Mantieni lo streak** - +5% poi +10% è ottimo all'inizio
 
 ### Mid Game (Lv 50-100, Rank C-B)
 1. **Completa le Trial** per salire rank velocemente
@@ -412,14 +414,15 @@ Lo **Streak** è il numero di giorni consecutivi in cui fai login e completi alm
 4. **Partecipa a "Prima Frattura"** (06:00) - Se vinci primi = +300 gloria!
 
 ### Late Game (Lv 100+, Rank A-S)
-1. **Mantieni streak 30 giorni** - +12% è ENORME
+1. **Mantieni streak 30 giorni** - +20% è ENORME
 2. **Fai Emergency Quest** - 150-1200 gloria se di rank alto
 3. **Risparmia per Frammento Monarca** (50k) - Item finale
 4. **Vai per National Rank** (1.5M gloria) - Obiettivo finale
 
 ### Pro Tips
-- **Speed Kill** = +200 gloria! Cerca di uccidere boss <60s
-- **Party Play** = Tutti prendono gloria dalle fratture!
+- **Speed Kill Emergency** = +300 gloria (boss) o +150 gloria (metin) bonus!
+- **Party Fratture** = In party, TUTTI ricevono gloria e progresso missioni dalle fratture!
+- **Solo Boss/Metin** = Progresso missioni boss/metin/bauli è INDIVIDUALE (premia il killer)
 - **Night Farming** = Evento 01:30 gloria x4 (migliore della giornata)
 - **Streak > Shop** = Mantieni streak prima di spendere gloria
 
@@ -489,10 +492,15 @@ Se non completi missioni troppo spesso:
 - Claim achievement: Lock 2 secondi
 - Smart claim: Lock 3 secondi
 
-### 4. FAIR PLAY
-- Partito in party = TUTTI prendono gloria
-- Eventi = Sorteggio casuale (eccetto "first" events)
-- Rank basato solo su gloria, non su pay-to-win
+### 4. FAIR PLAY & PARTY PLAY
+- **Gloria Base**: Ogni giocatore riceve gloria per le proprie azioni
+- **Fratture in Party**: Se sigilli una frattura in party, TUTTI i membri ricevono:
+  - Gloria dalla frattura
+  - Progresso missioni "Sigilla Fratture"
+  - Progresso trial per "fracture_seal"
+- **Boss/Metin/Bauli**: Progresso missioni INDIVIDUALE (solo chi killa/apre)
+- **Eventi**: Sorteggio casuale (eccetto "first" events dove vince chi arriva primo)
+- **Rank**: Basato SOLO su gloria totale, nessun pay-to-win
 
 ---
 

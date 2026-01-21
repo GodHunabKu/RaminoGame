@@ -542,6 +542,7 @@ when chat."/hunter_request_trial_data" begin
                     syschat("|cff00FF00[SISTEMA]|r Il diritto di conquista precedente e' scaduto. La frattura e' libera!")
                 elseif owner_pid == pid then
                     -- E' il proprietario e siamo nel tempo limite -> APRE
+                    npc.purge()  -- FIX: Rimuovi frattura PRIMA di finalize (context NPC valido)
                     hg_lib.finalize_gate_opening(vid)
                     game.set_event_flag("hq_gate_conq_time_"..vid, 0)
                     return
