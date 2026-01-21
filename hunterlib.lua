@@ -3546,10 +3546,14 @@ function hg_lib.open_chest(chest_vnum)
             syschat("|cffFF00FF*** BONUS! |r|cff00FF00" .. jackpot_items .. "|r")
         end
     end
-    
-    -- Verifica completamento trial
-    hg_lib.check_trial_completion_status()
-    
+
+    -- FIX: NON controllare trial completion qui!
+    -- Aprire bauli e' un'azione normale (daily quest, farming, etc.)
+    -- Il check trial viene fatto solo da:
+    --   1. on_fracture_seal() - perche' le fratture sono parte della trial
+    --   2. Timer periodico (ogni 5 min se trial attiva)
+    --   3. Apertura manuale UI Trial
+
     -- Aggiorna dati client
     hg_lib.send_player_data()
 end
@@ -5586,14 +5590,30 @@ end
 
 function hg_lib.check_trial_completion_status()
     local pid = pc.get_player_id()
-    
+
+    -- SECURITY: Throttle check (max 1 volta ogni 30 secondi per player)
+    -- Previene spam di notifiche e riduce carico DB
+    local last_check = pc.getqf("hq_last_trial_check") or 0
+    local now = get_time()
+    if (now - last_check) < 30 then
+        return  -- Troppo presto dal last check
+    end
+    pc.setqf("hq_last_trial_check", now)
+
+    -- Verifica se il player ha una trial attiva
+    -- Non vogliamo sorprendere il player con notifiche inaspettate!
+    local c, d = mysql_direct_query("SELECT 1 FROM srv1_hunabku.hunter_player_trials WHERE player_id=" .. pid .. " AND status='in_progress' LIMIT 1")
+    if c == 0 then
+        return  -- Nessuna trial attiva, skip check
+    end
+
     -- IMPORTANTE: Prima flush i trial pendenti per avere dati aggiornati
     -- Necessario per rilevare completamento in tempo reale
     local boss_kills = pc.getqf("hq_trial_boss_kill") or 0
     local metin_kills = pc.getqf("hq_trial_metin_kill") or 0
     local chest_opens = pc.getqf("hq_trial_chest_open") or 0
     local fracture_seals = pc.getqf("hq_trial_fracture_seal") or 0
-    
+
     -- Se ci sono valori pendenti, flush prima del check
     if boss_kills > 0 or metin_kills > 0 or chest_opens > 0 or fracture_seals > 0 then
         local flush_q = string.format([[
