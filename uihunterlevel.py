@@ -1020,59 +1020,166 @@ class HunterLevelWindow(ui.ScriptWindow):
         t = self.theme
         y = 5
 
-        self.__CText(T("STATS_TITLE", "STATISTICHE PERSONALI"), 5, y, t["accent"])
+        # ============================================================
+        # HEADER - RISVEGLIATO STATUS
+        # ============================================================
+        self.__CText(T("STATS_TITLE", ">>> STATO RISVEGLIATO <<<"), 5, y, t["accent"])
         y += 25
 
-        self.__CBar(5, y, 420, 45, t["bg_dark"])
-        self.__CText(T("STATS_RANK", "Rango:"), 15, y + 5, t["text_muted"])
-        self.__CText("[%s] %s - %s" % (self.currentRankKey, t["name"], t["title"]), 70, y + 5, t["accent"])
+        # ============================================================
+        # RANK BADGE + INFO
+        # ============================================================
+        self.__CBar(5, y, 420, 55, t["bg_dark"])
 
+        # Badge visivo del rango (a sinistra)
+        self.__CBar(15, y + 8, 40, 40, t["accent"])
+        self.__CText(self.currentRankKey, 27, y + 17, 0xFF000000)
+
+        # Nome rango e titolo
+        self.__CText(t["name"], 65, y + 8, t["accent"])
+        self.__CText(t["title"], 65, y + 23, t["text_muted"])
+
+        # Posizione in classifica (se presente)
+        daily_pos = self.playerData.get("daily_pos", 0)
+        weekly_pos = self.playerData.get("weekly_pos", 0)
+        if daily_pos > 0:
+            self.__CText(T("RANK_POSITION", "Classifica:"), 250, y + 8, t["text_muted"])
+            self.__CText("#%d oggi | #%d settimana" % (daily_pos, weekly_pos if weekly_pos > 0 else 999), 250, y + 23, GOLD_COLOR)
+
+        y += 60
+
+        # ============================================================
+        # PROGRESSO VERSO PROSSIMO RANK
+        # ============================================================
         progress = GetRankProgress(self.playerData["total_points"])
-        self.__CText(T("STATS_PROGRESS", "Progresso:"), 15, y + 25, t["text_muted"])
-        self.__CProgressBar(90, y + 25, 220, 12, progress, t["bar_fill"])
-        self.__CText("%d%%" % int(progress), 320, y + 23, t["accent"])
-        y += 55
+        total_glory = self.playerData["total_points"]
 
+        # Calcola distanza dal prossimo rango
+        rank_thresholds = [
+            ("N", 1500000), ("S", 500000), ("A", 150000),
+            ("B", 50000), ("C", 10000), ("D", 2000), ("E", 0)
+        ]
+        next_rank_name = None
+        next_rank_glory = None
+        for rk, threshold in rank_thresholds:
+            if total_glory < threshold:
+                next_rank_name = rk
+                next_rank_glory = threshold
+                break
+
+        self.__CBar(5, y, 420, 45, t["bg_dark"])
+        self.__CText(T("STATS_PROGRESS", "PROGRESSO RISVEGLIO:"), 15, y + 5, t["accent"])
+        self.__CProgressBar(15, y + 22, 340, 14, progress, t["bar_fill"])
+        self.__CText("%d%%" % int(progress), 365, y + 21, t["accent"])
+
+        if next_rank_name and next_rank_glory:
+            missing = next_rank_glory - total_glory
+            next_theme = RANK_THEMES[next_rank_name]
+            self.__CText(T("NEXT_RANK", "Prossimo: [%s] %s" % (next_rank_name, next_theme["name"])), 15, y + 38, next_theme["accent"])
+            self.__CText(T("MISSING_GLORY", "(-" + FormatNumber(missing) + " Gloria)"), 280, y + 38, 0xFFFFAA55)
+        else:
+            self.__CText(T("MAX_RANK", ">>> HAI RAGGIUNTO IL RANGO MASSIMO <<<"), 15, y + 38, 0xFFFFD700)
+
+        y += 50
+
+        # ============================================================
+        # STREAK BONUS (se attivo)
+        # ============================================================
+        streak = self.playerData.get("login_streak", 0)
+        streak_bonus = self.playerData.get("streak_bonus", 0)
+        if streak > 0:
+            streak_color = 0xFF00FF88 if streak >= 30 else 0xFFFFAA55 if streak >= 7 else 0xFF00AAFF
+            self.__CBar(5, y, 420, 25, 0x33FFAA00)
+
+            streak_icon = "[***]" if streak >= 30 else "[**]" if streak >= 7 else "[*]"
+            self.__CText(T("STREAK", "%s SERIE CONSECUTIVA: %d giorni | Bonus: +%d%%" % (streak_icon, streak, int(streak_bonus * 100))), 15, y + 6, streak_color)
+            y += 30
+
+        # ============================================================
+        # PREMI DISPONIBILI
+        # ============================================================
         if self.playerData.get("pending_daily_reward", 0) > 0 or self.playerData.get("pending_weekly_reward", 0) > 0:
             self.__CBar(5, y, 420, 30, 0x4400FF00)
-            self.__CText(T("STATS_REWARDS_AVAILABLE", "PREMI DISPONIBILI!"), 15, y + 8, 0xFF00FF88)
+            self.__CText(T("STATS_REWARDS_AVAILABLE", "[!] PREMI DA RISCUOTERE [!]"), 15, y + 8, 0xFF00FF88)
             self.__CButton(340, y + 3, T("BTN_CLAIM", "Ritira"), ui.__mem_func__(self.__OnSmartClaim))
             y += 40
 
         self.__CSep(5, y)
         y += 15
 
-        self.__CText(T("STATS_TODAY", "OGGI"), 100, y, t["accent"])
-        self.__CText(T("STATS_TOTAL", "TOTALE"), 300, y, GOLD_COLOR)
+        # ============================================================
+        # POWER LEVEL (in stile Solo Leveling)
+        # ============================================================
+        # Calcola un "livello di potere" basato su gloria + kills
+        power_level = int((total_glory / 1000) + (self.playerData["total_kills"] / 10))
+        power_rank = "SSS" if power_level > 5000 else "SS" if power_level > 2000 else "S" if power_level > 1000 else "A" if power_level > 500 else "B" if power_level > 200 else "C" if power_level > 100 else "D"
+
+        self.__CText(T("POWER_LEVEL", "LIVELLO DI POTERE"), 5, y, t["accent"])
+        y += 22
+        self.__CBar(5, y, 420, 35, 0x22440000)
+        self.__CText(T("POWER_VALUE", "Rango: %s | Potere: %s" % (power_rank, FormatNumber(power_level))), 15, y + 3, GOLD_COLOR)
+
+        # Calcola bonus totale giornaliero (rank bonus + streak)
+        rank_bonuses = {"N": 1.12, "S": 1.10, "A": 1.07, "B": 1.05, "C": 1.03, "D": 1.01, "E": 1.0}
+        rank_bonus = rank_bonuses.get(self.currentRankKey, 1.0)
+        total_daily_bonus = ((rank_bonus - 1.0) + streak_bonus) * 100
+
+        if total_daily_bonus > 0:
+            self.__CText(T("DAILY_BONUS", "Bonus Giornaliero Totale: +%.1f%% (Rango: +%.0f%% | Streak: +%.0f%%)" % (total_daily_bonus, (rank_bonus - 1.0) * 100, streak_bonus * 100)), 15, y + 18, 0xFFFFAA55)
+        y += 40
+
+        self.__CSep(5, y)
+        y += 15
+
+        # ============================================================
+        # STATISTICHE COMBATTIMENTO
+        # ============================================================
+        self.__CText(T("STATS_COMBAT", "[ STATISTICHE COMBATTIMENTO ]"), 5, y, t["accent"])
         y += 25
 
+        self.__CText(T("STATS_TODAY", "OGGI"), 100, y, 0xFF00AAFF)
+        self.__CText(T("STATS_TOTAL", "TOTALE"), 300, y, GOLD_COLOR)
+        y += 20
+
         self.__CText(T("STATS_KILLS", "Uccisioni:"), 15, y, t["text_muted"])
-        self.__CText(str(self.playerData["daily_kills"]), 120, y, 0xFF00FF88)
+        self.__CText(FormatNumber(self.playerData["daily_kills"]), 120, y, 0xFF00FF88)
         self.__CText(FormatNumber(self.playerData["total_kills"]), 320, y, t["text_value"])
-        y += 22
+        y += 20
 
         self.__CText(T("STATS_GLORY", "Gloria:"), 15, y, t["text_muted"])
         self.__CText("+" + FormatNumber(self.playerData["daily_points"]), 120, y, GOLD_COLOR)
         self.__CText(FormatNumber(self.playerData["total_points"]), 320, y, GOLD_COLOR)
-        y += 30
+        y += 28
 
         self.__CSep(5, y)
         y += 15
 
-        self.__CText(T("STATS_ECONOMY", "ECONOMIA"), 5, y, 0xFFFFA500)
+        # ============================================================
+        # ECONOMIA - CRISTALLI GLORIA
+        # ============================================================
+        self.__CText(T("STATS_ECONOMY", "[ CRISTALLI GLORIA ]"), 5, y, 0xFFFFA500)
         y += 22
         self.__CText(T("STATS_SPENDABLE", "Spendibili:"), 15, y, t["text_muted"])
-        self.__CText(FormatNumber(self.playerData["spendable_points"]) + " CR", 100, y, 0xFFFFA500)
-        y += 30
+        self.__CText(FormatNumber(self.playerData["spendable_points"]) + " CR", 120, y, 0xFFFFA500)
+
+        # Mostra percentuale di gloria spesa
+        if total_glory > 0:
+            spent_glory = total_glory - self.playerData["spendable_points"]
+            spent_percent = int((spent_glory * 100.0) / total_glory)
+            self.__CText(T("SPENT_PERCENT", "(Spesa: %d%%)" % spent_percent), 280, y, t["text_muted"])
+        y += 28
 
         self.__CSep(5, y)
         y += 15
 
-        self.__CText(T("STATS_RECORDS", "RECORD"), 5, y, t["accent"])
+        # ============================================================
+        # RECORD PERSONALI
+        # ============================================================
+        self.__CText(T("STATS_RECORDS", "[ RECORD PERSONALI ]"), 5, y, t["accent"])
         y += 22
-        self.__CText(T("STATS_FRACTURES", "Fratture:") + " %d" % self.playerData["total_fractures"], 15, y, t["accent"])
+        self.__CText(T("STATS_FRACTURES", "Fratture: %d" % self.playerData["total_fractures"]), 15, y, t["accent"])
         self.__CText("Metin: %d" % self.playerData["total_metins"], 160, y, 0xFFFFA500)
-        self.__CText(T("STATS_CHESTS", "Bauli:") + " %d" % self.playerData["total_chests"], 300, y, GOLD_COLOR)
+        self.__CText(T("STATS_CHESTS", "Bauli: %d" % self.playerData["total_chests"]), 300, y, GOLD_COLOR)
     
     def __LoadShop(self):
         t = self.theme
