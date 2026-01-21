@@ -1,6 +1,8 @@
--- ============================================================
--- HUNTER LEVEL SYSTEM LIB (hg_lib) - STABLE VERSION 2025
--- ============================================================
+quest hunterlib begin
+    state start begin
+        -- ============================================================
+        -- HUNTER LEVEL SYSTEM LIB (hg_lib) - STABLE VERSION 2025
+        -- ============================================================
 
 hg_lib = {}
 
@@ -6364,5 +6366,8 @@ function hg_lib.smart_claim_all()
 
     -- Rilascia lock dopo 3 secondi
     timer("hq_smart_claim_unlock", 3)
+end
+
+    end
 end
 
