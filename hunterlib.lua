@@ -2031,6 +2031,7 @@ function hg_lib.register_event_participant()
 
     local event_id = tonumber(event.id)
     local event_name = event.event_name or "Evento"
+    local participation_prize = tonumber(event.reward_glory_base) or 50
     local winner_prize = tonumber(event.reward_glory_winner) or 200
     local pid = pc.get_player_id()
     local pname = pc.get_name()
@@ -2073,13 +2074,14 @@ function hg_lib.register_event_participant()
         syschat("|cffFFFFFF   Il Sistema ha registrato la tua presenza.|r")
         syschat("|cffFFFFFF   Sei ora in lizza per il premio finale.|r")
         syschat("")
+        syschat("|cff00FFFF   Gloria Partecipazione: +" .. participation_prize .. " Gloria|r")
         syschat("|cffFFD700   Premio Sorteggio: +" .. winner_prize .. " Gloria|r")
         syschat("")
         syschat("|cff888888   'La fortuna favorisce gli audaci.'|r")
         syschat("|cff00FF00=============================================|r")
 
         hg_lib.hunter_speak_color("CANDIDATURA ACCETTATA. RESTA IN GIOCO.", "GOLD")
-        cmdchat("HunterEventJoined " .. event_id .. "|" .. hg_lib.clean_str(event_name) .. "|0")
+        cmdchat("HunterEventJoined " .. event_id .. "|" .. hg_lib.clean_str(event_name) .. "|" .. participation_prize)
 
         pc.setqf("hq_event_registered", 1)
         return true
