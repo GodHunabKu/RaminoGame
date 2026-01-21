@@ -1,8 +1,6 @@
-quest hunterlib begin
-    state start begin
-        -- ============================================================
-        -- HUNTER LEVEL SYSTEM LIB (hg_lib) - STABLE VERSION 2025
-        -- ============================================================
+-- ============================================================
+-- HUNTER LEVEL SYSTEM LIB (hg_lib) - STABLE VERSION 2025
+-- ============================================================
 
 hg_lib = {}
 
@@ -72,9 +70,9 @@ function hg_lib.send_notification(player_pid, notif_type, message)
             cmdchat("HunterNotification " .. notif_type .. "|" .. clean_msg)
         else
             -- Altro player, usa begin_other_pc_block
-            quest.begin_other_pc_block(pid)
+            begin_other_pc_block(pid)
             cmdchat("HunterNotification " .. notif_type .. "|" .. clean_msg)
-            quest.end_other_pc_block()
+            end_other_pc_block()
         end
     end
 end
@@ -1168,7 +1166,7 @@ function hg_lib.start_emergency(title, seconds, mob_vnum, count, description, di
 
         local pids = {party.get_member_pids()}
         for i, member_pid in ipairs(pids) do
-            quest.begin_other_pc_block(member_pid)
+            begin_other_pc_block(member_pid)
             pc.setqf("hq_emerg_active", 1)
             pc.setqf("hq_emerg_vnum", mob_vnum or 0)
             hg_lib.set_emerg_vnums(vnum_str)  -- Multi-vnum come flags separati
@@ -1176,7 +1174,7 @@ function hg_lib.start_emergency(title, seconds, mob_vnum, count, description, di
             pc.setqf("hq_emerg_cur", 0)
             pc.setqf("hq_emerg_expire", expire_time)
             pc.setqf("hq_emerg_penalty_pts", penalty_pts or 0)
-            quest.end_other_pc_block()
+            end_other_pc_block()
         end
     else
         pc.setqf("hq_emerg_active", 1)
@@ -1221,7 +1219,7 @@ function hg_lib.end_emergency(status)
 
         local pids = {party.get_member_pids()}
         for i, member_pid in ipairs(pids) do
-            quest.begin_other_pc_block(member_pid)
+            begin_other_pc_block(member_pid)
             pc.setqf("hq_emerg_active", 0)
             pc.setqf("hq_emerg_vnum", 0)
             hg_lib.clear_emerg_vnums()
@@ -1235,7 +1233,7 @@ function hg_lib.end_emergency(status)
             pc.setqf("hq_emerg_reward_count", 0)
             pc.setqf("hq_speedkill_active", 0)
             pc.setqf("hq_speedkill_vnum", 0)
-            quest.end_other_pc_block()
+            end_other_pc_block()
         end
     else
         pc.setqf("hq_emerg_active", 0)
@@ -1766,11 +1764,11 @@ function hg_lib.award_glory_to_player(player_id, glory_amount)
     local karma_alignment = math.floor(glory_amount / 10)
     if karma_alignment > 0 then
         -- Cerca il player online e assegna karma
-        quest.begin_other_pc_block(player_id)
+        begin_other_pc_block(player_id)
         if pc.get_player_id() == player_id then
             pc.change_alignment(karma_alignment)
         end
-        quest.end_other_pc_block()
+        end_other_pc_block()
     end
 end
 
@@ -2280,7 +2278,7 @@ function hg_lib.draw_event_winner(event_id)
 
         -- Cerca il vincitore tra i giocatori online e invia UI
         local winner_found = false
-        quest.begin_other_pc_block(winner_id)
+        begin_other_pc_block(winner_id)
         if pc.get_player_id() == winner_id then
             winner_found = true
             -- UI popup per il vincitore
@@ -2300,7 +2298,7 @@ function hg_lib.draw_event_winner(event_id)
             syschat("|cffFFD700=============================================|r")
             hg_lib.hunter_speak_color("CONGRATULAZIONI! HAI VINTO +" .. glory_prize .. " GLORIA!", "GOLD")
         end
-        quest.end_other_pc_block()
+        end_other_pc_block()
         
         return winner_name, glory_prize
     end
@@ -2914,11 +2912,11 @@ function hg_lib.on_emergency_kill(vnum)
             if party_has_emergency == 1 then
                 local pids = {party.get_member_pids()}
                 for i, member_pid in ipairs(pids) do
-                    quest.begin_other_pc_block(member_pid)
+                    begin_other_pc_block(member_pid)
                     local member_active = pc.getqf("hq_emerg_active") or 0
                     local member_vnum = pc.getqf("hq_emerg_vnum") or 0
                     local member_vnums = hg_lib.get_emerg_vnums()
-                    quest.end_other_pc_block()
+                    end_other_pc_block()
 
                     -- Supporto multi-vnum: controlla se il vnum ucciso è valido
                     local vnum_matches = hg_lib.is_vnum_in_list(vnum, member_vnums)
@@ -2928,13 +2926,13 @@ function hg_lib.on_emergency_kill(vnum)
 
                     if member_active == 1 and vnum_matches then
                         -- Un membro del party ha l'emergency attiva! Eredita i flag
-                        quest.begin_other_pc_block(member_pid)
+                        begin_other_pc_block(member_pid)
                         local req = pc.getqf("hq_emerg_req") or 1
                         local expire = pc.getqf("hq_emerg_expire") or 0
                         local reward_pts = pc.getqf("hq_emerg_reward_pts") or 0
                         local penalty_pts = pc.getqf("hq_emerg_penalty_pts") or 0
                         local emerg_id = pc.getqf("hq_emerg_id") or 0
-                        quest.end_other_pc_block()
+                        end_other_pc_block()
 
                         pc.setqf("hq_emerg_active", 1)
                         pc.setqf("hq_emerg_vnum", member_vnum)
@@ -3364,13 +3362,13 @@ function hg_lib.trigger_random_emergency()
         if party.is_party() then
             local pids = {party.get_member_pids()}
             for i, member_pid in ipairs(pids) do
-                quest.begin_other_pc_block(member_pid)
+                begin_other_pc_block(member_pid)
                 pc.setqf("hq_emerg_id", emerg_id)
                 pc.setqf("hq_emerg_reward_pts", reward_pts)
                 pc.setqf("hq_emerg_penalty_pts", penalty_pts)
                 pc.setqf("hq_emerg_reward_vnum", reward_vnum)
                 pc.setqf("hq_emerg_reward_count", reward_count)
-                quest.end_other_pc_block()
+                end_other_pc_block()
             end
         else
             pc.setqf("hq_emerg_id", emerg_id)
@@ -3401,13 +3399,13 @@ function hg_lib.trigger_random_emergency()
         if party.is_party() then
             local pids = {party.get_member_pids()}
             for i, member_pid in ipairs(pids) do
-                quest.begin_other_pc_block(member_pid)
+                begin_other_pc_block(member_pid)
                 pc.setqf("hq_emerg_id", 0)
                 pc.setqf("hq_emerg_reward_pts", 0)
                 pc.setqf("hq_emerg_penalty_pts", fallback_penalty)
                 pc.setqf("hq_emerg_reward_vnum", 0)
                 pc.setqf("hq_emerg_reward_count", 0)
-                quest.end_other_pc_block()
+                end_other_pc_block()
             end
         else
             pc.setqf("hq_emerg_id", 0)
@@ -3910,7 +3908,7 @@ function hg_lib.open_gate(fname, frank, fcolor, pid)
         local pids = {party.get_member_pids()}
         for i, member_pid in ipairs(pids) do
             -- Setta su TUTTI i membri (incluso chi ha cliccato per ultimo)
-            quest.begin_other_pc_block(member_pid)
+            begin_other_pc_block(member_pid)
             
             -- Flag difesa attiva
             pc.setqf("hq_defense_active", 1)
@@ -3928,7 +3926,7 @@ function hg_lib.open_gate(fname, frank, fcolor, pid)
             pc.setqf("hq_defense_mob_killed", 0)
             pc.setqf("hq_defense_duration", duration)
             
-            quest.end_other_pc_block()
+            end_other_pc_block()
         end
         
         -- Salva anche i dati defense per tutti
@@ -3976,9 +3974,9 @@ function hg_lib.party_cmdchat(cmd)
         local pids = {party.get_member_pids()}
         for i, pid in ipairs(pids) do
             if pid ~= my_pid then
-                quest.begin_other_pc_block(pid)
+                begin_other_pc_block(pid)
                 cmdchat(cmd)
-                quest.end_other_pc_block()
+                end_other_pc_block()
             end
         end
     end
@@ -3990,9 +3988,9 @@ function hg_lib.party_hunter_speak_color(msg, color)
         -- Invia a tutti i membri del party
         local pids = {party.get_member_pids()}
         for i, pid in ipairs(pids) do
-            quest.begin_other_pc_block(pid)
+            begin_other_pc_block(pid)
             cmdchat("HunterSystemSpeak " .. (color or "WHITE") .. "|" .. hg_lib.clean_str(msg))
-            quest.end_other_pc_block()
+            end_other_pc_block()
         end
     else
         -- Solo player
@@ -4073,30 +4071,30 @@ function hg_lib.check_party_defense_distance()
     -- IN PARTY: Controlla TUTTI i membri
     local pids = {party.get_member_pids()}
     for i, member_pid in ipairs(pids) do
-        quest.begin_other_pc_block(member_pid)
+        begin_other_pc_block(member_pid)
         
         -- Verifica che il membro sia nella stessa mappa
         local member_map = pc.get_map_index()
         local leader_map = 0
-        quest.end_other_pc_block()
+        end_other_pc_block()
         
         -- Riprendi il contesto del leader per la mappa
         leader_map = pc.get_map_index()
         
-        quest.begin_other_pc_block(member_pid)
+        begin_other_pc_block(member_pid)
         member_map = pc.get_map_index()
         
         -- Se il membro e' in una mappa diversa, e' considerato lontano
         if member_map ~= leader_map then
             local member_name = pc.get_name()
-            quest.end_other_pc_block()
+            end_other_pc_block()
             return false, member_name
         end
         
         -- Controlla distanza del membro
         local mx, my = pc.get_local_x(), pc.get_local_y()
         local member_name = pc.get_name()
-        quest.end_other_pc_block()
+        end_other_pc_block()
         
         local dx = mx - fx
         local dy = my - fy
@@ -4222,7 +4220,7 @@ function hg_lib.complete_defense_success()
         
         local pids = {party.get_member_pids()}
         for i, member_pid in ipairs(pids) do
-            quest.begin_other_pc_block(member_pid)
+            begin_other_pc_block(member_pid)
             pc.setqf("hq_defense_active", 0)
             pc.setqf("hq_defense_fracture_vid", 0)
             pc.setqf("hq_defense_x", 0)
@@ -4230,7 +4228,7 @@ function hg_lib.complete_defense_success()
             pc.setqf("hq_defense_wave", 0)
             pc.setqf("hq_defense_mob_req", 0)
             pc.setqf("hq_defense_mob_killed", 0)
-            quest.end_other_pc_block()
+            end_other_pc_block()
             
             -- Pulisci hunter_defense_data per questo membro
             if hunter_defense_data and hunter_defense_data[member_pid] then
@@ -4272,9 +4270,9 @@ function hg_lib.complete_defense_success()
     if party.is_party() then
         local pids = {party.get_member_pids()}
         for i, member_pid in ipairs(pids) do
-            quest.begin_other_pc_block(member_pid)
+            begin_other_pc_block(member_pid)
             pc.setqf("hq_pending_defense_wins", (pc.getqf("hq_pending_defense_wins") or 0) + 1)
-            quest.end_other_pc_block()
+            end_other_pc_block()
         end
     else
         pc.setqf("hq_pending_defense_wins", (pc.getqf("hq_pending_defense_wins") or 0) + 1)
@@ -4351,7 +4349,7 @@ function hg_lib.fail_defense(reason)
         
         local pids = {party.get_member_pids()}
         for i, member_pid in ipairs(pids) do
-            quest.begin_other_pc_block(member_pid)
+            begin_other_pc_block(member_pid)
             pc.setqf("hq_defense_active", 0)
             pc.setqf("hq_defense_fracture_vid", 0)
             pc.setqf("hq_defense_x", 0)
@@ -4359,7 +4357,7 @@ function hg_lib.fail_defense(reason)
             pc.setqf("hq_defense_wave", 0)
             pc.setqf("hq_defense_mob_req", 0)
             pc.setqf("hq_defense_mob_killed", 0)
-            quest.end_other_pc_block()
+            end_other_pc_block()
             
             -- Pulisci hunter_defense_data per questo membro
             if hunter_defense_data and hunter_defense_data[member_pid] then
@@ -4438,9 +4436,9 @@ function hg_lib.fail_defense(reason)
     if party.is_party() then
         local pids = {party.get_member_pids()}
         for i, member_pid in ipairs(pids) do
-            quest.begin_other_pc_block(member_pid)
+            begin_other_pc_block(member_pid)
             pc.setqf("hq_pending_defense_losses", (pc.getqf("hq_pending_defense_losses") or 0) + 1)
-            quest.end_other_pc_block()
+            end_other_pc_block()
         end
     else
         pc.setqf("hq_pending_defense_losses", (pc.getqf("hq_pending_defense_losses") or 0) + 1)
@@ -4560,7 +4558,7 @@ function hg_lib.spawn_gate_mob_and_alert(rank_label, fcolor)
                 if party.is_party() then
                     local pids = {party.get_member_pids()}
                     for i, member_pid in ipairs(pids) do
-                        quest.begin_other_pc_block(member_pid)
+                        begin_other_pc_block(member_pid)
                         pc.setqf("hq_emerg_reward_pts", bonus_points)
                         pc.setqf("hq_emerg_reward_vnum", 0)
                         pc.setqf("hq_emerg_reward_count", 0)
@@ -4568,7 +4566,7 @@ function hg_lib.spawn_gate_mob_and_alert(rank_label, fcolor)
                         pc.setqf("hq_speedkill_vnum", spawned_vnum)
                         pc.setqf("hq_speedkill_start", get_time())
                         pc.setqf("hq_speedkill_duration", emergency_seconds)
-                        quest.end_other_pc_block()
+                        end_other_pc_block()
                     end
                 else
                     pc.setqf("hq_emerg_reward_pts", bonus_points)
@@ -4643,10 +4641,10 @@ function hg_lib.finalize_gate_opening(vid)
     if party.is_party() then
         local pids = {party.get_member_pids()}
         for i, member_pid in ipairs(pids) do
-            quest.begin_other_pc_block(member_pid)
+            begin_other_pc_block(member_pid)
             pc.setqf("hq_defense_fracture_vid", 0)
             pc.setqf("hq_defense_active", 0)
-            quest.end_other_pc_block()
+            end_other_pc_block()
             
             -- Pulisci hunter_defense_data per questo membro
             if hunter_defense_data and hunter_defense_data[member_pid] then
@@ -5363,11 +5361,11 @@ function hg_lib.apply_mission_penalties()
                 local karma_penalty = math.floor(penalty / 10)
                 if karma_penalty > 0 then
                     -- Cerca il player online e sottrai karma
-                    quest.begin_other_pc_block(player_id)
+                    begin_other_pc_block(player_id)
                     if pc.get_player_id() == player_id then
                         pc.change_alignment(-karma_penalty)  -- Negativo per sottrarre
                     end
-                    quest.end_other_pc_block()
+                    end_other_pc_block()
                 end
 
                 -- Marca la missione come 'failed'
@@ -5877,10 +5875,10 @@ function hg_lib.on_fracture_seal()
         local pids = {party.get_member_pids()}
         for i, member_pid in ipairs(pids) do
             if member_pid ~= pid then
-                quest.begin_other_pc_block(member_pid)
+                begin_other_pc_block(member_pid)
                 hg_lib.update_mission_progress("seal_fracture", 1, 0)
                 hg_lib.add_trial_progress("fracture_seal", 1)
-                quest.end_other_pc_block()
+                end_other_pc_block()
             end
         end
     end
@@ -6366,8 +6364,5 @@ function hg_lib.smart_claim_all()
 
     -- Rilascia lock dopo 3 secondi
     timer("hq_smart_claim_unlock", 3)
-end
-
-    end
 end
 
