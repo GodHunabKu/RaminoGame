@@ -3261,7 +3261,7 @@ class GameWindow(ui.ScriptWindow):
 	def __HunterPlayerData(self, dataStr):
 		try:
 			parts = dataStr.split("|")
-			if len(parts) >= 17:
+			if len(parts) >= 33:  # Updated for detailed stats
 				data = {
 					"name": parts[0],
 					"total_points": int(parts[1]),
@@ -3276,10 +3276,32 @@ class GameWindow(ui.ScriptWindow):
 					"total_fractures": int(parts[10]),
 					"total_chests": int(parts[11]),
 					"total_metins": int(parts[12]),
-					"pending_daily_reward": int(parts[13]), 
+					"pending_daily_reward": int(parts[13]),
 					"pending_weekly_reward": int(parts[14]),
 					"daily_pos": int(parts[15]),
 					"weekly_pos": int(parts[16]),
+					# Detailed stats
+					"chests_e": int(parts[17]), "chests_d": int(parts[18]), "chests_c": int(parts[19]),
+					"chests_b": int(parts[20]), "chests_a": int(parts[21]), "chests_s": int(parts[22]), "chests_n": int(parts[23]),
+					"boss_kills_easy": int(parts[24]), "boss_kills_medium": int(parts[25]),
+					"boss_kills_hard": int(parts[26]), "boss_kills_elite": int(parts[27]),
+					"metin_kills_normal": int(parts[28]), "metin_kills_special": int(parts[29]),
+					"defense_wins": int(parts[30]), "defense_losses": int(parts[31]), "elite_kills": int(parts[32]),
+				}
+				wnd = uihunterlevel.GetHunterLevelWindow()
+				if wnd: wnd.SetPlayerData(data)
+			elif len(parts) >= 17:  # Fallback for old format
+				data = {
+					"name": parts[0], "total_points": int(parts[1]), "spendable_points": int(parts[2]),
+					"daily_points": int(parts[3]), "weekly_points": int(parts[4]), "total_kills": int(parts[5]),
+					"daily_kills": int(parts[6]), "weekly_kills": int(parts[7]), "login_streak": int(parts[8]),
+					"streak_bonus": int(parts[9]), "total_fractures": int(parts[10]), "total_chests": int(parts[11]),
+					"total_metins": int(parts[12]), "pending_daily_reward": int(parts[13]), "pending_weekly_reward": int(parts[14]),
+					"daily_pos": int(parts[15]), "weekly_pos": int(parts[16]),
+					# Defaults for detailed stats
+					"chests_e": 0, "chests_d": 0, "chests_c": 0, "chests_b": 0, "chests_a": 0, "chests_s": 0, "chests_n": 0,
+					"boss_kills_easy": 0, "boss_kills_medium": 0, "boss_kills_hard": 0, "boss_kills_elite": 0,
+					"metin_kills_normal": 0, "metin_kills_special": 0, "defense_wins": 0, "defense_losses": 0, "elite_kills": 0,
 				}
 				wnd = uihunterlevel.GetHunterLevelWindow()
 				if wnd: wnd.SetPlayerData(data)
