@@ -4556,7 +4556,7 @@ function hg_lib.spawn_gate_mob_and_alert(rank_label, fcolor)
                 if party.is_party() then
                     local pids = {party.get_member_pids()}
                     for i, member_pid in ipairs(pids) do
-                        q.begin_other_pc_block(member_pid)
+                        quest.begin_other_pc_block(member_pid)
                         pc.setqf("hq_emerg_reward_pts", bonus_points)
                         pc.setqf("hq_emerg_reward_vnum", 0)
                         pc.setqf("hq_emerg_reward_count", 0)
@@ -4564,7 +4564,7 @@ function hg_lib.spawn_gate_mob_and_alert(rank_label, fcolor)
                         pc.setqf("hq_speedkill_vnum", spawned_vnum)
                         pc.setqf("hq_speedkill_start", get_time())
                         pc.setqf("hq_speedkill_duration", emergency_seconds)
-                        q.end_other_pc_block()
+                        quest.end_other_pc_block()
                     end
                 else
                     pc.setqf("hq_emerg_reward_pts", bonus_points)
@@ -4670,13 +4670,8 @@ function hg_lib.finalize_gate_opening(vid)
 
     hg_lib.spawn_gate_mob_and_alert(frank, fcolor)
 
-    -- FIX: Usa purge_vid() invece di npc.purge() per garantire rimozione anche se context invalido
-    -- Questo previene che la frattura riappaia dopo logout/login del player
-    if vid and vid > 0 then
-        purge_vid(vid)
-    else
-        npc.purge()  -- Fallback se VID non disponibile
-    end
+    -- NOTA: La frattura viene già rimossa nel when click (prima di chiamare questa funzione)
+    -- usando npc.purge() con context NPC valido. Non rimuoverla di nuovo qui.
 
     pc.setqf("hq_elite_spawn_time", get_time())
 end
