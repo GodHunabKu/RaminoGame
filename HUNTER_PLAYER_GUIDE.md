@@ -62,12 +62,12 @@ Il Sistema classifica tutti i Hunter in base alla **Gloria Totale**.
 | Rank | Soglia Gloria | Titolo | Bonus Gloria | Colore |
 |------|--------------|--------|--------------|--------|
 | **E** | 0 - 2.000 | Risvegliato | +0% | Grigio |
-| **D** | 2.000 - 10.000 | Apprendista | +2% | Verde |
-| **C** | 10.000 - 50.000 | Cacciatore | +4% | Ciano |
-| **B** | 50.000 - 150.000 | Veterano | +6% | Blu |
-| **A** | 150.000 - 500.000 | Maestro | +9% | Viola |
-| **S** | 500.000 - 1.500.000 | Leggenda | +13% | Arancione |
-| **N** | 1.500.000+ | **MONARCA NAZIONALE** | +18% | Rosso |
+| **D** | 2.000 - 10.000 | Apprendista | +1% | Verde |
+| **C** | 10.000 - 50.000 | Cacciatore | +3% | Ciano |
+| **B** | 50.000 - 150.000 | Veterano | +5% | Blu |
+| **A** | 150.000 - 500.000 | Maestro | +7% | Viola |
+| **S** | 500.000 - 1.500.000 | Leggenda | +10% | Arancione |
+| **N** | 1.500.000+ | **MONARCA NAZIONALE** | +12% | Rosso |
 
 ### Come Salire di Rank
 1. **Accumula Gloria** uccidendo mostri, sigillando fratture, completando missioni
@@ -77,8 +77,8 @@ Il Sistema classifica tutti i Hunter in base alla **Gloria Totale**.
 ### Bonus Rank
 Ogni rank ti dà un **bonus permanente** su tutta la gloria guadagnata:
 - Rank E: **+0%** (100 gloria = 100 gloria)
-- Rank S: **+13%** (100 gloria = 113 gloria)
-- Rank N: **+18%** (100 gloria = 118 gloria)
+- Rank S: **+10%** (100 gloria = 110 gloria)
+- Rank N: **+12%** (100 gloria = 112 gloria)
 
 **I bonus si sommano con Streak!**
 
@@ -115,7 +115,7 @@ Se **NON** completi TUTTE e 3 le missioni entro la mezzanotte:
 
 ## 4. EVENTI SCHEDULATI
 
-Il Sistema organizza **27 eventi** a settimana.
+Il Sistema organizza **29 eventi** giornalieri.
 Partecipazione **AUTOMATICA** se sei online durante l'evento.
 
 ### 🎯 Tipi di Eventi Principali
@@ -205,18 +205,18 @@ Quando clicchi una frattura:
 
 ## 6. SISTEMA TRIAL (PROVE)
 
-Per salire da **B-Rank in su** devi superare una **Trial** (Prova).
+Per salire di Rank devi superare una **Trial** (Prova). Ogni rank richiede requisiti specifici che devi completare per avanzare.
 
 ### 📜 Prove di Avanzamento
 
 | Da → A | Nome Trial | Min Gloria | Min Level | Requisiti |
 |--------|-----------|-----------|-----------|-----------|
-| E → D | Prova del Risvegliato | 2.000 | 35 | 3 Boss |
-| D → C | Prova del Cacciatore | 10.000 | 55 | 5 Boss, 5 Fratture |
-| C → B | Prova del Veterano | 50.000 | 75 | 10 Boss, 10 Fratture |
-| B → A | Risveglio Interiore | 150.000 | 95 | 15 Boss, 15 Fratture, 5 Bauli |
-| A → S | Ascensione Leggendaria | 500.000 | 115 | 25 Boss, 25 Fratture, 10 Bauli |
-| S → N | **Il Giudizio Finale** | 1.500.000 | 140 | 50 Boss, 50 Fratture, 20 Bauli |
+| E → D | Prova del Risvegliato | 2.000 | 35 | 3 Boss, 6 Fratture |
+| D → C | Prova del Cacciatore | 10.000 | 55 | 5 Boss, 10 Fratture, 5 Metin, 5 Bauli |
+| C → B | Prova del Veterano | 50.000 | 75 | 10 Boss, 20 Fratture, 10 Metin |
+| B → A | Risveglio Interiore | 150.000 | 95 | 15 Boss, 30 Fratture, 15 Metin, 7 Missioni Giornaliere |
+| A → S | Ascensione Leggendaria | 500.000 | 115 | 25 Boss, 50 Fratture, 25 Metin, 14 Missioni Giornaliere |
+| S → N | **Il Giudizio Finale** | 1.500.000 | 140 | 50 Boss, 100 Fratture, 50 Metin, 20 Bauli, 30 Missioni Giornaliere |
 
 ### ⏱️ Durata Trial
 - E→D, D→C, C→B: **Istantanea** (se hai i requisiti)
@@ -267,12 +267,12 @@ Gloria Finale = Gloria Base × (1 + Bonus Rank) × (1 + Bonus Streak) × Moltipl
 
 **Esempio:**
 - Uccidi boss = 50 gloria base
-- Sei Rank S (+13%)
+- Sei Rank S (+10%)
 - Hai streak 7 giorni (+7%)
 - Hai completato tutte le missioni (x1.5)
 
 ```
-50 × 1.13 × 1.07 × 1.5 = 90.6 gloria
+50 × 1.10 × 1.07 × 1.5 = 88.3 gloria
 ```
 
 ### 💰 Gloria Spendibile vs Totale
@@ -369,9 +369,9 @@ Lo **Streak** è il numero di giorni consecutivi in cui fai login e completi alm
 - Si **somma** con bonus Rank!
 
 **Esempio totale bonus:**
-- Rank S: +13%
+- Rank S: +10%
 - Streak 30 giorni: +12%
-- **TOTALE: +25% gloria su TUTTO!**
+- **TOTALE: +22% gloria su TUTTO!**
 
 ---
 
@@ -439,14 +439,34 @@ Apri finestra Hunter → Tab **Stats** per vedere:
 - **Gloria Totale**: Determina il tuo Rank
 - **Posizione Overall**: Sei #X nella classifica globale
 
-### Record
-- **Fratture**: Quante fratture hai sigillato
-- **Metin**: Quanti metin hai distrutto
-- **Bauli**: Quanti bauli hai aperto
+### Statistiche Dettagliate
 
-### Economia
-- **Spendibili**: Gloria che puoi spendere nello shop
-- **Pending Rewards**: Ricompense da ritirare (daily/weekly top 3)
+#### Bauli per Grado
+Il sistema traccia ogni baule aperto per grado:
+- **E, D, C, B, A, S, N** - Totale bauli aperti per ogni rank
+- Visualizza i tuoi bauli più rari conquistati
+
+#### Boss Eliminati per Difficoltà
+Il sistema classifica i boss in 4 categorie:
+- **Facili** - Boss base (< 500 punti base)
+- **Medi** - Boss intermedi (500-1500 punti)
+- **Difficili** - Boss avanzati (1500-5000 punti)
+- **Elite** - Boss leggendari (> 5000 punti)
+
+#### Metin Distrutti
+- **Normal** - Metin stones standard
+- **Special** - Metin stones speciali/avanzati
+
+#### Defense Record
+- **Vittorie** - Fratture sigillate con successo
+- **Sconfitte** - Fratture fallite
+- **Win Rate %** - Percentuale di successo nelle difese
+  - Verde (≥70%), Arancione (≥50%), Rosso (<50%)
+
+#### Elite Kills
+- **Totale Elite** - Mob elite uccisi (categoria speciale)
+
+Tutte queste statistiche sono permanenti e vengono tracciate automaticamente mentre giochi!
 
 ---
 
@@ -484,10 +504,11 @@ Se non completi missioni troppo spesso:
 ║          DIVENTA IL MONARCA NAZIONALE            ║
 ║                                                  ║
 ║     Raggiungi 1.500.000+ Gloria Totale           ║
-║     Completa Il Giudizio Finale (50 Boss,        ║
-║                50 Fratture, 20 Bauli)            ║
+║     Completa Il Giudizio Finale:                 ║
+║     50 Boss, 100 Fratture, 50 Metin,             ║
+║     20 Bauli, 30 Missioni Giornaliere            ║
 ║     Ottieni Rank [N] - Colore Rosso Sangue       ║
-║     Bonus Permanente +18% Su Tutta La Gloria     ║
+║     Bonus Permanente +12% Su Tutta La Gloria     ║
 ║                                                  ║
 ║    "Solo I Più Forti Arrivano In Cima"           ║
 ║                                                  ║

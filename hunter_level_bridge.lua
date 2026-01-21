@@ -1377,5 +1377,29 @@ when chat."/hunter_request_trial_data" begin
             hg_lib.smart_claim_all()
         end
 
+        -- TIMER UNLOCK - Shop lock release
+        when hq_shop_unlock.timer begin
+            pc.setqf("hq_shop_lock", 0)
+        end
+
+        -- TIMER UNLOCK - Achievement lock release
+        when hq_ach_unlock.timer begin
+            pc.setqf("hq_ach_lock", 0)
+        end
+
+        -- TIMER UNLOCK - Smart claim lock release
+        when hq_smart_claim_unlock.timer begin
+            pc.setqf("hq_smart_claim_lock", 0)
+        end
+
+        -- TIMER UNLOCK - Event lock release
+        when hq_release_event_lock.timer begin
+            local lock_flag = pc.getqf("hq_pending_lock_flag")
+            if lock_flag and lock_flag ~= "" and lock_flag ~= 0 then
+                game.set_event_flag(lock_flag, 0)
+                pc.setqf("hq_pending_lock_flag", 0)
+            end
+        end
+
     end
 end
