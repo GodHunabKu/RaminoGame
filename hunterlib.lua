@@ -4700,10 +4700,12 @@ end
 -- ============================================================
 -- MEMORY LEAK CLEANUP - Pulizia periodica tabelle globali
 -- Previene memory leak rimuovendo entry vecchie/inutilizzate
+-- Chiamato ogni ora dal timer hq_cleanup_timer
 -- ============================================================
 function hg_lib.cleanup_global_tables()
     local now = get_time()
     local cleanup_threshold = 3600  -- 1 ora
+    local max_entries = 1000  -- Safety: Limite massimo entry per tabella
 
     -- 1. Pulisci hunter_temp_gate_data (dati gate temporanei)
     if _G.hunter_temp_gate_data then
@@ -4761,8 +4763,95 @@ function hg_lib.cleanup_global_tables()
         end
     end
 
+    -- 5. Pulisci hunter_kill_tracking (dati tracking per PID offline)
+    if _G.hunter_kill_tracking then
+        for pid, data in pairs(_G.hunter_kill_tracking) do
+            -- Rimuovi se più vecchio di 2 ore o se il player non è online
+            if data.last_kill and (now - data.last_kill > 7200) then
+                _G.hunter_kill_tracking[pid] = nil
+            end
+        end
+    end
+
+    -- 6. Pulisci hunter_session_glory (sessioni vecchie)
+    if _G.hunter_session_glory then
+        for pid, session in pairs(_G.hunter_session_glory) do
+            -- Rimuovi sessioni più vecchie di 2 ore
+            if session.start_time and (now - session.start_time > 7200) then
+                _G.hunter_session_glory[pid] = nil
+            end
+        end
+    end
+
+    -- 7. Pulisci hunter_spawn_tracking (tracking spawn per PID offline)
+    if _G.hunter_spawn_tracking then
+        for pid, data in pairs(_G.hunter_spawn_tracking) do
+            -- Rimuovi se più vecchio di 2 ore
+            if data.last_spawn and (now - data.last_spawn > 7200) then
+                _G.hunter_spawn_tracking[pid] = nil
+            end
+        end
+    end
+
+    -- 8. Pulisci hunter_chest_tracking (tracking bauli per PID offline)
+    if _G.hunter_chest_tracking then
+        for pid, data in pairs(_G.hunter_chest_tracking) do
+            -- Rimuovi se più vecchio di 2 ore
+            if data.last_open and (now - data.last_open > 7200) then
+                _G.hunter_chest_tracking[pid] = nil
+            end
+        end
+    end
+
+    -- SAFETY CHECK: Verifica dimensione tabelle (previene esplosione memoria)
+    -- Se una tabella supera max_entries, rimuovi le entry più vecchie
+    local global_tables = {
+        "hunter_temp_gate_data",
+        "hunter_mission_buffer",
+        "hunter_kill_tracking",
+        "hunter_session_glory",
+        "hunter_spawn_tracking",
+        "hunter_chest_tracking"
+    }
+
+    for _, table_name in ipairs(global_tables) do
+        if _G[table_name] then
+            local count = 0
+            for _ in pairs(_G[table_name]) do count = count + 1 end
+
+            if count > max_entries then
+                -- EMERGENCY: Troppi entry, pulisci i più vecchi
+                local entries = {}
+                for pid, data in pairs(_G[table_name]) do
+                    local timestamp = 0
+                    if type(data) == "table" then
+                        timestamp = data.timestamp or data.last_kill or data.start_time or data.last_spawn or data.last_open or 0
+                    end
+                    table.insert(entries, {pid = pid, timestamp = timestamp})
+                end
+
+                -- Ordina per timestamp (più vecchi prima)
+                table.sort(entries, function(a, b) return a.timestamp < b.timestamp end)
+
+                -- Rimuovi il 30% più vecchio
+                local to_remove = math.floor(count * 0.3)
+                for i = 1, to_remove do
+                    _G[table_name][entries[i].pid] = nil
+                end
+            end
+        end
+    end
+
+    -- 9. Pulisci event flags vecchi (previene accumulo flags orfani)
+    -- IMPORTANTE: Pulisce flags che potrebbero rimanere attivi dopo crash/logout
+    -- Esempio: hq_gate_lock_<vid>, hq_defense_killed_<vid>, hq_party_defense_vid_<pid>
+    -- NOTA: Non possiamo iterare gli event flags direttamente, quindi questa è una nota
+    -- per future ottimizzazioni. Gli event flags vengono comunque puliti on-the-fly
+    -- durante le operazioni normali (finalize_gate_opening, fail_defense, etc.)
+
     -- NOTE: hunter_elite_cache, hunter_defense_waves_cache sono cache statiche,
     -- non crescono nel tempo quindi non serve cleanup
+    -- hunter_defense_data viene pulita on-the-fly durante finalize_gate_opening
 end
 
 -- ============================================================
