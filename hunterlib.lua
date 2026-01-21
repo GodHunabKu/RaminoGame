@@ -3822,10 +3822,8 @@ function hg_lib.spawn_fracture()
 end
 
 function hg_lib.open_gate(fname, frank, fcolor, pid)
-    if pc.getqf("hq_defense_active") == 1 then
-        syschat("|cffFF0000[" .. hg_lib.get_text("CONFLICT", nil, "CONFLITTO") .. "]|r " .. hg_lib.get_text("CONFLICT_DEFENSE", nil, "Stai gia' difendendo un'altra frattura!"))
-        return
-    end
+    -- NOTA: Il check hq_defense_active e' stato spostato nei punti di chiamata
+    -- per evitare errori quando la frattura e' gia' stata conquistata
 
     -- Prova npc.get_vid(), se fallisce usa il VID salvato dal click
     local fracture_vid = npc.get_vid()
@@ -4667,10 +4665,17 @@ function hg_lib.finalize_gate_opening(vid)
     -- Ora il punto viene dato solo quando la frattura si apre effettivamente
     hg_lib.on_fracture_seal()
     -- ===================================
-        
+
     hg_lib.spawn_gate_mob_and_alert(frank, fcolor)
-    npc.purge() -- L'NPC sparisce, quindi non puo' essere riusata
-        
+
+    -- FIX: Usa purge_vid() invece di npc.purge() per garantire rimozione anche se context invalido
+    -- Questo previene che la frattura riappaia dopo logout/login del player
+    if vid and vid > 0 then
+        purge_vid(vid)
+    else
+        npc.purge()  -- Fallback se VID non disponibile
+    end
+
     pc.setqf("hq_elite_spawn_time", get_time())
 end
 

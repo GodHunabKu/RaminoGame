@@ -804,6 +804,13 @@ when chat."/hunter_request_trial_data" begin
                     say(hg_lib.get_text("classic_gate_ask") or "Vuoi spezzare il sigillo ed entrare?")
                     say("")
                     if select("Apri Gate", "Chiudi") == 1 then
+                        -- FIX: Check se il player sta già difendendo un'altra frattura
+                        if pc.getqf("hq_defense_active") == 1 then
+                            say_title("CONFLITTO!")
+                            say("Stai gia' difendendo un'altra frattura!")
+                            say("Completa prima quella.")
+                            return
+                        end
                         if game.get_event_flag("hq_gate_lock_"..vid) > 0 or game.get_event_flag("hq_gate_conq_"..vid) > 0 then
                             say_title("Troppo Tardi!")
                             say("Un altro Hunter e' stato piu' veloce.")
@@ -834,6 +841,13 @@ when chat."/hunter_request_trial_data" begin
                         if can_force then
                             say_reward("Power Rank SUFFICIENTE!")
                             if select("Forza Gate", "Chiudi") == 1 then
+                                -- FIX: Check se il player sta già difendendo un'altra frattura
+                                if pc.getqf("hq_defense_active") == 1 then
+                                    say_title("CONFLITTO!")
+                                    say("Stai gia' difendendo un'altra frattura!")
+                                    say("Completa prima quella.")
+                                    return
+                                end
                                 if game.get_event_flag("hq_gate_lock_"..vid) > 0 or game.get_event_flag("hq_gate_conq_"..vid) > 0 then
                                     say_title("Troppo Tardi!")
                                     say("Un altro Hunter e' stato piu' veloce.")
@@ -851,6 +865,13 @@ when chat."/hunter_request_trial_data" begin
                         if can_force then
                             say_reward("Il tuo Party (4+) puo' forzarlo!")
                             if select("Forza Gate", "Chiudi") == 1 then
+                                -- FIX: Check se il player sta già difendendo un'altra frattura
+                                if pc.getqf("hq_defense_active") == 1 then
+                                    say_title("CONFLITTO!")
+                                    say("Stai gia' difendendo un'altra frattura!")
+                                    say("Completa prima quella.")
+                                    return
+                                end
                                 if game.get_event_flag("hq_gate_lock_"..vid) > 0 or game.get_event_flag("hq_gate_conq_"..vid) > 0 then
                                     say_title("Troppo Tardi!")
                                     say("Un altro Hunter e' stato piu' veloce.")
@@ -958,12 +979,18 @@ when chat."/hunter_request_trial_data" begin
                 local fcolor = temp_data.fcolor or "PURPLE"
                 
                 if choice == 1 then
+                    -- FIX: Check se il player sta già difendendo un'altra frattura
+                    if pc.getqf("hq_defense_active") == 1 then
+                        hg_lib.hunter_speak_color("CONFLITTO! Stai gia' difendendo un'altra frattura!", "RED")
+                        return
+                    end
+
                     -- FIX RACE CONDITION (WHAT-IF)
                     if game.get_event_flag("hq_gate_lock_"..vid) > 0 or game.get_event_flag("hq_gate_conq_"..vid) > 0 then
                         hg_lib.hunter_speak_color("TROPPO TARDI! Un altro Hunter ti ha preceduto.", "RED")
                         return
                     end
-                    
+
                     -- Controlla requisiti per forzare (Power Rank o Party classico)
                     local can_force, force_type, total_power, required_power = hg_lib.can_force_fracture(vnum)
 
