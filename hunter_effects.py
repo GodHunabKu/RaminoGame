@@ -95,40 +95,85 @@ class BossAlertWindow(ui.Window):
         self.neonBottomGlow.AddFlag("not_pick")
         self.neonBottomGlow.Show()
         
-        # Testi
+        # Linee verticali accent (bordi laterali della barra)
+        self.accentLeft = ui.Bar()
+        self.accentLeft.SetParent(self)
+        self.accentLeft.SetPosition(0, self.barY)
+        self.accentLeft.SetSize(6, self.barHeight)
+        self.accentLeft.SetColor(0x44FF0000)
+        self.accentLeft.AddFlag("not_pick")
+        self.accentLeft.Show()
+
+        self.accentRight = ui.Bar()
+        self.accentRight.SetParent(self)
+        self.accentRight.SetPosition(self.screenWidth - 6, self.barY)
+        self.accentRight.SetSize(6, self.barHeight)
+        self.accentRight.SetColor(0x44FF0000)
+        self.accentRight.AddFlag("not_pick")
+        self.accentRight.Show()
+
+        # Linea separatrice centrale (divide header da boss name)
+        self.sepLine = ui.Bar()
+        self.sepLine.SetParent(self)
+        self.sepLine.SetPosition(self.screenWidth // 2 - 120, self.barY + 65)
+        self.sepLine.SetSize(240, 1)
+        self.sepLine.SetColor(0x44FF4444)
+        self.sepLine.AddFlag("not_pick")
+        self.sepLine.Show()
+
+        # Slow scanline (singola riga che scorre lentamente nella barra - NON epilettico)
+        self.scanLine = ui.Bar()
+        self.scanLine.SetParent(self)
+        self.scanLine.SetPosition(0, self.barY)
+        self.scanLine.SetSize(self.screenWidth, 2)
+        self.scanLine.SetColor(0x10FF6666)
+        self.scanLine.AddFlag("not_pick")
+        self.scanLine.Show()
+
+        # Testi riposizionati
         self.alertText = ui.TextLine()
         self.alertText.SetParent(self)
-        self.alertText.SetPosition(self.screenWidth // 2, self.barY + 25)
+        self.alertText.SetPosition(self.screenWidth // 2, self.barY + 10)
         self.alertText.SetHorizontalAlignCenter()
-        self.alertText.SetText("! ! !  A L E R T  ! ! !")
+        self.alertText.SetText("[ S Y S T E M   A L E R T ]")
         self.alertText.SetPackedFontColor(0xFFFFFFFF)
         self.alertText.SetOutline()
         self.alertText.Show()
-        
+
         self.subText = ui.TextLine()
         self.subText.SetParent(self)
-        self.subText.SetPosition(self.screenWidth // 2, self.barY + 55)
+        self.subText.SetPosition(self.screenWidth // 2, self.barY + 35)
         self.subText.SetHorizontalAlignCenter()
-        self.subText.SetText("B O S S   D E T E C T E D")
-        self.subText.SetPackedFontColor(0xFFFF4444)
+        self.subText.SetText("E N T I T A'   P E R I C O L O S A   R I L E V A T A")
+        self.subText.SetPackedFontColor(0xFFFF5555)
         self.subText.SetOutline()
         self.subText.Show()
-        
+
         self.bossName = ui.TextLine()
         self.bossName.SetParent(self)
-        self.bossName.SetPosition(self.screenWidth // 2, self.barY + 80)
+        self.bossName.SetPosition(self.screenWidth // 2, self.barY + 70)
         self.bossName.SetHorizontalAlignCenter()
         self.bossName.SetText("")
         self.bossName.SetPackedFontColor(0xFFFFD700)
         self.bossName.SetOutline()
         self.bossName.Show()
-        
+
+        # Testo minore (risposta richiesta)
+        self.responseText = ui.TextLine()
+        self.responseText.SetParent(self)
+        self.responseText.SetPosition(self.screenWidth // 2, self.barY + 95)
+        self.responseText.SetHorizontalAlignCenter()
+        self.responseText.SetText("RISPOSTA IMMEDIATA RICHIESTA")
+        self.responseText.SetPackedFontColor(0x77FF8888)
+        self.responseText.AddFlag("not_pick")
+        self.responseText.Show()
+
         # Angoli decorativi
         self.__BuildCorners()
-        
+
         self.endTime = 0
         self.isFlashing = False
-        
+
         self.Hide()
     
     def __BuildCorners(self):
@@ -199,6 +244,11 @@ class BossAlertWindow(ui.Window):
         self.cornerBLv = None
         self.cornerBR = None
         self.cornerBRv = None
+        self.accentLeft = None
+        self.accentRight = None
+        self.sepLine = None
+        self.scanLine = None
+        self.responseText = None
         self.ClearDictionary()
     
     def __del__(self):
@@ -229,41 +279,44 @@ class BossAlertWindow(ui.Window):
             self.isFlashing = False
             return
 
-        # Animazione PULSE LENTO (NO FLASH RAPIDO - epilepsy safe)
-        # Usa un seno lento (0.8 Hz invece di 3.5 Hz)
-        pulse = (math.sin(currentTime * 1.6) + 1.0) / 2.0  # Valore 0.0 - 1.0, ciclo ~0.8 Hz
+        # Pulse LENTO (0.5 Hz - epilepsy safe, variazione minima)
+        pulse = (math.sin(currentTime * 1.0) + 1.0) / 2.0  # ~0.5 Hz
 
-        # Calcola intensita basata sul pulse (variazione minima per evitare epilessia)
-        mainAlpha = int(0x77 + pulse * 0x33)  # 0x77 - 0xAA (meno contrasto)
-        glowOuterAlpha = int(0x15 + pulse * 0x15)
-        glowMiddleAlpha = int(0x25 + pulse * 0x25)
-
-        # Colori con pulse LENTO
+        # Layer principali
+        mainAlpha = int(0x77 + pulse * 0x2A)
+        glowOuterAlpha = int(0x12 + pulse * 0x12)
+        glowMiddleAlpha = int(0x22 + pulse * 0x20)
         self.mainBar.SetColor((mainAlpha << 24) | 0x00FF0000)
         self.glowOuter.SetColor((glowOuterAlpha << 24) | 0x00FF0000)
         self.glowMiddle.SetColor((glowMiddleAlpha << 24) | 0x00FF0000)
 
-        # Neon sempre acceso, solo leggera variazione alpha
-        neonAlpha = int(0xCC + pulse * 0x33)  # 0xCC - 0xFF
+        # Neon - variazione leggera
+        neonAlpha = int(0xCC + pulse * 0x22)
         self.neonTop.SetColor((neonAlpha << 24) | 0x00FF0000)
         self.neonBottom.SetColor((neonAlpha << 24) | 0x00FF0000)
 
-        # Testo sempre leggibile (NO flash)
+        # Testo stabile
         self.alertText.SetPackedFontColor(0xFFFFFFFF)
-        self.subText.SetPackedFontColor(0xFFFF4444)
+        self.subText.SetPackedFontColor(0xFFFF5555)
 
-        # Pulsazione angoli (lenta)
-        goldPulse = int(pulse * 80) + 175  # 175-255
+        # Angoli dorati (pulsazione lenta)
+        goldPulse = int(pulse * 70) + 180
         goldColor = 0x00FFD700 | (goldPulse << 24)
-        
-        self.cornerTL.SetColor(goldColor)
-        self.cornerTLv.SetColor(goldColor)
-        self.cornerTR.SetColor(goldColor)
-        self.cornerTRv.SetColor(goldColor)
-        self.cornerBL.SetColor(goldColor)
-        self.cornerBLv.SetColor(goldColor)
-        self.cornerBR.SetColor(goldColor)
-        self.cornerBRv.SetColor(goldColor)
+        self.cornerTL.SetColor(goldColor); self.cornerTLv.SetColor(goldColor)
+        self.cornerTR.SetColor(goldColor); self.cornerTRv.SetColor(goldColor)
+        self.cornerBL.SetColor(goldColor); self.cornerBLv.SetColor(goldColor)
+        self.cornerBR.SetColor(goldColor); self.cornerBRv.SetColor(goldColor)
+
+        # Accenti laterali (pulsano con il ritmo principale)
+        if self.accentLeft is not None:
+            accentAlpha = int(0x30 + pulse * 0x30)
+            self.accentLeft.SetColor((accentAlpha << 24) | 0x00FF0000)
+            self.accentRight.SetColor((accentAlpha << 24) | 0x00FF0000)
+
+        # Scanline lenta (attraversa la barra in ~6s - assolutamente non epilettica)
+        if self.scanLine is not None:
+            scanY = self.barY + int((currentTime * 20) % self.barHeight)
+            self.scanLine.SetPosition(0, scanY)
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -546,6 +599,32 @@ class AwakeningEffect(ui.Window):
         self.bottomBar.Show()
 
         # Testi
+        # Linee decorative attorno al testo centrale (appaiono in fase 4)
+        self.centerLineTop = ui.Bar()
+        self.centerLineTop.SetParent(self)
+        self.centerLineTop.SetPosition(self.screenWidth // 2 - 180, self.screenHeight // 2 - 115)
+        self.centerLineTop.SetSize(360, 1)
+        self.centerLineTop.SetColor(0x00FFFFFF)
+        self.centerLineTop.AddFlag("not_pick")
+        self.centerLineTop.Show()
+
+        self.centerLineBottom = ui.Bar()
+        self.centerLineBottom.SetParent(self)
+        self.centerLineBottom.SetPosition(self.screenWidth // 2 - 180, self.screenHeight // 2 + 50)
+        self.centerLineBottom.SetSize(360, 1)
+        self.centerLineBottom.SetColor(0x00FFFFFF)
+        self.centerLineBottom.AddFlag("not_pick")
+        self.centerLineBottom.Show()
+
+        # Badge box dietro il nome (appare in fase 4)
+        self.nameBg = ui.Bar()
+        self.nameBg.SetParent(self)
+        self.nameBg.SetPosition(self.screenWidth // 2 - 140, self.screenHeight // 2 - 62)
+        self.nameBg.SetSize(280, 26)
+        self.nameBg.SetColor(0x00000000)
+        self.nameBg.AddFlag("not_pick")
+        self.nameBg.Show()
+
         self.levelText = ui.TextLine()
         self.levelText.SetParent(self)
         self.levelText.SetPosition(self.screenWidth // 2, self.screenHeight // 2 - 100)
@@ -658,6 +737,9 @@ class AwakeningEffect(ui.Window):
         if self.bottomBar:
             self.bottomBar.Hide()
         self.bottomBar = None
+        self.centerLineTop = None
+        self.centerLineBottom = None
+        self.nameBg = None
         if self.levelText:
             self.levelText.Hide()
         self.levelText = None
@@ -796,10 +878,19 @@ class AwakeningEffect(ui.Window):
             textFadeIn = min(1.0, (elapsed - 1.0) / 0.6)
             textAlpha = int(textFadeIn * 255)
 
+            # Linee e badge si materializzano con i testi
+            lineAlpha = int(textFadeIn * 50)
+            if hasattr(self, 'centerLineTop') and self.centerLineTop:
+                self.centerLineTop.SetColor((lineAlpha << 24) | (color & 0xFFFFFF))
+                self.centerLineBottom.SetColor((lineAlpha << 24) | (color & 0xFFFFFF))
+            bgAlpha = int(textFadeIn * 0x22)
+            if hasattr(self, 'nameBg') and self.nameBg:
+                self.nameBg.SetColor((bgAlpha << 24) | (color & 0xFFFFFF))
+
             glitchOffset = 0
             if effect in ["system_boot", "terminal_unlock", "monarch"]:
                 self.glitchTimer += 1
-                if self.glitchTimer % 8 < 2:
+                if self.glitchTimer % 10 < 2:
                     glitchOffset = (self.glitchTimer % 5) - 2
 
             self.levelText.SetPosition(self.screenWidth // 2 + glitchOffset, self.screenHeight // 2 - 100)
@@ -933,6 +1024,40 @@ class RankUpEffect(ui.Window):
         self.titleText.SetOutline()
         self.titleText.Show()
 
+        # Sfondi badge rank (box colorato dietro al testo rank)
+        self.oldRankBg = ui.Bar()
+        self.oldRankBg.SetParent(self)
+        self.oldRankBg.SetPosition(self.screenWidth // 2 - 165, self.screenHeight // 2 - 48)
+        self.oldRankBg.SetSize(90, 38)
+        self.oldRankBg.SetColor(0x00000000)
+        self.oldRankBg.AddFlag("not_pick")
+        self.oldRankBg.Show()
+
+        self.newRankBg = ui.Bar()
+        self.newRankBg.SetParent(self)
+        self.newRankBg.SetPosition(self.screenWidth // 2 + 75, self.screenHeight // 2 - 48)
+        self.newRankBg.SetSize(90, 38)
+        self.newRankBg.SetColor(0x00000000)
+        self.newRankBg.AddFlag("not_pick")
+        self.newRankBg.Show()
+
+        # Linee decorative orizzontali attorno alla zona rank
+        self.rankLineTop = ui.Bar()
+        self.rankLineTop.SetParent(self)
+        self.rankLineTop.SetPosition(self.screenWidth // 2 - 200, self.screenHeight // 2 - 55)
+        self.rankLineTop.SetSize(400, 1)
+        self.rankLineTop.SetColor(0x00FFFFFF)
+        self.rankLineTop.AddFlag("not_pick")
+        self.rankLineTop.Show()
+
+        self.rankLineBottom = ui.Bar()
+        self.rankLineBottom.SetParent(self)
+        self.rankLineBottom.SetPosition(self.screenWidth // 2 - 200, self.screenHeight // 2 + 15)
+        self.rankLineBottom.SetSize(400, 1)
+        self.rankLineBottom.SetColor(0x00FFFFFF)
+        self.rankLineBottom.AddFlag("not_pick")
+        self.rankLineBottom.Show()
+
         self.oldRankText = ui.TextLine()
         self.oldRankText.SetParent(self)
         self.oldRankText.SetPosition(self.screenWidth // 2 - 120, self.screenHeight // 2 - 30)
@@ -1017,6 +1142,10 @@ class RankUpEffect(ui.Window):
         if self.titleText:
             self.titleText.Hide()
         self.titleText = None
+        self.oldRankBg = None
+        self.newRankBg = None
+        self.rankLineTop = None
+        self.rankLineBottom = None
         if self.oldRankText:
             self.oldRankText.Hide()
         self.oldRankText = None
@@ -1055,14 +1184,22 @@ class RankUpEffect(ui.Window):
         else:
             self.duration = 7.0
 
-        self.systemText.SetText("[SYSTEM NOTIFICATION]")
-        self.titleText.SetText("R A N K   U P !")
+        self.systemText.SetText("[ SYSTEM NOTIFICATION ]")
+        self.titleText.SetText("P R O M O Z I O N E   D I   G R A D O")
         self.oldRankText.SetText(oldRank + "-RANK")
-        self.arrowText.SetText(">>> ")
+        self.arrowText.SetText("==>")
         self.newRankText.SetText(newRank + "-RANK")
         self.rankNameText.SetText(RANK_NAMES.get(newRank, "HUNTER"))
         self.titleEarnedText.SetText("Titolo: " + RANK_TITLES.get(newRank, ""))
         self.quoteText.SetText(RANK_QUOTES.get(newRank, ""))
+
+        # Imposta colori badge
+        oldColor = RANK_COLORS.get(oldRank, 0xFF808080)
+        newColor = RANK_COLORS.get(newRank, 0xFFFFFFFF)
+        if hasattr(self, 'oldRankBg') and self.oldRankBg:
+            self.oldRankBg.SetColor((oldColor & 0x00FFFFFF) | 0x22000000)
+        if hasattr(self, 'newRankBg') and self.newRankBg:
+            self.newRankBg.SetColor((newColor & 0x00FFFFFF) | 0x33000000)
 
         self.Show()
         self.SetTop()
@@ -1136,16 +1273,28 @@ class RankUpEffect(ui.Window):
             rankAlpha = int(min(1.0, (elapsed - 2.0) / 0.5) * 255)
             self.oldRankText.SetPackedFontColor((rankAlpha << 24) | (oldColor & 0xFFFFFF))
             self.arrowText.SetPackedFontColor((rankAlpha << 24) | 0xFFD700)
-            
-            arrowPulse = abs(math.sin(elapsed * 4))
+
+            # Linee e badge animati
+            lineAlpha = int(min(1.0, (elapsed - 2.0) / 0.5) * 55)
+            if hasattr(self, 'rankLineTop') and self.rankLineTop:
+                self.rankLineTop.SetColor((lineAlpha << 24) | (newColor & 0xFFFFFF))
+                self.rankLineBottom.SetColor((lineAlpha << 24) | (newColor & 0xFFFFFF))
+            bgAlpha = int(min(1.0, (elapsed - 2.0) / 0.5) * 0x28)
+            if hasattr(self, 'oldRankBg') and self.oldRankBg:
+                self.oldRankBg.SetColor((bgAlpha << 24) | (oldColor & 0xFFFFFF))
+
+            arrowPulse = abs(math.sin(elapsed * 2.5))  # Più lento
             self.arrowText.SetPosition(
-                self.screenWidth // 2 + int(arrowPulse * 10),
+                self.screenWidth // 2 + int(arrowPulse * 8),
                 self.screenHeight // 2 - 30
             )
 
         if elapsed >= 2.5:
             newRankAlpha = int(min(1.0, (elapsed - 2.5) / 0.5) * 255)
             self.newRankText.SetPackedFontColor((newRankAlpha << 24) | (newColor & 0xFFFFFF))
+            bgAlpha2 = int(min(1.0, (elapsed - 2.5) / 0.5) * 0x44)
+            if hasattr(self, 'newRankBg') and self.newRankBg:
+                self.newRankBg.SetColor((bgAlpha2 << 24) | (newColor & 0xFFFFFF))
 
         if elapsed >= 3.0:
             nameAlpha = int(min(1.0, (elapsed - 3.0) / 0.5) * 255)
