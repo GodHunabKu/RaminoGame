@@ -182,66 +182,101 @@ class SystemMessageWindow(ui.Window):
         self.AddFlag("not_pick")
         self.AddFlag("float")
 
-        self.currentColor = 0xFF0099FF
+        self.currentColor = 0xFF00AAFF
         self.messageQueue = []
         self.currentMessage = None
         self.messageDelay = 4.0
 
-        # Sfondo con gradiente simulato (2 layer)
+        # Sfondo principale profondo – quasi nero con sfumatura blu
         self.bg = ui.Bar()
         self.bg.SetParent(self)
         self.bg.SetPosition(0, 0)
         self.bg.SetSize(500, 60)
-        self.bg.SetColor(0xEE080812)
+        self.bg.SetColor(0xF2040412)
         self.bg.Show()
 
-        # Inner glow (layer sopra bg, più chiaro)
-        self.innerGlow = ui.Bar()
-        self.innerGlow.SetParent(self)
-        self.innerGlow.SetPosition(2, 2)
-        self.innerGlow.SetSize(496, 56)
-        self.innerGlow.SetColor(0x15FFFFFF)
-        self.innerGlow.AddFlag("not_pick")
-        self.innerGlow.Show()
+        # Inner bg (layer profondità interna)
+        self.innerBg = ui.Bar()
+        self.innerBg.SetParent(self)
+        self.innerBg.SetPosition(6, 2)
+        self.innerBg.SetSize(488, 56)
+        self.innerBg.SetColor(0x0C040410)
+        self.innerBg.AddFlag("not_pick")
+        self.innerBg.Show()
+
+        # Top highlight
+        self.topHL = ui.Bar()
+        self.topHL.SetParent(self)
+        self.topHL.SetPosition(8, 3)
+        self.topHL.SetSize(484, 1)
+        self.topHL.SetColor(0x18FFFFFF)
+        self.topHL.AddFlag("not_pick")
+        self.topHL.Show()
 
         # Bordi
         self.borders = []
-        color = COLOR_SCHEMES["BLUE"]["border"]
+        color = 0xFF00AAFF
+        # Top (2px spesso)
         b1 = ui.Bar(); b1.SetParent(self); b1.SetPosition(0, 0); b1.SetSize(500, 2); b1.SetColor(color); b1.Show()
         self.borders.append(b1)
-        b2 = ui.Bar(); b2.SetParent(self); b2.SetPosition(0, 58); b2.SetSize(500, 2); b2.SetColor(color); b2.Show()
+        # Bottom (1px sottile)
+        b2 = ui.Bar(); b2.SetParent(self); b2.SetPosition(0, 59); b2.SetSize(500, 1); b2.SetColor((color & 0x00FFFFFF) | 0x55000000); b2.Show()
         self.borders.append(b2)
+        # Left (2px)
         b3 = ui.Bar(); b3.SetParent(self); b3.SetPosition(0, 0); b3.SetSize(2, 60); b3.SetColor(color); b3.Show()
         self.borders.append(b3)
-        b4 = ui.Bar(); b4.SetParent(self); b4.SetPosition(498, 0); b4.SetSize(2, 60); b4.SetColor(color); b4.Show()
+        # Right (1px sottile)
+        b4 = ui.Bar(); b4.SetParent(self); b4.SetPosition(499, 0); b4.SetSize(1, 60); b4.SetColor((color & 0x00FFFFFF) | 0x44000000); b4.Show()
         self.borders.append(b4)
 
-        # Left accent bar (spessa barra colorata sx - stile Sistema)
+        # Left accent bar (spessa barra neon sx – iconica)
         self.leftAccent = ui.Bar()
         self.leftAccent.SetParent(self)
         self.leftAccent.SetPosition(2, 2)
-        self.leftAccent.SetSize(5, 56)
+        self.leftAccent.SetSize(6, 56)
         self.leftAccent.SetColor(color)
         self.leftAccent.AddFlag("not_pick")
         self.leftAccent.Show()
 
-        # Corner ticks
-        tickLen = 8
+        # Corner ticks DOPPI – outer brillanti, inner attenuati
+        tickOuter = 12
+        tickInner = 6
         self.cornerTicks = []
+        self.cornerTicksInner = []
+        # Outer brackets
         for (cx, cy, cw, ch) in [
-            (2, 0, tickLen, 1), (0, 2, 1, tickLen),
-            (500 - tickLen - 2, 0, tickLen, 1), (499, 2, 1, tickLen),
-            (2, 59, tickLen, 1), (0, 60 - tickLen - 2, 1, tickLen),
-            (500 - tickLen - 2, 59, tickLen, 1), (499, 60 - tickLen - 2, 1, tickLen),
+            (6, 0, tickOuter, 1), (0, 2, 1, tickOuter),                     # TL
+            (500 - tickOuter - 6, 0, tickOuter, 1), (499, 2, 1, tickOuter), # TR
+            (6, 59, tickOuter, 1), (0, 60 - tickOuter - 2, 1, tickOuter),   # BL
+            (500 - tickOuter - 6, 59, tickOuter, 1), (499, 60 - tickOuter - 2, 1, tickOuter), # BR
         ]:
             ct = ui.Bar(); ct.SetParent(self); ct.SetPosition(cx, cy); ct.SetSize(cw, ch); ct.SetColor(color); ct.AddFlag("not_pick"); ct.Show()
             self.cornerTicks.append(ct)
+        # Inner brackets (attenuati)
+        innerColor = (color & 0x00FFFFFF) | 0x55000000
+        for (cx, cy, cw, ch) in [
+            (9, 3, tickInner, 1), (3, 5, 1, tickInner),
+            (500 - tickInner - 9, 3, tickInner, 1), (496, 5, 1, tickInner),
+            (9, 56, tickInner, 1), (3, 60 - tickInner - 5, 1, tickInner),
+            (500 - tickInner - 9, 56, tickInner, 1), (496, 60 - tickInner - 5, 1, tickInner),
+        ]:
+            ct = ui.Bar(); ct.SetParent(self); ct.SetPosition(cx, cy); ct.SetSize(cw, ch); ct.SetColor(innerColor); ct.AddFlag("not_pick"); ct.Show()
+            self.cornerTicksInner.append(ct)
+
+        # Label sistema in alto a sinistra
+        self.sysLabel = ui.TextLine()
+        self.sysLabel.SetParent(self)
+        self.sysLabel.SetPosition(16, 3)
+        self.sysLabel.SetText("[ SYSTEM ]")
+        self.sysLabel.SetPackedFontColor((color & 0x00FFFFFF) | 0x88000000)
+        self.sysLabel.AddFlag("not_pick")
+        self.sysLabel.Show()
 
         self.text = ui.TextLine()
         self.text.SetParent(self)
-        self.text.SetPosition(255, 20)
+        self.text.SetPosition(255, 21)
         self.text.SetHorizontalAlignCenter()
-        self.text.SetPackedFontColor(COLOR_SCHEMES["BLUE"]["title"])
+        self.text.SetPackedFontColor(0xFF00AAFF)
         self.text.SetOutline()
         self.text.Show()
 
@@ -249,14 +284,25 @@ class SystemMessageWindow(ui.Window):
 
     def __UpdateColors(self, color):
         self.currentColor = color
-        for b in self.borders:
-            b.SetColor(color)
+        colorDim = (color & 0x00FFFFFF) | 0x55000000
+        colorFaint = (color & 0x00FFFFFF) | 0x44000000
+        # Bordi: top/left brillanti, bottom/right attenuati
+        if hasattr(self, 'borders') and len(self.borders) == 4:
+            self.borders[0].SetColor(color)
+            self.borders[1].SetColor(colorDim)
+            self.borders[2].SetColor(color)
+            self.borders[3].SetColor(colorFaint)
         self.text.SetPackedFontColor(color)
         if hasattr(self, 'leftAccent'):
             self.leftAccent.SetColor(color)
         if hasattr(self, 'cornerTicks'):
             for ct in self.cornerTicks:
                 ct.SetColor(color)
+        if hasattr(self, 'cornerTicksInner'):
+            for ct in self.cornerTicksInner:
+                ct.SetColor(colorDim)
+        if hasattr(self, 'sysLabel'):
+            self.sysLabel.SetPackedFontColor(colorDim)
 
     def ShowMessage(self, msg, color=None):
         """Aggiungi messaggio alla coda"""
@@ -318,13 +364,13 @@ class SystemMessageWindow(ui.Window):
 #  EMERGENCY QUEST WINDOW - Solo Leveling Style - Missioni a tempo
 # ═══════════════════════════════════════════════════════════════════════════════
 
-# Colori per difficolta' Emergency Quest
+# Colori per difficolta' Emergency Quest – SOLO LEVELING DEFINITIVE PALETTE
 DIFFICULTY_COLORS = {
-    "EASY": {"bg": 0xCC004400, "border": 0xFF00FF00, "text": 0xFF00FF00, "label": "FACILE"},
-    "NORMAL": {"bg": 0xCC001144, "border": 0xFF00CCFF, "text": 0xFF00CCFF, "label": "NORMALE"},
-    "HARD": {"bg": 0xCC442200, "border": 0xFFFF8800, "text": 0xFFFF8800, "label": "DIFFICILE"},
-    "EXTREME": {"bg": 0xCC440000, "border": 0xFFFF0000, "text": 0xFFFF0000, "label": "ESTREMA"},
-    "GOD_MODE": {"bg": 0xCC220044, "border": 0xFFFF00FF, "text": 0xFFFF00FF, "label": "DIVINO"}
+    "EASY":     {"bg": 0xF0020A02, "border": 0xFF00EE44, "text": 0xFF66FF88, "label": "FACILE",    "glow": 0x2800EE44},
+    "NORMAL":   {"bg": 0xF0020510, "border": 0xFF00AAFF, "text": 0xFF55CCFF, "label": "NORMALE",   "glow": 0x2800AAFF},
+    "HARD":     {"bg": 0xF0100500, "border": 0xFFFF8800, "text": 0xFFFFBB44, "label": "DIFFICILE", "glow": 0x28FF8800},
+    "EXTREME":  {"bg": 0xF0100000, "border": 0xFFFF2222, "text": 0xFFFF6666, "label": "ESTREMA",   "glow": 0x28FF2222},
+    "GOD_MODE": {"bg": 0xF0080010, "border": 0xFFCC00FF, "text": 0xFFDD66FF, "label": "DIVINO",    "glow": 0x28CC00FF},
 }
 
 class EmergencyQuestWindow(ui.Window, DraggableMixin):
@@ -348,23 +394,32 @@ class EmergencyQuestWindow(ui.Window, DraggableMixin):
         self.penalty = 0
         self.pulsePhase = 0.0
 
-        # Sfondo principale scuro
+        # Sfondo principale profondo (quasi-nero con sfumatura colore difficoltà)
         self.bg = ui.Bar()
         self.bg.SetParent(self)
         self.bg.SetPosition(0, 0)
         self.bg.SetSize(420, 220)
-        self.bg.SetColor(0xEE06060F)
+        self.bg.SetColor(0xF5040410)
         self.bg.AddFlag("not_pick")
         self.bg.Show()
 
-        # Inner glow effect
+        # Inner background (profondità layer)
         self.innerGlow = ui.Bar()
         self.innerGlow.SetParent(self)
-        self.innerGlow.SetPosition(3, 3)
-        self.innerGlow.SetSize(414, 214)
-        self.innerGlow.SetColor(0x18FFFFFF)
+        self.innerGlow.SetPosition(2, 2)
+        self.innerGlow.SetSize(416, 216)
+        self.innerGlow.SetColor(0x0A0608FF)
         self.innerGlow.AddFlag("not_pick")
         self.innerGlow.Show()
+
+        # Top highlight (effetto gradiente sommità)
+        self.topHL = ui.Bar()
+        self.topHL.SetParent(self)
+        self.topHL.SetPosition(3, 3)
+        self.topHL.SetSize(414, 2)
+        self.topHL.SetColor(0x14FFFFFF)
+        self.topHL.AddFlag("not_pick")
+        self.topHL.Show()
 
         # Inner background
         self.innerBg = ui.Bar()
@@ -398,77 +453,86 @@ class EmergencyQuestWindow(ui.Window, DraggableMixin):
             self.emgCorners.append(ct)
 
         # ═══════════ HEADER SECTION ═══════════
-        # Header bar (barra colorata in cima)
+        # Header bar (barra colorata in cima – più alta e più elaborata)
         self.headerBar = ui.Bar()
         self.headerBar.SetParent(self)
         self.headerBar.SetPosition(2, 2)
-        self.headerBar.SetSize(416, 20)
-        self.headerBar.SetColor(0x33FF0000)
+        self.headerBar.SetSize(416, 22)
+        self.headerBar.SetColor(0x28FF0000)
         self.headerBar.AddFlag("not_pick")
         self.headerBar.Show()
 
-        # Linea separatore header
+        # Header separatore (linea neon brillante)
         self.headerLine = ui.Bar()
         self.headerLine.SetParent(self)
         self.headerLine.SetPosition(10, 45)
         self.headerLine.SetSize(400, 1)
-        self.headerLine.SetColor(0x55FFFFFF)
+        self.headerLine.SetColor(0x44FFFFFF)
         self.headerLine.AddFlag("not_pick")
         self.headerLine.Show()
 
-        # Titolo "[SYSTEM] EMERGENCY QUEST"
+        # Titolo "[SYSTEM] EMERGENCY QUEST" (più grande, più drammatico)
         self.systemLabel = ui.TextLine()
         self.systemLabel.SetParent(self)
-        self.systemLabel.SetPosition(210, 5)
+        self.systemLabel.SetPosition(210, 6)
         self.systemLabel.SetHorizontalAlignCenter()
-        self.systemLabel.SetText("[SYSTEM] EMERGENCY QUEST")
-        self.systemLabel.SetPackedFontColor(0xFFFF5555)
+        self.systemLabel.SetText("[ SYSTEM ] EMERGENCY QUEST")
+        self.systemLabel.SetPackedFontColor(0xFFFF4444)
         self.systemLabel.SetOutline()
         self.systemLabel.AddFlag("not_pick")
         self.systemLabel.Show()
 
-        # Badge Difficolta' (con bordo extra)
+        # Badge Difficolta' (bordo neon + background)
         self.diffBadgeBorder = ui.Bar()
         self.diffBadgeBorder.SetParent(self)
         self.diffBadgeBorder.SetPosition(10, 24)
-        self.diffBadgeBorder.SetSize(82, 20)
-        self.diffBadgeBorder.SetColor(0xCC001144)
+        self.diffBadgeBorder.SetSize(90, 20)
+        self.diffBadgeBorder.SetColor(0xFF004466)
         self.diffBadgeBorder.AddFlag("not_pick")
         self.diffBadgeBorder.Show()
 
         self.diffBadgeBg = ui.Bar()
         self.diffBadgeBg.SetParent(self)
         self.diffBadgeBg.SetPosition(11, 25)
-        self.diffBadgeBg.SetSize(80, 18)
-        self.diffBadgeBg.SetColor(0xCC001144)
+        self.diffBadgeBg.SetSize(88, 18)
+        self.diffBadgeBg.SetColor(0xDD020A14)
         self.diffBadgeBg.AddFlag("not_pick")
         self.diffBadgeBg.Show()
 
         self.diffBadgeText = ui.TextLine()
         self.diffBadgeText.SetParent(self)
-        self.diffBadgeText.SetPosition(51, 27)
+        self.diffBadgeText.SetPosition(55, 27)
         self.diffBadgeText.SetHorizontalAlignCenter()
         self.diffBadgeText.SetText("NORMALE")
-        self.diffBadgeText.SetPackedFontColor(0xFF00CCFF)
+        self.diffBadgeText.SetPackedFontColor(0xFF55CCFF)
+        self.diffBadgeText.SetOutline()
         self.diffBadgeText.AddFlag("not_pick")
         self.diffBadgeText.Show()
 
-        # Timer con sfondo più elaborato
+        # Timer con sfondo scuro + bordo oro
         self.timerBg = ui.Bar()
         self.timerBg.SetParent(self)
-        self.timerBg.SetPosition(318, 21)
-        self.timerBg.SetSize(94, 24)
-        self.timerBg.SetColor(0x88110000)
+        self.timerBg.SetPosition(316, 21)
+        self.timerBg.SetSize(96, 23)
+        self.timerBg.SetColor(0xCC0C0400)
         self.timerBg.AddFlag("not_pick")
         self.timerBg.Show()
 
         self.timerBorder = ui.Bar()
         self.timerBorder.SetParent(self)
-        self.timerBorder.SetPosition(318, 21)
-        self.timerBorder.SetSize(94, 1)
-        self.timerBorder.SetColor(0x55FFD700)
+        self.timerBorder.SetPosition(316, 21)
+        self.timerBorder.SetSize(96, 1)
+        self.timerBorder.SetColor(0x88FFD700)
         self.timerBorder.AddFlag("not_pick")
         self.timerBorder.Show()
+
+        self.timerBorderLeft = ui.Bar()
+        self.timerBorderLeft.SetParent(self)
+        self.timerBorderLeft.SetPosition(316, 21)
+        self.timerBorderLeft.SetSize(1, 23)
+        self.timerBorderLeft.SetColor(0x55FFD700)
+        self.timerBorderLeft.AddFlag("not_pick")
+        self.timerBorderLeft.Show()
 
         self.timer = ui.TextLine()
         self.timer.SetParent(self)

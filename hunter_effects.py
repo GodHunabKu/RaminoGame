@@ -32,92 +32,102 @@ class BossAlertWindow(ui.Window):
         self.AddFlag("float")
         self.AddFlag("attach")
         
-        self.barHeight = 120
+        self.barHeight = 130
         self.barY = (self.screenHeight - self.barHeight) // 2
-        
-        # Layer 1: Glow esterno
+
+        # Layer 1: Glow esterno ultra-ampio (2x altezza – alone spettacolare)
         self.glowOuter = ui.Bar()
         self.glowOuter.SetParent(self)
-        self.glowOuter.SetPosition(0, self.barY - 30)
-        self.glowOuter.SetSize(self.screenWidth, self.barHeight + 60)
-        self.glowOuter.SetColor(0x15FF0000)
+        self.glowOuter.SetPosition(0, self.barY - 50)
+        self.glowOuter.SetSize(self.screenWidth, self.barHeight + 100)
+        self.glowOuter.SetColor(0x10FF0000)
         self.glowOuter.AddFlag("not_pick")
         self.glowOuter.Show()
-        
+
         # Layer 2: Glow medio
         self.glowMiddle = ui.Bar()
         self.glowMiddle.SetParent(self)
-        self.glowMiddle.SetPosition(0, self.barY - 15)
-        self.glowMiddle.SetSize(self.screenWidth, self.barHeight + 30)
-        self.glowMiddle.SetColor(0x25FF0000)
+        self.glowMiddle.SetPosition(0, self.barY - 25)
+        self.glowMiddle.SetSize(self.screenWidth, self.barHeight + 50)
+        self.glowMiddle.SetColor(0x20FF0000)
         self.glowMiddle.AddFlag("not_pick")
         self.glowMiddle.Show()
-        
-        # Layer 3: Barra principale
+
+        # Layer 3: Barra principale (più intensa)
         self.mainBar = ui.Bar()
         self.mainBar.SetParent(self)
         self.mainBar.SetPosition(0, self.barY)
         self.mainBar.SetSize(self.screenWidth, self.barHeight)
-        self.mainBar.SetColor(0x88FF0000)
+        self.mainBar.SetColor(0x95FF0000)
         self.mainBar.AddFlag("not_pick")
         self.mainBar.Show()
-        
-        # Linee NEON
+
+        # Highlight superiore della barra (effetto depth)
+        self.barHL = ui.Bar()
+        self.barHL.SetParent(self)
+        self.barHL.SetPosition(0, self.barY)
+        self.barHL.SetSize(self.screenWidth, 20)
+        self.barHL.SetColor(0x18FFFFFF)
+        self.barHL.AddFlag("not_pick")
+        self.barHL.Show()
+
+        # Linee NEON superiori (3px + 5px glow)
         self.neonTop = ui.Bar()
         self.neonTop.SetParent(self)
         self.neonTop.SetPosition(0, self.barY - 3)
         self.neonTop.SetSize(self.screenWidth, 6)
-        self.neonTop.SetColor(0xFFFF0000)
+        self.neonTop.SetColor(0xFFFF1111)
         self.neonTop.AddFlag("not_pick")
         self.neonTop.Show()
-        
+
         self.neonTopGlow = ui.Bar()
         self.neonTopGlow.SetParent(self)
-        self.neonTopGlow.SetPosition(0, self.barY - 8)
-        self.neonTopGlow.SetSize(self.screenWidth, 5)
-        self.neonTopGlow.SetColor(0x66FF4444)
+        self.neonTopGlow.SetPosition(0, self.barY - 10)
+        self.neonTopGlow.SetSize(self.screenWidth, 7)
+        self.neonTopGlow.SetColor(0x55FF4444)
         self.neonTopGlow.AddFlag("not_pick")
         self.neonTopGlow.Show()
-        
+
+        # Linee NEON inferiori
         self.neonBottom = ui.Bar()
         self.neonBottom.SetParent(self)
         self.neonBottom.SetPosition(0, self.barY + self.barHeight - 3)
         self.neonBottom.SetSize(self.screenWidth, 6)
-        self.neonBottom.SetColor(0xFFFF0000)
+        self.neonBottom.SetColor(0xFFFF1111)
         self.neonBottom.AddFlag("not_pick")
         self.neonBottom.Show()
-        
+
         self.neonBottomGlow = ui.Bar()
         self.neonBottomGlow.SetParent(self)
         self.neonBottomGlow.SetPosition(0, self.barY + self.barHeight + 3)
-        self.neonBottomGlow.SetSize(self.screenWidth, 5)
-        self.neonBottomGlow.SetColor(0x66FF4444)
+        self.neonBottomGlow.SetSize(self.screenWidth, 7)
+        self.neonBottomGlow.SetColor(0x55FF4444)
         self.neonBottomGlow.AddFlag("not_pick")
         self.neonBottomGlow.Show()
-        
-        # Linee verticali accent (bordi laterali della barra)
+
+        # Accent laterali (barre verticali sx/dx)
         self.accentLeft = ui.Bar()
         self.accentLeft.SetParent(self)
         self.accentLeft.SetPosition(0, self.barY)
-        self.accentLeft.SetSize(6, self.barHeight)
-        self.accentLeft.SetColor(0x44FF0000)
+        self.accentLeft.SetSize(8, self.barHeight)
+        self.accentLeft.SetColor(0x55FF0000)
         self.accentLeft.AddFlag("not_pick")
         self.accentLeft.Show()
 
         self.accentRight = ui.Bar()
         self.accentRight.SetParent(self)
-        self.accentRight.SetPosition(self.screenWidth - 6, self.barY)
-        self.accentRight.SetSize(6, self.barHeight)
-        self.accentRight.SetColor(0x44FF0000)
+        self.accentRight.SetPosition(self.screenWidth - 8, self.barY)
+        self.accentRight.SetSize(8, self.barHeight)
+        self.accentRight.SetColor(0x55FF0000)
         self.accentRight.AddFlag("not_pick")
         self.accentRight.Show()
 
-        # Linea separatrice centrale (divide header da boss name)
+        # Linea separatrice centrale più lunga e visibile
         self.sepLine = ui.Bar()
         self.sepLine.SetParent(self)
-        self.sepLine.SetPosition(self.screenWidth // 2 - 120, self.barY + 65)
-        self.sepLine.SetSize(240, 1)
-        self.sepLine.SetColor(0x44FF4444)
+        self.sepLine.SetPosition(self.screenWidth // 2 - 160, self.barY + 68)
+        self.sepLine.SetSize(320, 1)
+        self.sepLine.SetColor(0x66FF4444)
         self.sepLine.AddFlag("not_pick")
         self.sepLine.Show()
 

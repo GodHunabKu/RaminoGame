@@ -10,7 +10,10 @@ import app
 import math
 
 from hunter_core import (
-    COLOR_BG_DARK, COLOR_TEXT_NORMAL, COLOR_TEXT_MUTED,
+    COLOR_BG_DARK, COLOR_BG_DARK2, COLOR_BG_INNER,
+    COLOR_TEXT_NORMAL, COLOR_TEXT_MUTED, COLOR_TEXT_DIM,
+    COLOR_SEPARATOR, COLOR_SEPARATOR_BRIGHT,
+    COLOR_GOLD, COLOR_GOLD_DIM, COLOR_SYSTEM_BLUE, COLOR_SYSTEM_CYAN,
     COLOR_SCHEMES, DEFAULT_SCHEME, RANK_THEMES,
     GetColorScheme, GetRankColor, GetColorFromKey
 )
@@ -35,21 +38,30 @@ class AnimatedProgressBar(ui.Window):
         self.__BuildUI()
     
     def __BuildUI(self):
-        # Background - più profondo e scuro
+        # Background scuro profondo con bordo interno
         self.bg = ui.Bar()
         self.bg.SetParent(self)
         self.bg.SetPosition(0, 0)
         self.bg.SetSize(self.width, self.height)
-        self.bg.SetColor(0xFF080808)
+        self.bg.SetColor(0xFF060610)
         self.bg.AddFlag("not_pick")
         self.bg.Show()
 
-        # Bordo completo a 4 lati (stile Solo Leveling)
-        self.border = ui.Bar()  # Top
+        # Inner bg (per effetto profondità)
+        self.bgInner = ui.Bar()
+        self.bgInner.SetParent(self)
+        self.bgInner.SetPosition(1, 1)
+        self.bgInner.SetSize(self.width - 2, self.height - 2)
+        self.bgInner.SetColor(0xFF040408)
+        self.bgInner.AddFlag("not_pick")
+        self.bgInner.Show()
+
+        # Bordi esterni – colore dinamico
+        self.border = ui.Bar()
         self.border.SetParent(self)
         self.border.SetPosition(0, 0)
         self.border.SetSize(self.width, 1)
-        self.border.SetColor(0xFF2A2A2A)
+        self.border.SetColor(0xFF333355)
         self.border.AddFlag("not_pick")
         self.border.Show()
 
@@ -57,7 +69,7 @@ class AnimatedProgressBar(ui.Window):
         self.borderBottom.SetParent(self)
         self.borderBottom.SetPosition(0, self.height - 1)
         self.borderBottom.SetSize(self.width, 1)
-        self.borderBottom.SetColor(0xFF1E1E1E)
+        self.borderBottom.SetColor(0xFF222233)
         self.borderBottom.AddFlag("not_pick")
         self.borderBottom.Show()
 
@@ -65,7 +77,7 @@ class AnimatedProgressBar(ui.Window):
         self.borderLeft.SetParent(self)
         self.borderLeft.SetPosition(0, 0)
         self.borderLeft.SetSize(1, self.height)
-        self.borderLeft.SetColor(0xFF222222)
+        self.borderLeft.SetColor(0xFF282838)
         self.borderLeft.AddFlag("not_pick")
         self.borderLeft.Show()
 
@@ -73,13 +85,14 @@ class AnimatedProgressBar(ui.Window):
         self.borderRight.SetParent(self)
         self.borderRight.SetPosition(self.width - 1, 0)
         self.borderRight.SetSize(1, self.height)
-        self.borderRight.SetColor(0xFF222222)
+        self.borderRight.SetColor(0xFF282838)
         self.borderRight.AddFlag("not_pick")
         self.borderRight.Show()
 
-        # Angoli decorativi stile Solo Leveling (L-brackets)
-        tickLen = 5
-        tickColor = 0xFF444444
+        # Angoli decorativi stile Solo Leveling (L-brackets lunghi e doppi)
+        tickLen = 8
+        tickColor = 0xFF444466
+        # Outer corners
         self.ctlH = ui.Bar(); self.ctlH.SetParent(self); self.ctlH.SetPosition(0, 0); self.ctlH.SetSize(tickLen, 1); self.ctlH.SetColor(tickColor); self.ctlH.AddFlag("not_pick"); self.ctlH.Show()
         self.ctlV = ui.Bar(); self.ctlV.SetParent(self); self.ctlV.SetPosition(0, 0); self.ctlV.SetSize(1, tickLen); self.ctlV.SetColor(tickColor); self.ctlV.AddFlag("not_pick"); self.ctlV.Show()
         self.ctrH = ui.Bar(); self.ctrH.SetParent(self); self.ctrH.SetPosition(self.width - tickLen, 0); self.ctrH.SetSize(tickLen, 1); self.ctrH.SetColor(tickColor); self.ctrH.AddFlag("not_pick"); self.ctrH.Show()
@@ -89,7 +102,7 @@ class AnimatedProgressBar(ui.Window):
         self.cbrH = ui.Bar(); self.cbrH.SetParent(self); self.cbrH.SetPosition(self.width - tickLen, self.height - 1); self.cbrH.SetSize(tickLen, 1); self.cbrH.SetColor(tickColor); self.cbrH.AddFlag("not_pick"); self.cbrH.Show()
         self.cbrV = ui.Bar(); self.cbrV.SetParent(self); self.cbrV.SetPosition(self.width - 1, self.height - tickLen); self.cbrV.SetSize(1, tickLen); self.cbrV.SetColor(tickColor); self.cbrV.AddFlag("not_pick"); self.cbrV.Show()
 
-        # Progress fill
+        # Progress fill con padding raffinato
         self.fill = ui.Bar()
         self.fill.SetParent(self)
         self.fill.SetPosition(2, 2)
@@ -98,7 +111,25 @@ class AnimatedProgressBar(ui.Window):
         self.fill.AddFlag("not_pick")
         self.fill.Show()
 
-        # Glow overlay esterno (lento, ampio)
+        # Highlight interno top (riga luminosa nella parte alta – depth effect)
+        self.innerHL = ui.Bar()
+        self.innerHL.SetParent(self)
+        self.innerHL.SetPosition(2, 2)
+        self.innerHL.SetSize(0, 2)
+        self.innerHL.SetColor(0x30FFFFFF)
+        self.innerHL.AddFlag("not_pick")
+        self.innerHL.Show()
+
+        # Bottom shadow del fill (effetto 3D)
+        self.fillShadow = ui.Bar()
+        self.fillShadow.SetParent(self)
+        self.fillShadow.SetPosition(2, self.height - 4)
+        self.fillShadow.SetSize(0, 2)
+        self.fillShadow.SetColor(0x20000000)
+        self.fillShadow.AddFlag("not_pick")
+        self.fillShadow.Show()
+
+        # Glow overlay (pulsing – alpha basso, non epilettico)
         self.glow = ui.Bar()
         self.glow.SetParent(self)
         self.glow.SetPosition(2, 2)
@@ -107,31 +138,22 @@ class AnimatedProgressBar(ui.Window):
         self.glow.AddFlag("not_pick")
         self.glow.Show()
 
-        # Highlight interno (riga brillante nella parte alta del fill)
-        self.innerHL = ui.Bar()
-        self.innerHL.SetParent(self)
-        self.innerHL.SetPosition(2, 2)
-        self.innerHL.SetSize(0, 2)
-        self.innerHL.SetColor(0x20FFFFFF)
-        self.innerHL.AddFlag("not_pick")
-        self.innerHL.Show()
-
-        # Shimmer (linea brillante che scorre lentamente nel fill)
+        # Shimmer (linea brillante che scorre nel fill da sx a dx)
         self.shimmer = ui.Bar()
         self.shimmer.SetParent(self)
         self.shimmer.SetPosition(2, 2)
-        self.shimmer.SetSize(3, self.height - 4)
+        self.shimmer.SetSize(4, self.height - 4)
         self.shimmer.SetColor(0x00FFFFFF)
         self.shimmer.AddFlag("not_pick")
         self.shimmer.Show()
 
-        # Text
+        # Text overlay centrato
         self.text = ui.TextLine()
         self.text.SetParent(self)
         self.text.SetPosition(self.width // 2, 2)
         self.text.SetHorizontalAlignCenter()
         self.text.SetText("")
-        self.text.SetPackedFontColor(0xFFFFFFFF)
+        self.text.SetPackedFontColor(0xFFDDDDFF)
         self.text.SetOutline()
         self.text.Show()
 
@@ -143,6 +165,8 @@ class AnimatedProgressBar(ui.Window):
         self.height = h
         self.bg.SetSize(w, h)
         self.border.SetSize(w, 1)
+        if hasattr(self, 'bgInner'):
+            self.bgInner.SetSize(w - 2, h - 2)
         if hasattr(self, 'borderBottom'):
             self.borderBottom.SetSize(w, 1)
             self.borderBottom.SetPosition(0, h - 1)
@@ -150,7 +174,7 @@ class AnimatedProgressBar(ui.Window):
             self.borderRight.SetSize(1, h)
             self.borderRight.SetPosition(w - 1, 0)
         # Aggiorna corner ticks
-        tickLen = 5
+        tickLen = 8
         if hasattr(self, 'ctrH'):
             self.ctrH.SetPosition(w - tickLen, 0)
             self.ctrV.SetPosition(w - 1, 0)
@@ -158,6 +182,8 @@ class AnimatedProgressBar(ui.Window):
             self.cblV.SetPosition(0, h - tickLen)
             self.cbrH.SetPosition(w - tickLen, h - 1)
             self.cbrV.SetPosition(w - 1, h - tickLen)
+        if hasattr(self, 'fillShadow'):
+            self.fillShadow.SetPosition(2, h - 4)
         self.text.SetPosition(w // 2, 2)
         self.__UpdateFill()
     
@@ -189,14 +215,19 @@ class AnimatedProgressBar(ui.Window):
         self.text.Show()
     
     def SetColor(self, color):
-        """Imposta il colore della barra"""
+        """Imposta il colore della barra aggiornando fill, bordi e corner ticks"""
         self.color = color
         self.fill.SetColor(color)
-        # Corner ticks: versione attenuata del colore fill
         r = (color >> 16) & 0xFF
         g = (color >> 8) & 0xFF
         b = color & 0xFF
         tickColor = 0xFF000000 | ((r // 3) << 16) | ((g // 3) << 8) | (b // 3)
+        borderColor = 0xFF000000 | ((r // 5) << 16) | ((g // 5) << 8) | (b // 5)
+        if hasattr(self, 'border'):
+            self.border.SetColor(borderColor)
+            self.borderBottom.SetColor(borderColor)
+            self.borderLeft.SetColor(borderColor)
+            self.borderRight.SetColor(borderColor)
         if hasattr(self, 'ctlH'):
             self.ctlH.SetColor(tickColor); self.ctlV.SetColor(tickColor)
             self.ctrH.SetColor(tickColor); self.ctrV.SetColor(tickColor)
@@ -205,10 +236,14 @@ class AnimatedProgressBar(ui.Window):
 
     def __UpdateFill(self):
         fillWidth = int((self.width - 4) * self.progress)
-        self.fill.SetSize(max(0, fillWidth), self.height - 4)
-        self.glow.SetSize(max(0, fillWidth), self.height - 4)
+        fw = max(0, fillWidth)
+        fh = self.height - 4
+        self.fill.SetSize(fw, fh)
+        self.glow.SetSize(fw, fh)
         if hasattr(self, 'innerHL'):
-            self.innerHL.SetSize(max(0, fillWidth), 2)
+            self.innerHL.SetSize(fw, 2)
+        if hasattr(self, 'fillShadow'):
+            self.fillShadow.SetSize(fw, 2)
 
     def OnUpdate(self):
         # Smooth animation
@@ -216,22 +251,23 @@ class AnimatedProgressBar(ui.Window):
             self.progress += (self.targetProgress - self.progress) * 0.1
             self.__UpdateFill()
 
-        # Shimmer lento che scorre nel fill (non epilettico)
+        # Shimmer elegante che scorre nel fill da sx a dx
         if hasattr(self, 'shimmerPhase'):
-            self.shimmerPhase += 0.009
+            self.shimmerPhase += 0.007
             if self.shimmerPhase > 1.0:
                 self.shimmerPhase -= 1.0
             fillW = int((self.width - 4) * self.progress)
-            if fillW > 6:
-                sx = 2 + int(self.shimmerPhase * (fillW - 4))
+            if fillW > 8:
+                sx = 2 + int(self.shimmerPhase * (fillW - 6))
                 self.shimmer.SetPosition(sx, 2)
-                self.shimmer.SetColor(0x22FFFFFF)
+                shimmerAlpha = int((math.sin(self.shimmerPhase * math.pi) * 0.7 + 0.3) * 40)
+                self.shimmer.SetColor((shimmerAlpha << 24) | 0xFFFFFF)
             else:
                 self.shimmer.SetColor(0x00FFFFFF)
 
-        # Glow lento (0.4 Hz circa, alpha basso - non epilettico)
-        self.glowPhase += 0.035
-        glowAlpha = int((math.sin(self.glowPhase) * 0.5 + 0.5) * 22)
+        # Glow pulsante lento (0.3 Hz circa – non epilettico, alpha massimo 28)
+        self.glowPhase += 0.028
+        glowAlpha = int((math.sin(self.glowPhase) * 0.5 + 0.5) * 28)
         self.glow.SetColor((glowAlpha << 24) | 0xFFFFFF)
 
 
@@ -255,74 +291,89 @@ class SoloLevelingButton(ui.Window):
         self.SetPosition(x, y)
         self.SetSize(width, height)
         self.theme = theme
-        
-        # Background
+
+        borderColor = theme.get("border", 0xFF00CCFF)
+        accentDim = (borderColor & 0x00FFFFFF) | 0x44000000
+        accentDimmer = (borderColor & 0x00FFFFFF) | 0x22000000
+
+        # Background scuro principale
         self.bgBar = ui.Bar()
         self.bgBar.SetParent(self)
         self.bgBar.SetPosition(0, 0)
         self.bgBar.SetSize(width, height)
-        self.bgBar.SetColor(theme.get("btn_normal", 0xFF333333))
+        self.bgBar.SetColor(theme.get("btn_normal", 0xFF0E0E1A))
         self.bgBar.AddFlag("not_pick")
         self.bgBar.Show()
-        
-        # Bordi neon
+
+        # Inner background (gradiente simulato – più chiaro in cima)
+        self.bgInner = ui.Bar()
+        self.bgInner.SetParent(self)
+        self.bgInner.SetPosition(3, 2)
+        self.bgInner.SetSize(width - 6, height // 2)
+        self.bgInner.SetColor(0x08FFFFFF)
+        self.bgInner.AddFlag("not_pick")
+        self.bgInner.Show()
+
+        # Bordo superiore (2px - più spesso, più visibile)
         self.borderTop = ui.Bar()
         self.borderTop.SetParent(self)
         self.borderTop.SetPosition(0, 0)
         self.borderTop.SetSize(width, 2)
-        self.borderTop.SetColor(theme.get("border", 0xFF00CCFF))
+        self.borderTop.SetColor(borderColor)
         self.borderTop.AddFlag("not_pick")
         self.borderTop.Show()
-        
+
+        # Bordo inferiore (1px - più sottile, effetto profondità)
         self.borderBottom = ui.Bar()
         self.borderBottom.SetParent(self)
-        self.borderBottom.SetPosition(0, height - 2)
-        self.borderBottom.SetSize(width, 2)
-        self.borderBottom.SetColor(theme.get("border", 0xFF00CCFF))
+        self.borderBottom.SetPosition(0, height - 1)
+        self.borderBottom.SetSize(width, 1)
+        self.borderBottom.SetColor(accentDim)
         self.borderBottom.AddFlag("not_pick")
         self.borderBottom.Show()
-        
+
+        # Bordi laterali (1px sottili)
         self.borderLeft = ui.Bar()
         self.borderLeft.SetParent(self)
         self.borderLeft.SetPosition(0, 0)
-        self.borderLeft.SetSize(2, height)
-        self.borderLeft.SetColor(theme.get("border", 0xFF00CCFF))
+        self.borderLeft.SetSize(1, height)
+        self.borderLeft.SetColor(accentDim)
         self.borderLeft.AddFlag("not_pick")
         self.borderLeft.Show()
-        
+
         self.borderRight = ui.Bar()
         self.borderRight.SetParent(self)
-        self.borderRight.SetPosition(width - 2, 0)
-        self.borderRight.SetSize(2, height)
-        self.borderRight.SetColor(theme.get("border", 0xFF00CCFF))
+        self.borderRight.SetPosition(width - 1, 0)
+        self.borderRight.SetSize(1, height)
+        self.borderRight.SetColor(accentDim)
         self.borderRight.AddFlag("not_pick")
         self.borderRight.Show()
-        
-        # Left accent bar (barra verticale colorata sx - stile Solo Leveling)
+
+        # Left accent bar (barra verticale neon sx – iconica stile Solo Leveling)
         self.leftAccent = ui.Bar()
         self.leftAccent.SetParent(self)
         self.leftAccent.SetPosition(0, 0)
-        self.leftAccent.SetSize(3, height)
-        self.leftAccent.SetColor(theme.get("border", 0xFF00CCFF))
+        self.leftAccent.SetSize(4, height)
+        self.leftAccent.SetColor(borderColor)
         self.leftAccent.AddFlag("not_pick")
         self.leftAccent.Show()
 
-        # Corner ticks (angoli decorativi minimi)
-        borderColor = theme.get("border", 0xFF00CCFF)
-        accentDim = (borderColor & 0x00FFFFFF) | 0x55000000
-        tickLen = 5
-        self.btnCtlH = ui.Bar(); self.btnCtlH.SetParent(self); self.btnCtlH.SetPosition(3, 0); self.btnCtlH.SetSize(tickLen, 1); self.btnCtlH.SetColor(accentDim); self.btnCtlH.AddFlag("not_pick"); self.btnCtlH.Show()
-        self.btnCtrH = ui.Bar(); self.btnCtrH.SetParent(self); self.btnCtrH.SetPosition(width - tickLen - 2, 0); self.btnCtrH.SetSize(tickLen, 1); self.btnCtrH.SetColor(accentDim); self.btnCtrH.AddFlag("not_pick"); self.btnCtrH.Show()
-        self.btnCblH = ui.Bar(); self.btnCblH.SetParent(self); self.btnCblH.SetPosition(3, height - 1); self.btnCblH.SetSize(tickLen, 1); self.btnCblH.SetColor(accentDim); self.btnCblH.AddFlag("not_pick"); self.btnCblH.Show()
-        self.btnCbrH = ui.Bar(); self.btnCbrH.SetParent(self); self.btnCbrH.SetPosition(width - tickLen - 2, height - 1); self.btnCbrH.SetSize(tickLen, 1); self.btnCbrH.SetColor(accentDim); self.btnCbrH.AddFlag("not_pick"); self.btnCbrH.Show()
+        # Corner ticks decorativi (più lunghi, più eleganti)
+        tickLen = 8
+        self.btnCtlH = ui.Bar(); self.btnCtlH.SetParent(self); self.btnCtlH.SetPosition(4, 0); self.btnCtlH.SetSize(tickLen, 1); self.btnCtlH.SetColor(borderColor); self.btnCtlH.AddFlag("not_pick"); self.btnCtlH.Show()
+        self.btnCtrH = ui.Bar(); self.btnCtrH.SetParent(self); self.btnCtrH.SetPosition(width - tickLen - 1, 0); self.btnCtrH.SetSize(tickLen, 1); self.btnCtrH.SetColor(borderColor); self.btnCtrH.AddFlag("not_pick"); self.btnCtrH.Show()
+        self.btnCtrV = ui.Bar(); self.btnCtrV.SetParent(self); self.btnCtrV.SetPosition(width - 1, 0); self.btnCtrV.SetSize(1, tickLen); self.btnCtrV.SetColor(borderColor); self.btnCtrV.AddFlag("not_pick"); self.btnCtrV.Show()
+        self.btnCblH = ui.Bar(); self.btnCblH.SetParent(self); self.btnCblH.SetPosition(4, height - 1); self.btnCblH.SetSize(tickLen, 1); self.btnCblH.SetColor(accentDim); self.btnCblH.AddFlag("not_pick"); self.btnCblH.Show()
+        self.btnCbrH = ui.Bar(); self.btnCbrH.SetParent(self); self.btnCbrH.SetPosition(width - tickLen - 1, height - 1); self.btnCbrH.SetSize(tickLen, 1); self.btnCbrH.SetColor(accentDim); self.btnCbrH.AddFlag("not_pick"); self.btnCbrH.Show()
+        self.btnCbrV = ui.Bar(); self.btnCbrV.SetParent(self); self.btnCbrV.SetPosition(width - 1, height - tickLen); self.btnCbrV.SetSize(1, tickLen); self.btnCbrV.SetColor(accentDim); self.btnCbrV.AddFlag("not_pick"); self.btnCbrV.Show()
 
-        # Testo
+        # Testo centrato con outline
         self.textLine = ui.TextLine()
         self.textLine.SetParent(self)
-        self.textLine.SetPosition(width // 2 + 1, (height - 14) // 2)
+        self.textLine.SetPosition(width // 2 + 2, (height - 14) // 2)
         self.textLine.SetHorizontalAlignCenter()
         self.textLine.SetText(text)
-        self.textLine.SetPackedFontColor(theme.get("text_title", 0xFFFFFFFF))
+        self.textLine.SetPackedFontColor(theme.get("text_title", 0xFFEEEEFF))
         self.textLine.SetOutline()
         self.textLine.Show()
 
@@ -345,25 +396,24 @@ class SoloLevelingButton(ui.Window):
             self.textLine.SetPackedFontColor(color)
     
     def UpdateTheme(self, theme):
-        """Aggiorna il tema colori"""
+        """Aggiorna il tema colori di tutti gli elementi del bottone"""
         self.theme = theme
+        borderColor = theme.get("border", 0xFF00CCFF)
+        accentDim = (borderColor & 0x00FFFFFF) | 0x44000000
         if hasattr(self, 'borderTop'):
-            borderColor = theme.get("border", 0xFF00CCFF)
             self.borderTop.SetColor(borderColor)
-            self.borderBottom.SetColor(borderColor)
-            self.borderLeft.SetColor(borderColor)
-            self.borderRight.SetColor(borderColor)
-            self.bgBar.SetColor(theme.get("btn_normal", 0xFF333333))
-            self.textLine.SetPackedFontColor(theme.get("text_title", 0xFFFFFFFF))
+            self.borderBottom.SetColor(accentDim)
+            self.borderLeft.SetColor(accentDim)
+            self.borderRight.SetColor(accentDim)
+            self.bgBar.SetColor(theme.get("btn_normal", 0xFF0E0E1A))
+            self.textLine.SetPackedFontColor(theme.get("text_title", 0xFFEEEEFF))
         if hasattr(self, 'leftAccent'):
-            borderColor = theme.get("border", 0xFF00CCFF)
             self.leftAccent.SetColor(borderColor)
-            accentDim = (borderColor & 0x00FFFFFF) | 0x55000000
-            if hasattr(self, 'btnCtlH'):
-                self.btnCtlH.SetColor(accentDim)
-                self.btnCtrH.SetColor(accentDim)
-                self.btnCblH.SetColor(accentDim)
-                self.btnCbrH.SetColor(accentDim)
+        if hasattr(self, 'btnCtlH'):
+            self.btnCtlH.SetColor(borderColor)
+            self.btnCtrH.SetColor(borderColor)
+            self.btnCblH.SetColor(accentDim)
+            self.btnCbrH.SetColor(accentDim)
     
     def Down(self):
         """Stato premuto"""
@@ -482,7 +532,7 @@ class SoloLevelingWindow(ui.ScriptWindow):
         self.__BuildInterface(width, height)
         
     def __BuildInterface(self, w, h):
-        # Sfondo profondo
+        # Sfondo principale – profondo blu-nero
         self.bg = ui.Bar()
         self.bg.SetParent(self)
         self.bg.SetPosition(0, 0)
@@ -490,36 +540,57 @@ class SoloLevelingWindow(ui.ScriptWindow):
         self.bg.SetColor(COLOR_BG_DARK)
         self.bg.Show()
 
-        # Inner shadow (sottile ombra interna per profondità)
-        self.innerShadow = ui.Bar()
-        self.innerShadow.SetParent(self)
-        self.innerShadow.SetPosition(2, 2)
-        self.innerShadow.SetSize(w - 4, 4)
-        self.innerShadow.SetColor(0x18000000)
-        self.innerShadow.AddFlag("not_pick")
-        self.innerShadow.Show()
+        # Layer interno più chiaro (profondità e texture)
+        self.bgInner = ui.Bar()
+        self.bgInner.SetParent(self)
+        self.bgInner.SetPosition(2, 2)
+        self.bgInner.SetSize(w - 4, h - 4)
+        self.bgInner.SetColor(0x0C0808FF)
+        self.bgInner.AddFlag("not_pick")
+        self.bgInner.Show()
 
-        # Bordi (Top, Bottom, Left, Right)
+        # Top highlight (effetto gradiente cima)
+        self.topHighlight = ui.Bar()
+        self.topHighlight.SetParent(self)
+        self.topHighlight.SetPosition(3, 3)
+        self.topHighlight.SetSize(w - 6, 2)
+        self.topHighlight.SetColor(0x12FFFFFF)
+        self.topHighlight.AddFlag("not_pick")
+        self.topHighlight.Show()
+
+        # Bordi principali (Top spesso 2px, altri 1px per asimmetria elegante)
         self.borders = []
-        # Top
+        # Top (2px – più visibile)
         b1 = ui.Bar(); b1.SetParent(self); b1.SetPosition(0, 0); b1.SetSize(w, 2); b1.Show()
-        # Bottom
-        b2 = ui.Bar(); b2.SetParent(self); b2.SetPosition(0, h-2); b2.SetSize(w, 2); b2.Show()
-        # Left
+        # Bottom (2px)
+        b2 = ui.Bar(); b2.SetParent(self); b2.SetPosition(0, h - 2); b2.SetSize(w, 2); b2.Show()
+        # Left (2px)
         b3 = ui.Bar(); b3.SetParent(self); b3.SetPosition(0, 0); b3.SetSize(2, h); b3.Show()
-        # Right
-        b4 = ui.Bar(); b4.SetParent(self); b4.SetPosition(w-2, 0); b4.SetSize(2, h); b4.Show()
-
+        # Right (1px – più sottile, asimmetrico)
+        b4 = ui.Bar(); b4.SetParent(self); b4.SetPosition(w - 1, 0); b4.SetSize(1, h); b4.Show()
         self.borders = [b1, b2, b3, b4]
 
-        # Corner ticks - marchi angolari stile Solo Leveling (L-brackets)
+        # Corner ticks DOPPI – stile Solo Leveling definitivo (L-brackets grandi)
         self.cornerTicks = []
-        tickLen = 8
+        tickOuter = 12  # Bracket esterno (lungo)
+        tickInner = 6   # Bracket interno (corto, offset)
         for (cx, cy, cw, ch) in [
-            (2, 0, tickLen, 1), (0, 2, 1, tickLen),              # TL
-            (w - tickLen - 2, 0, tickLen, 1), (w - 1, 2, 1, tickLen),  # TR
-            (2, h - 1, tickLen, 1), (0, h - tickLen - 2, 1, tickLen),  # BL
-            (w - tickLen - 2, h - 1, tickLen, 1), (w - 1, h - tickLen - 2, 1, tickLen),  # BR
+            # Top-Left outer L
+            (2, 0, tickOuter, 1), (0, 2, 1, tickOuter),
+            # Top-Left inner L (offset di 3px – doppio bracket)
+            (5, 3, tickInner, 1), (3, 5, 1, tickInner),
+            # Top-Right outer L
+            (w - tickOuter - 2, 0, tickOuter, 1), (w - 1, 2, 1, tickOuter),
+            # Top-Right inner L
+            (w - tickInner - 5, 3, tickInner, 1), (w - 4, 5, 1, tickInner),
+            # Bottom-Left outer L
+            (2, h - 1, tickOuter, 1), (0, h - tickOuter - 2, 1, tickOuter),
+            # Bottom-Left inner L
+            (5, h - 4, tickInner, 1), (3, h - tickInner - 5, 1, tickInner),
+            # Bottom-Right outer L
+            (w - tickOuter - 2, h - 1, tickOuter, 1), (w - 1, h - tickOuter - 2, 1, tickOuter),
+            # Bottom-Right inner L
+            (w - tickInner - 5, h - 4, tickInner, 1), (w - 4, h - tickInner - 5, 1, tickInner),
         ]:
             ct = ui.Bar()
             ct.SetParent(self)
@@ -537,18 +608,29 @@ class SoloLevelingWindow(ui.ScriptWindow):
         self.UpdateColors()
         
     def UpdateColors(self):
-        """Aggiorna i colori dei bordi e degli angoli decorativi"""
+        """Aggiorna i colori di bordi, angoli e highlight"""
         borderColor = self.color_scheme.get("border", 0xFFFFFFFF)
-        for bar in self.borders:
-            bar.SetColor(borderColor)
-        # Corner ticks: versione più scura del colore border
         r = (borderColor >> 16) & 0xFF
         g = (borderColor >> 8) & 0xFF
         b = borderColor & 0xFF
-        tickColor = 0xFF000000 | ((r * 2 // 3) << 16) | ((g * 2 // 3) << 8) | (b * 2 // 3)
+        # Bordi con asimmetria: top/left brillanti, bottom/right attenuati
+        outerBright = borderColor
+        outerDim = 0xFF000000 | ((r * 3 // 4) << 16) | ((g * 3 // 4) << 8) | (b * 3 // 4)
+        if hasattr(self, 'borders') and len(self.borders) == 4:
+            self.borders[0].SetColor(outerBright)   # Top
+            self.borders[1].SetColor(outerDim)      # Bottom
+            self.borders[2].SetColor(outerBright)   # Left
+            self.borders[3].SetColor(outerDim)      # Right
+        # Corner ticks: alternati outer=brillante, inner=attenuato
+        innerTickColor = 0xFF000000 | ((r // 2) << 16) | ((g // 2) << 8) | (b // 2)
         if hasattr(self, 'cornerTicks'):
-            for ct in self.cornerTicks:
-                ct.SetColor(tickColor)
+            for i, ct in enumerate(self.cornerTicks):
+                # Outer brackets (indici 0,1,4,5,8,9,12,13) = brillanti
+                # Inner brackets (indici 2,3,6,7,10,11,14,15) = attenuati
+                if i % 4 < 2:
+                    ct.SetColor(outerBright)
+                else:
+                    ct.SetColor(innerTickColor)
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -583,74 +665,108 @@ class SystemPopup(ui.Window):
     def __BuildUI(self):
         screenWidth = wndMgr.GetScreenWidth()
         self.SetPosition((screenWidth - self.width) // 2, 320)
-        
-        # Background
+        w = self.width
+        h = self.height
+
+        # Background principale profondo
         self.bgBar = ui.Bar()
         self.bgBar.SetParent(self)
         self.bgBar.SetPosition(0, 0)
-        self.bgBar.SetSize(self.width, self.height)
-        self.bgBar.SetColor(0xDD0A0A0A)
+        self.bgBar.SetSize(w, h)
+        self.bgBar.SetColor(0xF0040410)
         self.bgBar.AddFlag("not_pick")
         self.bgBar.Show()
-        
-        # Bordi
+
+        # Inner background (per profondità)
+        self.bgInner = ui.Bar()
+        self.bgInner.SetParent(self)
+        self.bgInner.SetPosition(5, 2)
+        self.bgInner.SetSize(w - 10, h - 4)
+        self.bgInner.SetColor(0x10060618)
+        self.bgInner.AddFlag("not_pick")
+        self.bgInner.Show()
+
+        # Top highlight sottile
+        self.topHL = ui.Bar()
+        self.topHL.SetParent(self)
+        self.topHL.SetPosition(6, 3)
+        self.topHL.SetSize(w - 12, 1)
+        self.topHL.SetColor(0x15FFFFFF)
+        self.topHL.AddFlag("not_pick")
+        self.topHL.Show()
+
+        # Bordo superiore (2px – principale)
         self.borderTop = ui.Bar()
         self.borderTop.SetParent(self)
         self.borderTop.SetPosition(0, 0)
-        self.borderTop.SetSize(self.width, 2)
+        self.borderTop.SetSize(w, 2)
         self.borderTop.SetColor(self.currentColor)
         self.borderTop.AddFlag("not_pick")
         self.borderTop.Show()
 
+        # Bordo inferiore (1px – più sottile)
         self.borderBottom = ui.Bar()
         self.borderBottom.SetParent(self)
-        self.borderBottom.SetPosition(0, self.height - 2)
-        self.borderBottom.SetSize(self.width, 2)
-        self.borderBottom.SetColor(self.currentColor)
+        self.borderBottom.SetPosition(0, h - 1)
+        self.borderBottom.SetSize(w, 1)
+        self.borderBottom.SetColor((self.currentColor & 0x00FFFFFF) | 0x66000000)
         self.borderBottom.AddFlag("not_pick")
         self.borderBottom.Show()
 
-        # Left accent bar (spessa barra colorata sx - stile Sistema Solo Leveling)
+        # Left accent bar (barra neon sx – 5px, iconica)
         self.leftAccent = ui.Bar()
         self.leftAccent.SetParent(self)
         self.leftAccent.SetPosition(0, 2)
-        self.leftAccent.SetSize(4, self.height - 4)
+        self.leftAccent.SetSize(5, h - 4)
         self.leftAccent.SetColor(self.currentColor)
         self.leftAccent.AddFlag("not_pick")
         self.leftAccent.Show()
 
-        # Right accent bar (sottile, speculare)
+        # Right accent bar (1px sottile speculare)
         self.rightAccent = ui.Bar()
         self.rightAccent.SetParent(self)
-        self.rightAccent.SetPosition(self.width - 2, 2)
-        self.rightAccent.SetSize(2, self.height - 4)
-        self.rightAccent.SetColor((self.currentColor & 0x00FFFFFF) | 0x55000000)
+        self.rightAccent.SetPosition(w - 1, 2)
+        self.rightAccent.SetSize(1, h - 4)
+        self.rightAccent.SetColor((self.currentColor & 0x00FFFFFF) | 0x44000000)
         self.rightAccent.AddFlag("not_pick")
         self.rightAccent.Show()
 
-        # Separatore interno (linea tra titolo e messaggio)
+        # Corner ticks decorativi (4 angoli)
+        tickLen = 8
+        c = self.currentColor
+        self.popCorners = []
+        for (cx, cy, cw, ch) in [
+            (5, 0, tickLen, 1), (0, 2, 1, tickLen),           # TL
+            (w - tickLen - 1, 0, tickLen, 1), (w - 1, 2, 1, tickLen), # TR
+            (5, h - 1, tickLen, 1), (0, h - tickLen - 2, 1, tickLen), # BL
+            (w - tickLen - 1, h - 1, tickLen, 1), (w - 1, h - tickLen - 2, 1, tickLen), # BR
+        ]:
+            ct = ui.Bar(); ct.SetParent(self); ct.SetPosition(cx, cy); ct.SetSize(cw, ch); ct.SetColor(c); ct.AddFlag("not_pick"); ct.Show()
+            self.popCorners.append(ct)
+
+        # Separatore orizzontale (linea tra titolo e messaggio)
         self.separator = ui.Bar()
         self.separator.SetParent(self)
-        self.separator.SetPosition(8, self.height // 2)
-        self.separator.SetSize(self.width - 16, 1)
-        self.separator.SetColor(0x22FFFFFF)
+        self.separator.SetPosition(8, h // 2)
+        self.separator.SetSize(w - 16, 1)
+        self.separator.SetColor(0x28FFFFFF)
         self.separator.AddFlag("not_pick")
         self.separator.Show()
 
-        # Titolo
+        # Titolo (colore dinamico basato sul rank/tipo)
         self.titleText = ui.TextLine()
         self.titleText.SetParent(self)
-        self.titleText.SetPosition(self.width // 2, 10)
+        self.titleText.SetPosition(w // 2, 9)
         self.titleText.SetHorizontalAlignCenter()
         self.titleText.SetText("")
         self.titleText.SetPackedFontColor(self.currentColor)
         self.titleText.SetOutline()
         self.titleText.Show()
 
-        # Messaggio
+        # Messaggio (bianco-blu elegante)
         self.messageText = ui.TextLine()
         self.messageText.SetParent(self)
-        self.messageText.SetPosition(self.width // 2, 33)
+        self.messageText.SetPosition(w // 2, 33)
         self.messageText.SetHorizontalAlignCenter()
         self.messageText.SetText("")
         self.messageText.SetPackedFontColor(0xFFEEEEEE)
@@ -659,15 +775,22 @@ class SystemPopup(ui.Window):
         self.Hide()
     
     def SetColor(self, color):
-        """Imposta il colore del popup"""
+        """Imposta il colore del popup aggiornando tutti gli elementi"""
         self.currentColor = color
+        colorDim = (color & 0x00FFFFFF) | 0x55000000
+        colorFaint = (color & 0x00FFFFFF) | 0x33000000
         self.borderTop.SetColor(color)
-        self.borderBottom.SetColor(color)
+        self.borderBottom.SetColor(colorDim)
         self.titleText.SetPackedFontColor(color)
         if hasattr(self, 'leftAccent'):
             self.leftAccent.SetColor(color)
         if hasattr(self, 'rightAccent'):
-            self.rightAccent.SetColor((color & 0x00FFFFFF) | 0x55000000)
+            self.rightAccent.SetColor(colorFaint)
+        if hasattr(self, 'popCorners'):
+            for ct in self.popCorners:
+                ct.SetColor(colorDim)
+        if hasattr(self, 'separator'):
+            self.separator.SetColor((color & 0x00FFFFFF) | 0x22000000)
     
     def SetColorFromScheme(self, colorCode):
         """Imposta colore da codice schema (GREEN, BLUE, etc.)"""

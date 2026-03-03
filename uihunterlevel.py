@@ -782,7 +782,7 @@ class HunterLevelWindow(ui.ScriptWindow):
         self._DisableMousePick(glowFrame)
         self.bgElements.append(glowFrame)
 
-        # Background principale
+        # Background principale – profondo quasi-nero
         bg = ui.Bar()
         bg.SetParent(self.baseWindow)
         bg.SetPosition(0, 0)
@@ -792,98 +792,130 @@ class HunterLevelWindow(ui.ScriptWindow):
         self._DisableMousePick(bg)
         self.bgElements.append(bg)
 
-        # Bordi neon della finestra
-        for (x, y, w, h) in [(0, 0, WINDOW_WIDTH, 3), (0, WINDOW_HEIGHT - 3, WINDOW_WIDTH, 3),
-                             (0, 0, 3, WINDOW_HEIGHT), (WINDOW_WIDTH - 3, 0, 3, WINDOW_HEIGHT)]:
+        # Inner background layer (profondità + texture)
+        bgInner = ui.Bar()
+        bgInner.SetParent(self.baseWindow)
+        bgInner.SetPosition(3, 3)
+        bgInner.SetSize(WINDOW_WIDTH - 6, WINDOW_HEIGHT - 6)
+        bgInner.SetColor(t["bg_medium"])
+        bgInner.Show()
+        self._DisableMousePick(bgInner)
+        self.bgElements.append(bgInner)
+
+        # Top highlight (gradiente cima)
+        topHL = ui.Bar()
+        topHL.SetParent(self.baseWindow)
+        topHL.SetPosition(4, 4)
+        topHL.SetSize(WINDOW_WIDTH - 8, 3)
+        topHL.SetColor(0x0CFFFFFF)
+        topHL.Show()
+        self._DisableMousePick(topHL)
+        self.bgElements.append(topHL)
+
+        # Bordi neon principali – Top 3px, Left 3px (più visibili), Bottom/Right 2px (asimmetria elegante)
+        borderColor = t["border"]
+        borderDim = 0xFF000000 | (((borderColor >> 16) & 0xFF) * 2 // 3 << 16) | (((borderColor >> 8) & 0xFF) * 2 // 3 << 8) | ((borderColor & 0xFF) * 2 // 3)
+        for (x, y, w, h, col) in [
+            (0, 0, WINDOW_WIDTH, 3, borderColor),         # Top
+            (0, WINDOW_HEIGHT - 2, WINDOW_WIDTH, 2, borderDim),  # Bottom
+            (0, 0, 3, WINDOW_HEIGHT, borderColor),         # Left
+            (WINDOW_WIDTH - 2, 0, 2, WINDOW_HEIGHT, borderDim),  # Right
+        ]:
             border = ui.Bar()
             border.SetParent(self.baseWindow)
             border.SetPosition(x, y)
             border.SetSize(w, h)
-            border.SetColor(t["border"])
+            border.SetColor(col)
             border.Show()
             self._DisableMousePick(border)
             self.bgElements.append(border)
 
-        # Angoli decorativi ESTERNI - Solo Leveling Style
-        cornerLen = 25
-        cornerColor = t.get("pulse_color", t["accent"])
+        # Angoli decorativi DOPPI – stile Solo Leveling definitivo
+        cornerLen = 30
+        cornerColor = t.get("accent", t["border"])
+        cornerColorDim = 0xFF000000 | (((cornerColor >> 16) & 0xFF) // 2 << 16) | (((cornerColor >> 8) & 0xFF) // 2 << 8) | ((cornerColor & 0xFF) // 2)
 
-        # Top-Left
+        # Outer corners (brillanti)
         self.__CreateCorner(0, 0, cornerLen, cornerColor, "TL")
-        # Top-Right
         self.__CreateCorner(WINDOW_WIDTH - cornerLen, 0, cornerLen, cornerColor, "TR")
-        # Bottom-Left
         self.__CreateCorner(0, WINDOW_HEIGHT - cornerLen, cornerLen, cornerColor, "BL")
-        # Bottom-Right
         self.__CreateCorner(WINDOW_WIDTH - cornerLen, WINDOW_HEIGHT - cornerLen, cornerLen, cornerColor, "BR")
+        # Inner corners (attenuati - doppio bracket)
+        innerLen = 14
+        innerOffset = 6
+        self.__CreateCorner(innerOffset, innerOffset, innerLen, cornerColorDim, "TL")
+        self.__CreateCorner(WINDOW_WIDTH - innerLen - innerOffset, innerOffset, innerLen, cornerColorDim, "TR")
+        self.__CreateCorner(innerOffset, WINDOW_HEIGHT - innerLen - innerOffset, innerLen, cornerColorDim, "BL")
+        self.__CreateCorner(WINDOW_WIDTH - innerLen - innerOffset, WINDOW_HEIGHT - innerLen - innerOffset, innerLen, cornerColorDim, "BR")
 
         # FIX: Close button con colori espliciti ad alto contrasto (visibile su ogni tema)
         # NOTA: Creato in __CreateCloseButton() per z-order corretto (dopo header/tabs)
 
     def __CreateCloseButton(self):
-        """Crea il bottone X di chiusura - chiamato ULTIMO per z-order sopra tutto"""
+        """Crea il bottone X di chiusura – più elaborato e visibile"""
         closeWnd = ui.Window()
         closeWnd.SetParent(self.baseWindow)
-        closeWnd.SetPosition(WINDOW_WIDTH - 32, 6)
-        closeWnd.SetSize(24, 20)
+        closeWnd.SetPosition(WINDOW_WIDTH - 34, 5)
+        closeWnd.SetSize(26, 22)
         closeWnd.Show()
 
+        # BG con sfumatura rosso scuro
         closeBg = ui.Bar()
         closeBg.SetParent(closeWnd)
         closeBg.SetPosition(0, 0)
-        closeBg.SetSize(24, 20)
-        closeBg.SetColor(0xCC220000)
+        closeBg.SetSize(26, 22)
+        closeBg.SetColor(0xDD1A0000)
         closeBg.AddFlag("not_pick")
         closeBg.Show()
 
+        # Bordo superiore rosso brillante (2px)
         closeBorderT = ui.Bar()
         closeBorderT.SetParent(closeWnd)
         closeBorderT.SetPosition(0, 0)
-        closeBorderT.SetSize(24, 1)
-        closeBorderT.SetColor(0xFFFF4444)
+        closeBorderT.SetSize(26, 2)
+        closeBorderT.SetColor(0xFFFF3333)
         closeBorderT.AddFlag("not_pick")
         closeBorderT.Show()
 
+        # Bordo inferiore (1px attenuato)
         closeBorderB = ui.Bar()
         closeBorderB.SetParent(closeWnd)
-        closeBorderB.SetPosition(0, 19)
-        closeBorderB.SetSize(24, 1)
-        closeBorderB.SetColor(0xFFFF4444)
+        closeBorderB.SetPosition(0, 21)
+        closeBorderB.SetSize(26, 1)
+        closeBorderB.SetColor(0x66FF3333)
         closeBorderB.AddFlag("not_pick")
         closeBorderB.Show()
 
+        # Bordi laterali
         closeBorderL = ui.Bar()
         closeBorderL.SetParent(closeWnd)
         closeBorderL.SetPosition(0, 0)
-        closeBorderL.SetSize(1, 20)
-        closeBorderL.SetColor(0xFFFF4444)
+        closeBorderL.SetSize(1, 22)
+        closeBorderL.SetColor(0x88FF3333)
         closeBorderL.AddFlag("not_pick")
         closeBorderL.Show()
 
         closeBorderR = ui.Bar()
         closeBorderR.SetParent(closeWnd)
-        closeBorderR.SetPosition(23, 0)
-        closeBorderR.SetSize(1, 20)
-        closeBorderR.SetColor(0xFFFF4444)
+        closeBorderR.SetPosition(25, 0)
+        closeBorderR.SetSize(1, 22)
+        closeBorderR.SetColor(0x88FF3333)
         closeBorderR.AddFlag("not_pick")
         closeBorderR.Show()
 
+        # Testo X centrato
         closeText = ui.TextLine()
         closeText.SetParent(closeWnd)
-        closeText.SetPosition(12, 2)
+        closeText.SetPosition(13, 3)
         closeText.SetHorizontalAlignCenter()
         closeText.SetText("X")
-        closeText.SetPackedFontColor(0xFFFF6666)
+        closeText.SetPackedFontColor(0xFFFF5555)
         closeText.SetOutline()
         closeText.Show()
 
         closeWnd.OnMouseLeftButtonUp = lambda: self.Close()
         self.closeWnd = closeWnd
         self.closeBg = closeBg
-        self.closeBorderT = closeBorderT
-        self.closeBorderB = closeBorderB
-        self.closeBorderL = closeBorderL
-        self.closeBorderR = closeBorderR
         self.closeText = closeText
         self.bgElements.append(closeWnd)
 
@@ -973,32 +1005,52 @@ class HunterLevelWindow(ui.ScriptWindow):
     def __CreateHeader(self):
         t = self.theme
 
-        # Glow esterno (layer piu' grande)
+        # Glow esterno ampio (alone luminoso attorno all'header)
         glowOuter = ui.Bar()
         glowOuter.SetParent(self.baseWindow)
-        glowOuter.SetPosition(8, 8)
-        glowOuter.SetSize(WINDOW_WIDTH - 16, HEADER_HEIGHT + 4)
+        glowOuter.SetPosition(6, 6)
+        glowOuter.SetSize(WINDOW_WIDTH - 12, HEADER_HEIGHT + 8)
         glowOuter.SetColor(t["glow"])
         glowOuter.Show()
         self._DisableMousePick(glowOuter)
         self.headerElements.append(glowOuter)
 
-        # Background header
+        # Background header – più scuro, quasi piatto
         headerBg = ui.Bar()
         headerBg.SetParent(self.baseWindow)
         headerBg.SetPosition(10, 10)
         headerBg.SetSize(WINDOW_WIDTH - 20, HEADER_HEIGHT)
-        headerBg.SetColor(t["bg_medium"])
+        headerBg.SetColor(t["bg_dark"])
         headerBg.Show()
         self._DisableMousePick(headerBg)
         self.headerElements.append(headerBg)
 
-        # Bordi neon header (top, bottom, left, right)
+        # Inner header (gradiente interno simulato – layer più chiaro in cima)
+        headerBgTop = ui.Bar()
+        headerBgTop.SetParent(self.baseWindow)
+        headerBgTop.SetPosition(12, 12)
+        headerBgTop.SetSize(WINDOW_WIDTH - 24, HEADER_HEIGHT // 3)
+        headerBgTop.SetColor(0x0CFFFFFF)
+        headerBgTop.Show()
+        self._DisableMousePick(headerBgTop)
+        self.headerElements.append(headerBgTop)
+
+        # Left accent bar nell'header (barra neon sx – iconica)
+        headerAccent = ui.Bar()
+        headerAccent.SetParent(self.baseWindow)
+        headerAccent.SetPosition(10, 10)
+        headerAccent.SetSize(4, HEADER_HEIGHT)
+        headerAccent.SetColor(t["border"])
+        headerAccent.Show()
+        self._DisableMousePick(headerAccent)
+        self.headerElements.append(headerAccent)
+
+        # Bordi neon header superiore (2px brillante) e inferiore (2px attenuato)
         glowTop = ui.Bar()
         glowTop.SetParent(self.baseWindow)
         glowTop.SetPosition(10, 10)
         glowTop.SetSize(WINDOW_WIDTH - 20, 2)
-        glowTop.SetColor(t["glow_strong"])
+        glowTop.SetColor(t["border"])
         glowTop.Show()
         self._DisableMousePick(glowTop)
         self.headerElements.append(glowTop)
@@ -1012,9 +1064,9 @@ class HunterLevelWindow(ui.ScriptWindow):
         self._DisableMousePick(glowBottom)
         self.headerElements.append(glowBottom)
 
-        # Angoli decorativi - SOLO LEVELING STYLE
-        cornerSize = 12
-        cornerColor = t.get("pulse_color", t["accent"])
+        # Angoli decorativi – DOPPIO BRACKET
+        cornerSize = 16
+        cornerColor = t.get("accent", t["border"])
 
         # Top-Left corner
         cTL1 = ui.Bar()
@@ -1095,8 +1147,8 @@ class HunterLevelWindow(ui.ScriptWindow):
         self.__UpdateHeaderContent()
     
     def __UpdateHeaderContent(self):
-        # Mantieni i primi 12 elementi (glow, bg, bordi, angoli decorativi)
-        baseElements = 12
+        # Mantieni i primi 16 elementi (glow, bg, innerBg, accent, bordi, angoli decorativi)
+        baseElements = 16
         for e in self.headerElements[baseElements:]:
             try:
                 e.Hide()
@@ -1122,47 +1174,61 @@ class HunterLevelWindow(ui.ScriptWindow):
         else:
             progress = 0.0
         
-        self.__HText("Cacciatore:", 20, 18, t["text_muted"])
-        self.__HText(str(self.playerData["name"]), 95, 18, t["accent"])
-        
-        self.__HText("Gloria:", 250, 18, t["text_muted"])
-        self.__HText(FormatNumber(pts), 305, 18, GOLD_COLOR)
-        self.__HText("Oggi:", 400, 18, t["text_muted"])
-        self.__HText("+" + FormatNumber(self.playerData["daily_points"]), 440, 18, 0xFF00FF88)
-        
-        rankText = "[%s] %s - %s" % (self.currentRankKey, t["name"], t["title"])
-        self.__HText(rankText, 20, 40, t["accent"])
-        
-        self.__HText("Spendibili:", 250, 40, t["text_muted"])
-        self.__HText(FormatNumber(self.playerData["spendable_points"]), 305, 40, 0xFFFFA500)
-        
+        # ── Riga 1: Nome + Gloria + Daily ──
+        self.__HText("CACCIATORE", 20, 15, t["text_muted"])
+        self.__HText(str(self.playerData["name"]), 100, 15, t["accent_bright"] if "accent_bright" in t else t["accent"])
+
+        self.__HText("GLORIA", 250, 15, t["text_muted"])
+        self.__HText(FormatNumber(pts), 300, 15, GOLD_COLOR)
+
+        self.__HText("+Oggi", 400, 15, t["text_muted"])
+        self.__HText(FormatNumber(self.playerData["daily_points"]), 440, 15, 0xFF44FF88)
+
+        # Separatore orizzontale sottile
+        sepH = ui.Bar()
+        sepH.SetParent(self.baseWindow)
+        sepH.SetPosition(16, 33)
+        sepH.SetSize(WINDOW_WIDTH - 32, 1)
+        sepH.SetColor(0x20FFFFFF)
+        sepH.Show()
+        self._DisableMousePick(sepH)
+        self.headerElements.append(sepH)
+
+        # ── Riga 2: Rank + Spendibili + Streak ──
+        rankText = "[%s] %s" % (self.currentRankKey, t["title"])
+        self.__HText(rankText, 20, 38, t["accent"])
+
+        self.__HText("Spendibili", 250, 38, t["text_muted"])
+        self.__HText(FormatNumber(self.playerData["spendable_points"]), 318, 38, 0xFFFFAA44)
+
         streak = self.playerData["login_streak"]
         bonus = self.playerData["streak_bonus"]
-        
-        # Calcola bonus streak client-side se il server non lo manda
         if streak > 0 and bonus == 0:
-            if streak >= 30:
-                bonus = 20
-            elif streak >= 7:
-                bonus = 10
-            elif streak >= 3:
-                bonus = 5
-        
+            if streak >= 30: bonus = 20
+            elif streak >= 7: bonus = 10
+            elif streak >= 3: bonus = 5
         if streak > 0:
-            self.__HText("Streak: %dg (+%d%%)" % (streak, bonus), 400, 40, 0xFF00FF88)
-        
-        barX, barY = 20, 65
-        barW, barH = 320, 14
-        
+            self.__HText("Streak %dg +%d%%" % (streak, bonus), 400, 38, 0xFF44FF88)
+
+        # ── Barra Progresso Rank – più elaborata ──
+        barX, barY = 16, 62
+        barW, barH = 300, 14
+
+        # BG barra (sfondo scuro con bordo sottile)
         barBg = ui.Bar()
         barBg.SetParent(self.baseWindow)
         barBg.SetPosition(barX, barY)
         barBg.SetSize(barW, barH)
-        barBg.SetColor(0xFF111111)
+        barBg.SetColor(0xFF060610)
         barBg.Show()
         self._DisableMousePick(barBg)
         self.headerElements.append(barBg)
-        
+
+        # Bordi barra (top/left brillanti)
+        barBorderT = ui.Bar(); barBorderT.SetParent(self.baseWindow); barBorderT.SetPosition(barX, barY); barBorderT.SetSize(barW, 1); barBorderT.SetColor(0xFF333355); barBorderT.Show(); self._DisableMousePick(barBorderT); self.headerElements.append(barBorderT)
+        barBorderL = ui.Bar(); barBorderL.SetParent(self.baseWindow); barBorderL.SetPosition(barX, barY); barBorderL.SetSize(1, barH); barBorderL.SetColor(0xFF333355); barBorderL.Show(); self._DisableMousePick(barBorderL); self.headerElements.append(barBorderL)
+
+        # Fill barra progresso
         fillW = max(1, int(barW * progress / 100))
         barFill = ui.Bar()
         barFill.SetParent(self.baseWindow)
@@ -1172,16 +1238,31 @@ class HunterLevelWindow(ui.ScriptWindow):
         barFill.Show()
         self._DisableMousePick(barFill)
         self.headerElements.append(barFill)
-        
-        self.__HText("%d%%" % int(progress), 350, 63, t["accent"])
-        
+
+        # Highlight fill (effetto brillantezza cima)
+        if fillW > 4:
+            barHL = ui.Bar(); barHL.SetParent(self.baseWindow); barHL.SetPosition(barX, barY); barHL.SetSize(fillW, 2); barHL.SetColor(0x25FFFFFF); barHL.Show(); self._DisableMousePick(barHL); self.headerElements.append(barHL)
+
+        # Testo % progresso e prossimo rank
+        self.__HText("%d%%" % int(progress), barX + barW + 6, 61, t["accent"])
+
         nextKey = self.__GetNextRankKey()
         if nextKey:
             nextTheme = RANK_THEMES[nextKey]
-            self.__HText("Prossimo:", 400, 63, t["text_muted"])
-            self.__HText(nextTheme["name"], 460, 63, nextTheme["accent"])
+            self.__HText("->", barX + barW + 38, 61, t["text_muted"])
+            self.__HText(nextTheme["name"], barX + barW + 52, 61, nextTheme.get("accent", 0xFFFFFFFF))
         else:
-            self.__HText("RANK MASSIMO!", 400, 63, GOLD_COLOR)
+            self.__HText("MONARCA", barX + barW + 6, 61, GOLD_COLOR)
+
+        # Separatore finale header
+        sepH2 = ui.Bar()
+        sepH2.SetParent(self.baseWindow)
+        sepH2.SetPosition(16, 82)
+        sepH2.SetSize(WINDOW_WIDTH - 32, 1)
+        sepH2.SetColor(t["glow_strong"] if "glow_strong" in t else 0x30FFFFFF)
+        sepH2.Show()
+        self._DisableMousePick(sepH2)
+        self.headerElements.append(sepH2)
     
     def __HText(self, text, x, y, color):
         t = ui.TextLine()
