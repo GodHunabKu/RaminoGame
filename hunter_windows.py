@@ -1595,9 +1595,8 @@ class FractureDefenseWindow(ui.Window, DraggableMixin):
 
     def __init__(self):
         ui.Window.__init__(self)
-        self.SetSize(380, 240)  # Aumentato per includere sezione distanza
-        # Usa posizioni default ottimizzate
-        defaultX, defaultY = GetDefaultPosition("FractureDefenseWindow", 380, 240)
+        self.SetSize(410, 300)
+        defaultX, defaultY = GetDefaultPosition("FractureDefenseWindow", 410, 300)
 
         self.InitDraggable("FractureDefenseWindow", defaultX, defaultY)
 
@@ -1612,77 +1611,113 @@ class FractureDefenseWindow(ui.Window, DraggableMixin):
         self.fractureRank = "E"
         self.pulsePhase = 0.0
         self.isActive = False
-        self.zeroTimeStart = 0  # FIX: Timestamp di quando il timer ha raggiunto 00:00
-        
+        self.zeroTimeStart = 0
+
         # Coordinate zona difesa
         self.defenseCenterX = 0
         self.defenseCenterY = 0
-        self.defenseRadius = 1000  # Default 10 metri
+        self.defenseRadius = 1000
         self.currentDistance = 0
         self.distanceStatus = "OK"
 
-        # Schema colori corrente
         self.colorScheme = DEFENSE_RANK_COLORS["E"]
+        borderColor = self.colorScheme["border"]
+
+        # Elementi decorativi (non hanno accesso individuale)
+        self._decorElements = []
+
+        W, H = 410, 300
 
         # ═══════════ SFONDO PRINCIPALE ═══════════
-        # Sfondo esterno scuro con bordo colorato
         self.bgOuter = ui.Bar()
         self.bgOuter.SetParent(self)
         self.bgOuter.SetPosition(0, 0)
-        self.bgOuter.SetSize(380, 240)
-        self.bgOuter.SetColor(0xEE0A0A14)
+        self.bgOuter.SetSize(W, H)
+        self.bgOuter.SetColor(0xF2030312)
         self.bgOuter.AddFlag("not_pick")
         self.bgOuter.Show()
 
-        # Glow interno
-        self.glowInner = ui.Bar()
-        self.glowInner.SetParent(self)
-        self.glowInner.SetPosition(3, 3)
-        self.glowInner.SetSize(374, 234)
-        self.glowInner.SetColor(0x22FFFFFF)
-        self.glowInner.AddFlag("not_pick")
-        self.glowInner.Show()
-
-        # Sfondo interno
+        # Inner depth layer
         self.bgInner = ui.Bar()
         self.bgInner.SetParent(self)
         self.bgInner.SetPosition(5, 5)
-        self.bgInner.SetSize(370, 230)
-        self.bgInner.SetColor(0xDD080812)
+        self.bgInner.SetSize(W - 10, H - 10)
+        self.bgInner.SetColor(0xDD050510)
         self.bgInner.AddFlag("not_pick")
         self.bgInner.Show()
 
-        # ═══════════ BORDI ANIMATI ═══════════
+        # Top highlight gradient
+        _topHL = ui.Bar()
+        _topHL.SetParent(self)
+        _topHL.SetPosition(5, 5)
+        _topHL.SetSize(W - 10, 10)
+        _topHL.SetColor(0x0CFFFFFF)
+        _topHL.AddFlag("not_pick")
+        _topHL.Show()
+        self._decorElements.append(_topHL)
+
+        # Glow pulsante (interno)
+        self.glowInner = ui.Bar()
+        self.glowInner.SetParent(self)
+        self.glowInner.SetPosition(3, 3)
+        self.glowInner.SetSize(W - 6, H - 6)
+        self.glowInner.SetColor(self.colorScheme.get("glow", 0x15FFFFFF))
+        self.glowInner.AddFlag("not_pick")
+        self.glowInner.Show()
+
+        # ═══════════ BORDI ASIMMETRICI (top/left spessi, bot/right sottili) ═══════════
         self.borders = []
-        borderColor = self.colorScheme["border"]
-        # Top
-        b = ui.Bar(); b.SetParent(self); b.SetPosition(0, 0); b.SetSize(380, 3); b.SetColor(borderColor); b.AddFlag("not_pick"); b.Show()
+        # Top (3px)
+        b = ui.Bar(); b.SetParent(self); b.SetPosition(0,0); b.SetSize(W,3); b.SetColor(borderColor); b.AddFlag("not_pick"); b.Show()
         self.borders.append(b)
-        # Bottom
-        b = ui.Bar(); b.SetParent(self); b.SetPosition(0, 237); b.SetSize(380, 3); b.SetColor(borderColor); b.AddFlag("not_pick"); b.Show()
+        # Bottom (2px)
+        b = ui.Bar(); b.SetParent(self); b.SetPosition(0,H-2); b.SetSize(W,2); b.SetColor(borderColor); b.AddFlag("not_pick"); b.Show()
         self.borders.append(b)
-        # Left
-        b = ui.Bar(); b.SetParent(self); b.SetPosition(0, 0); b.SetSize(3, 240); b.SetColor(borderColor); b.AddFlag("not_pick"); b.Show()
+        # Left accent (6px)
+        b = ui.Bar(); b.SetParent(self); b.SetPosition(0,0); b.SetSize(6,H); b.SetColor(borderColor); b.AddFlag("not_pick"); b.Show()
         self.borders.append(b)
-        # Right
-        b = ui.Bar(); b.SetParent(self); b.SetPosition(377, 0); b.SetSize(3, 240); b.SetColor(borderColor); b.AddFlag("not_pick"); b.Show()
+        # Right (2px)
+        b = ui.Bar(); b.SetParent(self); b.SetPosition(W-2,0); b.SetSize(2,H); b.SetColor(borderColor); b.AddFlag("not_pick"); b.Show()
         self.borders.append(b)
 
-        # ═══════════ HEADER ═══════════
-        # Icona scudo (simbolo difesa)
+        # Corner L-bracket ticks outer (22px)
+        self.cornerTicks = []
+        tickLen = 22
+        for (cx, cy, cw, ch) in [
+            (6,3,tickLen,1),  (6,3,1,tickLen),                             # TL H+V
+            (W-tickLen-2,3,tickLen,1),  (W-2,3,1,tickLen),                 # TR H+V
+            (6,H-3,tickLen,1),  (6,H-3-tickLen,1,tickLen),                 # BL H+V
+            (W-tickLen-2,H-3,tickLen,1), (W-2,H-3-tickLen,1,tickLen),      # BR H+V
+        ]:
+            ct = ui.Bar(); ct.SetParent(self); ct.SetPosition(cx,cy); ct.SetSize(cw,ch)
+            ct.SetColor(borderColor); ct.AddFlag("not_pick"); ct.Show()
+            self.cornerTicks.append(ct)
+
+        # ═══════════ HEADER (0–68px) ═══════════
+        # Header gradient bg
+        _hBg = ui.Bar()
+        _hBg.SetParent(self)
+        _hBg.SetPosition(6, 3)
+        _hBg.SetSize(W - 8, 64)
+        _hBg.SetColor(0x160A0525)
+        _hBg.AddFlag("not_pick")
+        _hBg.Show()
+        self._decorElements.append(_hBg)
+
+        # Icona / label laterale
         self.shieldIcon = ui.TextLine()
         self.shieldIcon.SetParent(self)
-        self.shieldIcon.SetPosition(15, 12)
-        self.shieldIcon.SetText("[#]")
+        self.shieldIcon.SetPosition(18, 9)
+        self.shieldIcon.SetText("[ DIFESA ]")
         self.shieldIcon.SetPackedFontColor(0xFFFFD700)
         self.shieldIcon.SetOutline()
         self.shieldIcon.AddFlag("not_pick")
         self.shieldIcon.Show()
 
-        # Titolo "DIFESA FRATTURA"
+        # Titolo centrato
         self.titleLabel = ui.TextLine()
         self.titleLabel.SetParent(self)
-        self.titleLabel.SetPosition(190, 10)
+        self.titleLabel.SetPosition(175, 8)
         self.titleLabel.SetHorizontalAlignCenter()
         self.titleLabel.SetText("DIFESA FRATTURA")
         self.titleLabel.SetPackedFontColor(0xFFFFFFFF)
@@ -1690,38 +1725,61 @@ class FractureDefenseWindow(ui.Window, DraggableMixin):
         self.titleLabel.AddFlag("not_pick")
         self.titleLabel.Show()
 
+        # Rank label "[E-RANK]"
+        self.rankLabel = ui.TextLine()
+        self.rankLabel.SetParent(self)
+        self.rankLabel.SetPosition(175, 26)
+        self.rankLabel.SetHorizontalAlignCenter()
+        self.rankLabel.SetText("[ E-RANK ]")
+        self.rankLabel.SetPackedFontColor(borderColor)
+        self.rankLabel.SetOutline()
+        self.rankLabel.AddFlag("not_pick")
+        self.rankLabel.Show()
+
         # Nome frattura
         self.fractureNameLabel = ui.TextLine()
         self.fractureNameLabel.SetParent(self)
-        self.fractureNameLabel.SetPosition(190, 28)
+        self.fractureNameLabel.SetPosition(175, 47)
         self.fractureNameLabel.SetHorizontalAlignCenter()
         self.fractureNameLabel.SetText("")
-        self.fractureNameLabel.SetPackedFontColor(0xFFAAAAAA)
+        self.fractureNameLabel.SetPackedFontColor(0xFFBBBBCC)
         self.fractureNameLabel.AddFlag("not_pick")
         self.fractureNameLabel.Show()
 
-        # Linea separatore header
-        self.headerLine = ui.Bar()
-        self.headerLine.SetParent(self)
-        self.headerLine.SetPosition(10, 48)
-        self.headerLine.SetSize(360, 1)
-        self.headerLine.SetColor(0x66FFFFFF)
-        self.headerLine.AddFlag("not_pick")
-        self.headerLine.Show()
-
-        # ═══════════ TIMER SECTION ═══════════
-        # Background timer
+        # ═══════════ TIMER BOX (top-right, 104x58) ═══════════
         self.timerBg = ui.Bar()
         self.timerBg.SetParent(self)
-        self.timerBg.SetPosition(290, 8)
-        self.timerBg.SetSize(80, 35)
-        self.timerBg.SetColor(0x88000000)
+        self.timerBg.SetPosition(298, 5)
+        self.timerBg.SetSize(106, 58)
+        self.timerBg.SetColor(0xCC030010)
         self.timerBg.AddFlag("not_pick")
         self.timerBg.Show()
 
+        # Timer: top border 2px rosso (urgenza)
+        _tTB = ui.Bar(); _tTB.SetParent(self); _tTB.SetPosition(298,5); _tTB.SetSize(106,2); _tTB.SetColor(0xFFCC2222); _tTB.AddFlag("not_pick"); _tTB.Show()
+        self._decorElements.append(_tTB)
+        # Timer: left accent 4px
+        _tAL = ui.Bar(); _tAL.SetParent(self); _tAL.SetPosition(298,5); _tAL.SetSize(4,58); _tAL.SetColor(0xFF880000); _tAL.AddFlag("not_pick"); _tAL.Show()
+        self._decorElements.append(_tAL)
+        # Timer corner ticks TL + BR
+        for (cx,cy,cw,ch) in [(302,7,8,1),(302,7,1,8),(396,57,8,1),(396,49,1,8)]:
+            _ct = ui.Bar(); _ct.SetParent(self); _ct.SetPosition(cx,cy); _ct.SetSize(cw,ch); _ct.SetColor(0xFF660000); _ct.AddFlag("not_pick"); _ct.Show()
+            self._decorElements.append(_ct)
+
+        # Timer label "[ TIMER ]"
+        _tLbl = ui.TextLine()
+        _tLbl.SetParent(self)
+        _tLbl.SetPosition(351, 12)
+        _tLbl.SetHorizontalAlignCenter()
+        _tLbl.SetText("[ TIMER ]")
+        _tLbl.SetPackedFontColor(0xFF666677)
+        _tLbl.AddFlag("not_pick")
+        _tLbl.Show()
+        self._decorElements.append(_tLbl)
+
         self.timerText = ui.TextLine()
         self.timerText.SetParent(self)
-        self.timerText.SetPosition(330, 18)
+        self.timerText.SetPosition(351, 30)
         self.timerText.SetHorizontalAlignCenter()
         self.timerText.SetText("00:00")
         self.timerText.SetPackedFontColor(0xFFFFFFFF)
@@ -1729,47 +1787,64 @@ class FractureDefenseWindow(ui.Window, DraggableMixin):
         self.timerText.AddFlag("not_pick")
         self.timerText.Show()
 
-        # ═══════════ PROGRESS SECTION ═══════════
-        # Label "PROGRESSO"
+        # Header separator
+        self.headerLine = ui.Bar()
+        self.headerLine.SetParent(self)
+        self.headerLine.SetPosition(8, 70)
+        self.headerLine.SetSize(W - 16, 1)
+        self.headerLine.SetColor(0x55FFFFFF)
+        self.headerLine.AddFlag("not_pick")
+        self.headerLine.Show()
+
+        # ═══════════ PROGRESS SECTION (y=72) ═══════════
+        # Label "PROGRESSO DIFESA" (colorata con scheme)
         self.progressLabel = ui.TextLine()
         self.progressLabel.SetParent(self)
-        self.progressLabel.SetPosition(15, 55)
+        self.progressLabel.SetPosition(15, 77)
         self.progressLabel.SetText("PROGRESSO DIFESA")
-        self.progressLabel.SetPackedFontColor(0xFFCCCCCC)
+        self.progressLabel.SetPackedFontColor(0xFF00CCFF)
         self.progressLabel.AddFlag("not_pick")
         self.progressLabel.Show()
 
-        # Progress bar background
+        # Progress bar border frame
+        for (cx,cy,cw,ch) in [
+            (14,92,W-28,1),(14,113,W-28,1),   # top+bot
+            (14,92,1,22),(W-14,92,1,22),       # left+right
+        ]:
+            _bd = ui.Bar(); _bd.SetParent(self); _bd.SetPosition(cx,cy); _bd.SetSize(cw,ch); _bd.SetColor(borderColor); _bd.AddFlag("not_pick"); _bd.Show()
+            self._decorElements.append(_bd)
+
+        # Progress bar bg
         self.progressBarBg = ui.Bar()
         self.progressBarBg.SetParent(self)
-        self.progressBarBg.SetPosition(15, 73)
-        self.progressBarBg.SetSize(350, 20)
-        self.progressBarBg.SetColor(0xFF1A1A2E)
+        self.progressBarBg.SetPosition(15, 93)
+        self.progressBarBg.SetSize(W - 30, 20)
+        self.progressBarBg.SetColor(0xFF060618)
         self.progressBarBg.AddFlag("not_pick")
         self.progressBarBg.Show()
 
         # Progress bar fill
         self.progressBarFill = ui.Bar()
         self.progressBarFill.SetParent(self)
-        self.progressBarFill.SetPosition(17, 75)
-        self.progressBarFill.SetSize(0, 16)
-        self.progressBarFill.SetColor(0xFF00FF00)
+        self.progressBarFill.SetPosition(16, 94)
+        self.progressBarFill.SetSize(0, 18)
+        self.progressBarFill.SetColor(borderColor)
         self.progressBarFill.AddFlag("not_pick")
         self.progressBarFill.Show()
 
-        # Progress bar glow overlay
+        # Progress bar top highlight
         self.progressBarGlow = ui.Bar()
         self.progressBarGlow.SetParent(self)
-        self.progressBarGlow.SetPosition(17, 75)
-        self.progressBarGlow.SetSize(0, 8)
+        self.progressBarGlow.SetPosition(16, 94)
+        self.progressBarGlow.SetSize(0, 6)
         self.progressBarGlow.SetColor(0x44FFFFFF)
         self.progressBarGlow.AddFlag("not_pick")
         self.progressBarGlow.Show()
 
-        # Progress text (0 / 20)
+        # Progress counter text (centered on bar)
         self.progressText = ui.TextLine()
         self.progressText.SetParent(self)
-        self.progressText.SetPosition(190, 75)
+        self.progressText.SetPosition(W // 2, 97)
         self.progressText.SetHorizontalAlignCenter()
         self.progressText.SetText("0 / 0")
         self.progressText.SetPackedFontColor(0xFFFFFFFF)
@@ -1777,86 +1852,139 @@ class FractureDefenseWindow(ui.Window, DraggableMixin):
         self.progressText.AddFlag("not_pick")
         self.progressText.Show()
 
-        # ═══════════ WAVE INDICATORS ═══════════
+        # ═══════════ WAVE INDICATORS (y=118) ═══════════
         self.waveLabel = ui.TextLine()
         self.waveLabel.SetParent(self)
-        self.waveLabel.SetPosition(15, 100)
+        self.waveLabel.SetPosition(15, 120)
         self.waveLabel.SetText("WAVE:")
-        self.waveLabel.SetPackedFontColor(0xFFCCCCCC)
+        self.waveLabel.SetPackedFontColor(0xFF00CCFF)
         self.waveLabel.AddFlag("not_pick")
         self.waveLabel.Show()
 
-        # Wave indicators (piccoli quadrati)
         self.waveIndicators = []
+        self._waveLabelTexts = []
         for i in range(5):
+            # Indicator bar
             ind = ui.Bar()
             ind.SetParent(self)
-            ind.SetPosition(70 + i * 30, 100)
-            ind.SetSize(22, 16)
-            ind.SetColor(0xFF333333)
+            ind.SetPosition(70 + i * 36, 118)
+            ind.SetSize(30, 18)
+            ind.SetColor(0xFF0C0C1C)
             ind.AddFlag("not_pick")
             ind.Show()
             self.waveIndicators.append(ind)
 
-        # ═══════════ DISTANZA DALLA FRATTURA ═══════════
-        # Separatore
+            # Border on indicator
+            for (cx,cy,cw,ch) in [
+                (70+i*36,118,30,1),(70+i*36,135,30,1),
+                (70+i*36,118,1,18),(70+i*36+29,118,1,18)
+            ]:
+                _wbd = ui.Bar(); _wbd.SetParent(self); _wbd.SetPosition(cx,cy); _wbd.SetSize(cw,ch); _wbd.SetColor(0xFF222233); _wbd.AddFlag("not_pick"); _wbd.Show()
+                self._decorElements.append(_wbd)
+
+            # Wave label "W1"-"W5"
+            wt = ui.TextLine()
+            wt.SetParent(self)
+            wt.SetPosition(70 + i * 36 + 15, 122)
+            wt.SetHorizontalAlignCenter()
+            wt.SetText("W%d" % (i + 1))
+            wt.SetPackedFontColor(0xFF333344)
+            wt.AddFlag("not_pick")
+            wt.Show()
+            self._waveLabelTexts.append(wt)
+
+        # ═══════════ DISTANZA DALLA FRATTURA (y=140) ═══════════
+        # Separator
         self.distSep = ui.Bar()
         self.distSep.SetParent(self)
-        self.distSep.SetPosition(10, 125)
-        self.distSep.SetSize(360, 1)
-        self.distSep.SetColor(0x66FFFFFF)
+        self.distSep.SetPosition(8, 142)
+        self.distSep.SetSize(W - 16, 1)
+        self.distSep.SetColor(0x44FFFFFF)
         self.distSep.AddFlag("not_pick")
         self.distSep.Show()
-        
+
         # Label distanza
         self.distLabel = ui.TextLine()
         self.distLabel.SetParent(self)
-        self.distLabel.SetPosition(15, 132)
+        self.distLabel.SetPosition(15, 149)
         self.distLabel.SetText("DISTANZA DALLA FRATTURA:")
-        self.distLabel.SetPackedFontColor(0xFFCCCCCC)
+        self.distLabel.SetPackedFontColor(0xFF00CCFF)
         self.distLabel.AddFlag("not_pick")
         self.distLabel.Show()
-        
-        # Valore distanza (in metri)
+
+        # Valore distanza (right-aligned)
         self.distValue = ui.TextLine()
         self.distValue.SetParent(self)
-        self.distValue.SetPosition(365, 132)
+        self.distValue.SetPosition(W - 10, 149)
         self.distValue.SetHorizontalAlignRight()
         self.distValue.SetText("0m")
-        self.distValue.SetPackedFontColor(0xFF00FF00)
+        self.distValue.SetPackedFontColor(0xFF00FF44)
         self.distValue.SetOutline()
         self.distValue.AddFlag("not_pick")
         self.distValue.Show()
-        
-        # Barra distanza
+
+        # Distance bar border frame
+        for (cx,cy,cw,ch) in [
+            (14,164,W-28,1),(14,180,W-28,1),
+            (14,164,1,17),(W-14,164,1,17),
+        ]:
+            _bd = ui.Bar(); _bd.SetParent(self); _bd.SetPosition(cx,cy); _bd.SetSize(cw,ch); _bd.SetColor(borderColor); _bd.AddFlag("not_pick"); _bd.Show()
+            self._decorElements.append(_bd)
+
+        # Distance bar bg
         self.distBarBg = ui.Bar()
         self.distBarBg.SetParent(self)
-        self.distBarBg.SetPosition(15, 150)
-        self.distBarBg.SetSize(350, 12)
-        self.distBarBg.SetColor(0xFF1A1A2E)
+        self.distBarBg.SetPosition(15, 165)
+        self.distBarBg.SetSize(W - 30, 15)
+        self.distBarBg.SetColor(0xFF060618)
         self.distBarBg.AddFlag("not_pick")
         self.distBarBg.Show()
-        
+
+        # Distance bar fill
         self.distBarFill = ui.Bar()
         self.distBarFill.SetParent(self)
-        self.distBarFill.SetPosition(17, 152)
-        self.distBarFill.SetSize(0, 8)
-        self.distBarFill.SetColor(0xFF00AA00)
+        self.distBarFill.SetPosition(16, 166)
+        self.distBarFill.SetSize(0, 13)
+        self.distBarFill.SetColor(borderColor)
         self.distBarFill.AddFlag("not_pick")
         self.distBarFill.Show()
 
-        # ═══════════ STATUS MESSAGE ═══════════
+        # ═══════════ STATUS MESSAGE (y=184–300) ═══════════
+        # Status separator
+        _stSep = ui.Bar(); _stSep.SetParent(self); _stSep.SetPosition(8,184); _stSep.SetSize(W-16,1); _stSep.SetColor(0x55FFFFFF); _stSep.AddFlag("not_pick"); _stSep.Show()
+        self._decorElements.append(_stSep)
+
+        # Status bg
         self.statusBg = ui.Bar()
         self.statusBg.SetParent(self)
-        self.statusBg.SetPosition(15, 170)
-        self.statusBg.SetSize(350, 60)
-        self.statusBg.SetColor(0x44000000)
+        self.statusBg.SetPosition(5, 185)
+        self.statusBg.SetSize(W - 10, H - 188)
+        self.statusBg.SetColor(0x40000000)
         self.statusBg.AddFlag("not_pick")
         self.statusBg.Show()
 
+        # Status left accent (5px, border color)
+        self.statusAccentL = ui.Bar()
+        self.statusAccentL.SetParent(self)
+        self.statusAccentL.SetPosition(5, 185)
+        self.statusAccentL.SetSize(5, H - 188)
+        self.statusAccentL.SetColor(borderColor)
+        self.statusAccentL.AddFlag("not_pick")
+        self.statusAccentL.Show()
+
+        # Status top border (2px)
+        self.statusBorderTop = ui.Bar()
+        self.statusBorderTop.SetParent(self)
+        self.statusBorderTop.SetPosition(5, 185)
+        self.statusBorderTop.SetSize(W - 10, 2)
+        self.statusBorderTop.SetColor(borderColor)
+        self.statusBorderTop.AddFlag("not_pick")
+        self.statusBorderTop.Show()
+
+        # Main status text
         self.statusText = ui.TextLine()
         self.statusText.SetParent(self)
-        self.statusText.SetPosition(190, 180)
+        self.statusText.SetPosition(W // 2, 198)
         self.statusText.SetHorizontalAlignCenter()
         self.statusText.SetText("Preparati alla difesa...")
         self.statusText.SetPackedFontColor(0xFFFFD700)
@@ -1864,22 +1992,23 @@ class FractureDefenseWindow(ui.Window, DraggableMixin):
         self.statusText.AddFlag("not_pick")
         self.statusText.Show()
 
+        # Sub-status text
         self.statusSubText = ui.TextLine()
         self.statusSubText.SetParent(self)
-        self.statusSubText.SetPosition(190, 198)
+        self.statusSubText.SetPosition(W // 2, 218)
         self.statusSubText.SetHorizontalAlignCenter()
         self.statusSubText.SetText("Uccidi i mob per aprire la frattura!")
-        self.statusSubText.SetPackedFontColor(0xFFAAAAAA)
+        self.statusSubText.SetPackedFontColor(0xFF8888AA)
         self.statusSubText.AddFlag("not_pick")
         self.statusSubText.Show()
-        
-        # Warning text per distanza
+
+        # Warning text (distanza)
         self.warningText = ui.TextLine()
         self.warningText.SetParent(self)
-        self.warningText.SetPosition(190, 215)
+        self.warningText.SetPosition(W // 2, 255)
         self.warningText.SetHorizontalAlignCenter()
         self.warningText.SetText("")
-        self.warningText.SetPackedFontColor(0xFFFF0000)
+        self.warningText.SetPackedFontColor(0xFFFF2222)
         self.warningText.SetOutline()
         self.warningText.AddFlag("not_pick")
         self.warningText.Hide()
@@ -1903,22 +2032,46 @@ class FractureDefenseWindow(ui.Window, DraggableMixin):
         borderColor = self.colorScheme["border"]
         titleColor = self.colorScheme["title"]
 
-        # Aggiorna bordi
+        # Aggiorna bordi principali
         for b in self.borders:
             b.SetColor(borderColor)
 
-        # Aggiorna titolo
+        # Aggiorna corner ticks
+        if hasattr(self, "cornerTicks"):
+            for ct in self.cornerTicks:
+                ct.SetColor(borderColor)
+
+        # Aggiorna rank label
+        if hasattr(self, "rankLabel"):
+            self.rankLabel.SetPackedFontColor(borderColor)
+            self.rankLabel.SetText("[ %s-RANK ]" % self.fractureRank)
+
+        # Aggiorna titoli
         self.titleLabel.SetPackedFontColor(titleColor)
         self.fractureNameLabel.SetPackedFontColor(self.colorScheme["accent"])
 
         # Aggiorna progress bar
         self.progressBarFill.SetColor(borderColor)
-        
+
         # Aggiorna barra distanza
         self.distBarFill.SetColor(borderColor)
 
         # Aggiorna glow
-        self.glowInner.SetColor(self.colorScheme["glow"])
+        self.glowInner.SetColor(self.colorScheme.get("glow", 0x15FFFFFF))
+
+        # Aggiorna status accent + border top
+        if hasattr(self, "statusAccentL"):
+            self.statusAccentL.SetColor(borderColor)
+        if hasattr(self, "statusBorderTop"):
+            self.statusBorderTop.SetColor(borderColor)
+
+        # Aggiorna label sezioni
+        if hasattr(self, "progressLabel"):
+            self.progressLabel.SetPackedFontColor(borderColor)
+        if hasattr(self, "waveLabel"):
+            self.waveLabel.SetPackedFontColor(borderColor)
+        if hasattr(self, "distLabel"):
+            self.distLabel.SetPackedFontColor(borderColor)
 
         # Aggiorna status text color
         self.statusText.SetPackedFontColor(titleColor)
@@ -1981,11 +2134,11 @@ class FractureDefenseWindow(ui.Window, DraggableMixin):
         # Se killed >= required, mostra completato
         if killed >= self.mobsRequired and self.mobsRequired > 0:
             self.progressText.SetText("%d / %d - COMPLETATO!" % (self.mobsRequired, self.mobsRequired))
-            self.progressText.SetPackedFontColor(0xFF00FF00)
+            self.progressText.SetPackedFontColor(0xFF00FF44)
             # Barra al 100%
-            self.progressBarFill.SetSize(346, 16)
-            self.progressBarGlow.SetSize(346, 8)
-            self.progressBarFill.SetColor(0xFF00FF00)  # Verde
+            self.progressBarFill.SetSize(378, 18)
+            self.progressBarGlow.SetSize(378, 6)
+            self.progressBarFill.SetColor(0xFF00FF44)  # Verde neon
             # Status
             self.statusText.SetText("OBIETTIVO RAGGIUNTO!")
             self.statusText.SetPackedFontColor(0xFF00FF00)
@@ -1997,9 +2150,9 @@ class FractureDefenseWindow(ui.Window, DraggableMixin):
             # Aggiorna barra
             if self.mobsRequired > 0:
                 progress = float(killed) / float(self.mobsRequired)
-                barWidth = int(346 * min(1.0, progress))
-                self.progressBarFill.SetSize(barWidth, 16)
-                self.progressBarGlow.SetSize(barWidth, 8)
+                barWidth = int(378 * min(1.0, progress))
+                self.progressBarFill.SetSize(barWidth, 18)
+                self.progressBarGlow.SetSize(barWidth, 6)
                 self.progressBarFill.SetColor(self.colorScheme["border"])
 
         # Aggiorna wave
@@ -2035,8 +2188,8 @@ class FractureDefenseWindow(ui.Window, DraggableMixin):
             # Calcola percentuale per la barra
             if self.defenseRadius > 0:
                 ratio = min(1.0, distance / self.defenseRadius)
-                barWidth = int(346 * ratio)
-                self.distBarFill.SetSize(barWidth, 8)
+                barWidth = int(378 * ratio)
+                self.distBarFill.SetSize(barWidth, 13)
             
             # Colori in base alla distanza (con buffer di 50 unita = 0.5m per evitare falsi positivi)
             if distance >= self.defenseRadius + 50:
@@ -2072,18 +2225,26 @@ class FractureDefenseWindow(ui.Window, DraggableMixin):
 
         if success:
             self.statusText.SetText("DIFESA COMPLETATA!")
-            self.statusText.SetPackedFontColor(0xFF00FF00)
+            self.statusText.SetPackedFontColor(0xFF00FF44)
             self.statusSubText.SetText("Tocca il portale per aprire la frattura!")
-            # Bordi verdi lampeggianti
+            # Bordi verdi brillanti
             for b in self.borders:
-                b.SetColor(0xFF00FF00)
+                b.SetColor(0xFF00FF44)
+            if hasattr(self, "statusAccentL"):
+                self.statusAccentL.SetColor(0xFF00FF44)
+            if hasattr(self, "statusBorderTop"):
+                self.statusBorderTop.SetColor(0xFF00FF44)
         else:
             self.statusText.SetText("DIFESA FALLITA!")
-            self.statusText.SetPackedFontColor(0xFFFF0000)
+            self.statusText.SetPackedFontColor(0xFFFF2222)
             self.statusSubText.SetText("La frattura rimane chiusa...")
             # Bordi rossi
             for b in self.borders:
-                b.SetColor(0xFFFF0000)
+                b.SetColor(0xFFFF2222)
+            if hasattr(self, "statusAccentL"):
+                self.statusAccentL.SetColor(0xFFFF2222)
+            if hasattr(self, "statusBorderTop"):
+                self.statusBorderTop.SetColor(0xFFFF2222)
         
         self.warningText.Hide()
 
