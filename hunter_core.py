@@ -16,6 +16,73 @@ import os
 HUNTER_CONFIG_FILE = "hunter_config.cfg"
 
 # ═══════════════════════════════════════════════════════════════════════════════
+#  POSIZIONI DEFAULT OTTIMIZZATE (basate su schermo 1920x1080)
+#  Queste posizioni vengono calcolate dinamicamente in base allo schermo
+# ═══════════════════════════════════════════════════════════════════════════════
+# Layout pensato per evitare sovrapposizioni:
+# - SINISTRA: Tips (basso), Notification (medio)
+# - CENTRO: SystemMessage, Overtake, WhatIf
+# - DESTRA: Rival (alto), Event (alto-medio), SpeedKill (medio), Defense (basso)
+# - CENTRO-DESTRA: Emergency
+DEFAULT_WINDOW_LAYOUT = {
+    # Finestre a SINISTRA (margine 10px)
+    "HunterTipsWindow":         {"x": 10,   "y": 0.65},   # 65% schermo, basso sinistra
+    "HunterNotificationWindow": {"x": 10,   "y": 0.45},   # 45% schermo, medio sinistra
+    "DailyMissionsWindow":      {"x": 10,   "y": 0.15},   # 15% schermo, alto sinistra
+    
+    # Finestre CENTRO
+    "WhatIfChoiceWindow":       {"x": 0.5,  "y": 0.30},   # Centro, 30% dall'alto
+    "OvertakeWindow":           {"x": 0.5,  "y": 0.18},   # Centro, 18% dall'alto
+    
+    # Finestre a DESTRA (margine dalla destra)
+    "RivalTrackerWindow":       {"x": -250, "y": 10},     # Alto destra
+    "EventStatusWindow":        {"x": -230, "y": 120},    # Sotto Rival
+    "SpeedKillTimerWindow":     {"x": -340, "y": 200},    # Sotto Event
+    "FractureDefenseWindow":    {"x": -400, "y": 340},    # Basso destra
+    
+    # Emergency - centro alto
+    "EmergencyQuestWindow":     {"x": 0.5,  "y": 0.22},   # Centro, 22% dall'alto
+    
+    # Trial - centro
+    "TrialStatusWindow":        {"x": 0.5,  "y": 0.5},    # Centro esatto
+    
+    # Eventi Schedule
+    "EventsScheduleWindow":     {"x": 10,   "y": 0.10},   # Alto sinistra
+}
+
+def GetDefaultPosition(windowName, windowWidth, windowHeight):
+    """Calcola la posizione default basata sullo schermo e sul layout predefinito"""
+    screenW = wndMgr.GetScreenWidth()
+    screenH = wndMgr.GetScreenHeight()
+    
+    layout = DEFAULT_WINDOW_LAYOUT.get(windowName)
+    if layout:
+        x = layout["x"]
+        y = layout["y"]
+        
+        # Se x è una frazione (0.0-1.0), calcola posizione proporzionale centrata
+        if isinstance(x, float) and 0 <= x <= 1:
+            defaultX = int((screenW - windowWidth) * x)
+        # Se x è negativo, è offset dalla destra
+        elif x < 0:
+            defaultX = screenW + x
+        else:
+            defaultX = int(x)
+        
+        # Stessa logica per y
+        if isinstance(y, float) and 0 <= y <= 1:
+            defaultY = int((screenH - windowHeight) * y)
+        elif y < 0:
+            defaultY = screenH + y
+        else:
+            defaultY = int(y)
+        
+        return (defaultX, defaultY)
+    
+    # Fallback: centro dello schermo
+    return ((screenW - windowWidth) // 2, (screenH - windowHeight) // 2)
+
+# ═══════════════════════════════════════════════════════════════════════════════
 #  MEMORIA POSIZIONI FINESTRE (Session-based + File Persistence)
 # ═══════════════════════════════════════════════════════════════════════════════
 # Dizionario globale per memorizzare le posizioni delle finestre durante la sessione
@@ -80,6 +147,28 @@ def HasSavedPosition(windowName):
     _LoadConfigFile()  # Assicura che il config sia caricato
     return windowName in WINDOW_POSITIONS
 
+def ResetAllWindowPositions():
+    """Resetta tutte le posizioni salvate - Usato se un utente muove una finestra fuori schermo"""
+    global WINDOW_POSITIONS, _configLoaded
+    WINDOW_POSITIONS = {}
+    _configLoaded = True
+    # Elimina il file di configurazione
+    try:
+        if os.path.exists(HUNTER_CONFIG_FILE):
+            os.remove(HUNTER_CONFIG_FILE)
+    except:
+        pass
+    return True
+
+def ResetWindowPosition(windowName):
+    """Resetta la posizione di una singola finestra"""
+    global WINDOW_POSITIONS
+    _LoadConfigFile()
+    if windowName in WINDOW_POSITIONS:
+        del WINDOW_POSITIONS[windowName]
+        _SaveConfigFile()
+        return True
+    return False
 
 # ═══════════════════════════════════════════════════════════════════════════════
 #  COLORI BASE DEL SISTEMA
@@ -624,7 +713,10 @@ def GetRankProgress(points):
     theme = RANK_THEMES[key]
     if points >= theme["max"]:
         return 100.0
-    progress = float(points - theme["min"]) / float(theme["max"] - theme["min"]) * 100
+    rangeSize = float(theme["max"] - theme["min"])
+    if rangeSize <= 0:
+        return 100.0
+    progress = float(points - theme["min"]) / rangeSize * 100
     return min(100, max(0, progress))
 
 

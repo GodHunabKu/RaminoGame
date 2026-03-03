@@ -142,105 +142,102 @@ from hunter_missions import (
     OpenEventsSchedule,
 )
 
-
 # =============================================================================
-# CONVENIENCE API - Funzioni di alto livello
+# FRACTURE PORTAL - Sistema Preview Fratture con UI Immersiva
 # =============================================================================
+from hunter_fracture_portal import (
+    FracturePortalWindow,
+    ParseFracturePreviewData,
+    RANK_CONFIG as FRACTURE_RANK_CONFIG,
+    FRACTURE_COLORS,
+)
 
-def InitHunterSystem(callback=None):
+# Singleton istanza
+_fracturePortalWindow = None
+
+def GetFracturePortalWindow():
+    global _fracturePortalWindow
+    if _fracturePortalWindow is None:
+        _fracturePortalWindow = FracturePortalWindow()
+    return _fracturePortalWindow
+
+def ShowFracturePortal(data):
     """
-    Inizializza il sistema Hunter con animazione.
-    Da chiamare al login del giocatore.
+    Mostra la finestra preview frattura.
+    data = dict con: name, rank, color, vnum, req_glory, req_power_rank,
+                     can_enter, can_force, player_glory, party_power_rank,
+                     rewards, seal_bonus
+    """
+    wnd = GetFracturePortalWindow()
+    wnd.ShowPortal(data)
+
+def ShowFracturePortalFromCmd(cmdData):
+    """
+    Parsa e mostra la finestra da una stringa comando.
+    Format: name|rank|color|vnum|req_glory|req_power_rank|can_enter|can_force|player_glory|party_power_rank|seal_bonus|rewards
+    """
+    data = ParseFracturePreviewData(cmdData)
+    if data:
+        ShowFracturePortal(data)
+
+def HideFracturePortal():
+    """Nasconde la finestra preview frattura"""
+    wnd = GetFracturePortalWindow()
+    if wnd.IsShow():
+        wnd.Hide()
+
+def RestoreGameInterface():
+    """
+    Ripristina la UI del gioco (taskbar, minimap, etc).
+    Chiamata quando la finestra portale si chiude.
     
-    Args:
-        callback: Funzione da chiamare quando l'inizializzazione e' completa
+    IMPORTANTE: Questa funzione deve gestire il caso in cui la FracturePortalWindow
+    ha intercettato l'input di una QuestDialog con setskin(NOWINDOW), lasciando
+    il QuestCurtain in uno stato inconsistente.
     """
-    ShowSystemInit(callback)
-
-
-def ShowLevelUp(level):
-    """
-    Gestisce il level up con eventuale awakening.
-    
-    Args:
-        level: Nuovo livello raggiunto
+    try:
+        import dbg
         
-    Returns:
-        True se e' stato mostrato un awakening, False altrimenti
-    """
-    return CheckAndShowAwakening(level)
+        # STEP 1: Forza chiusura QuestCurtain se esiste
+        try:
+            import uiQuest
+            if hasattr(uiQuest, 'QuestDialog') and hasattr(uiQuest.QuestDialog, 'QuestCurtain'):
+                curtain = uiQuest.QuestDialog.QuestCurtain
+                if curtain:
+                    # Forza chiusura immediata
+                    curtain.CurtainMode = -1
+                    curtain.Close()
+        except Exception as e:
+            dbg.TraceError("RestoreGameInterface QuestCurtain cleanup: " + str(e))
+        
+        # STEP 2: Ripristina la UI del gioco
+        global _gameInterface
+        if _gameInterface:
+            # Mostra le finestre base
+            if hasattr(_gameInterface, 'ShowDefaultWindows'):
+                _gameInterface.ShowDefaultWindows()
+            
+            # Mostra i pulsanti quest e whisper che potrebbero essere stati nascosti
+            if hasattr(_gameInterface, 'ShowAllQuestButton'):
+                try:
+                    _gameInterface.ShowAllQuestButton()
+                except:
+                    pass
+            
+            if hasattr(_gameInterface, 'ShowAllWhisperButton'):
+                try:
+                    _gameInterface.ShowAllWhisperButton()
+                except:
+                    pass
+                    
+    except Exception as e:
+        import dbg
+        dbg.TraceError("RestoreGameInterface error: " + str(e))
 
+# Riferimento all'interfaccia di gioco (settato da game.py)
+_gameInterface = None
 
-def NotifyRankUp(oldRank, newRank):
-    """
-    Notifica una promozione di rango.
-    
-    Args:
-        oldRank: Rango precedente (es. "E", "D", "C", ...)
-        newRank: Nuovo rango
-    """
-    ShowRankUp(oldRank, newRank)
-
-
-def NotifyMissionProgress(missionName, current, target, theme=None):
-    """
-    Notifica progresso di una missione.
-    
-    Args:
-        missionName: Nome della missione
-        current: Progresso attuale
-        target: Obiettivo
-        theme: Tema colori (opzionale)
-    """
-    ShowMissionProgress(missionName, current, target, theme)
-
-
-def NotifyMissionComplete(missionName, reward, theme=None):
-    """
-    Notifica completamento di una missione.
-    
-    Args:
-        missionName: Nome della missione completata
-        reward: Gloria guadagnata
-        theme: Tema colori (opzionale)
-    """
-    ShowMissionComplete(missionName, reward, theme)
-
-
-def NotifyAllMissionsComplete(bonusGlory, theme=None, hasFractureBonus=False):
-    """
-    Notifica completamento di tutte le missioni giornaliere.
-    
-    Args:
-        bonusGlory: Gloria bonus guadagnata
-        theme: Tema colori (opzionale)
-        hasFractureBonus: Se attivo il bonus fratture +50%
-    """
-    ShowAllMissionsComplete(bonusGlory, theme, hasFractureBonus)
-
-
-def NotifyBossSpawn(bossName=""):
-    """
-    Notifica spawn di un boss.
-    
-    Args:
-        bossName: Nome del boss (opzionale)
-    """
-    ShowBossAlert(bossName)
-
-
-# =============================================================================
-# VERSION INFO
-# =============================================================================
-HUNTER_VERSION = "2.0.0"
-HUNTER_STYLE = "Solo Leveling"
-
-
-def GetVersion():
-    """Ritorna la versione del sistema Hunter"""
-    return HUNTER_VERSION
-
-
-def GetStyle():
-    """Ritorna lo stile grafico (Solo Leveling)"""
-    return HUNTER_STYLE
+def SetGameInterface(interface):
+    """Salva il riferimento all'interfaccia di gioco"""
+    global _gameInterface
+    _gameInterface = interface

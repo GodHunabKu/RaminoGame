@@ -1012,6 +1012,128 @@ def ShowTrialProgress(pType, cur, req):
     g_popup.AddPopup(pType, cur, req)
 
 # ==============================================================================
+# CHEST SPAWN EFFECT - Notifica spawn baule dopo difesa frattura
+# ==============================================================================
+g_chestSpawn = None
+
+def ShowChestSpawn(chestName, colorCode, rank):
+    """Mostra effetto epico spawn baule dopo difesa frattura"""
+    global g_chestSpawn
+    if g_chestSpawn is None: g_chestSpawn = ChestSpawnEffect()
+    g_chestSpawn.Start(chestName, colorCode, rank)
+
+class ChestSpawnEffect(ui.Window):
+    """Effetto notifica spawn baule in stile Solo Leveling"""
+    
+    def __init__(self):
+        ui.Window.__init__(self)
+        self.screenWidth = wndMgr.GetScreenWidth()
+        self.screenHeight = wndMgr.GetScreenHeight()
+        self.SetSize(450, 100)
+        self.SetPosition(self.screenWidth/2 - 225, 200)
+        self.AddFlag("not_pick")
+        self.AddFlag("float")
+        
+        self.startTime = 0
+        self.chestName = "Baule"
+        self.colorCode = "GOLD"
+        self.rank = "E"
+        
+        self.__BuildUI()
+        self.Hide()
+    
+    def __BuildUI(self):
+        # Sfondo principale
+        self.bg = ui.Bar()
+        self.bg.SetParent(self)
+        self.bg.SetPosition(0, 0)
+        self.bg.SetSize(450, 100)
+        self.bg.SetColor(0xDD0A0A12)
+        self.bg.Show()
+        
+        # Bordo superiore
+        self.borderTop = ui.Bar()
+        self.borderTop.SetParent(self)
+        self.borderTop.SetPosition(0, 0)
+        self.borderTop.SetSize(450, 3)
+        self.borderTop.SetColor(0xFFFFD700)
+        self.borderTop.Show()
+        
+        # Bordo inferiore
+        self.borderBottom = ui.Bar()
+        self.borderBottom.SetParent(self)
+        self.borderBottom.SetPosition(0, 97)
+        self.borderBottom.SetSize(450, 3)
+        self.borderBottom.SetColor(0xFFFFD700)
+        self.borderBottom.Show()
+        
+        # Titolo
+        self.titleText = ui.TextLine()
+        self.titleText.SetParent(self)
+        self.titleText.SetPosition(225, 15)
+        self.titleText.SetHorizontalAlignCenter()
+        self.titleText.SetText("[ T E S O R O  R I L E V A T O ]")
+        self.titleText.SetPackedFontColor(0xFFFFD700)
+        self.titleText.SetOutline()
+        self.titleText.Show()
+        
+        # Nome baule
+        self.nameText = ui.TextLine()
+        self.nameText.SetParent(self)
+        self.nameText.SetPosition(225, 40)
+        self.nameText.SetHorizontalAlignCenter()
+        self.nameText.SetText("")
+        self.nameText.SetPackedFontColor(0xFF00FF00)
+        self.nameText.SetOutline()
+        self.nameText.Show()
+        
+        # Messaggio
+        self.msgText = ui.TextLine()
+        self.msgText.SetParent(self)
+        self.msgText.SetPosition(225, 65)
+        self.msgText.SetHorizontalAlignCenter()
+        self.msgText.SetText("Cliccalo per ottenere la ricompensa!")
+        self.msgText.SetPackedFontColor(0xFFAAAAAA)
+        self.msgText.SetOutline()
+        self.msgText.Show()
+    
+    def Start(self, chestName, colorCode, rank):
+        self.chestName = chestName.replace("+", " ")
+        self.colorCode = colorCode
+        self.rank = rank
+        self.startTime = app.GetTime()
+        
+        # Imposta colore in base al rank
+        color = GetColor(colorCode)
+        self.nameText.SetText(self.chestName + " [" + rank + "-Rank]")
+        self.nameText.SetPackedFontColor(color)
+        self.borderTop.SetColor(color)
+        self.borderBottom.SetColor(color)
+        
+        self.Show()
+        self.SetTop()
+    
+    def OnUpdate(self):
+        if self.startTime == 0:
+            return
+        
+        elapsed = app.GetTime() - self.startTime
+        
+        # Lampeggio bordi
+        import math
+        pulse = 0.5 + 0.5 * math.sin(elapsed * 4)
+        pulseAlpha = int(180 + 75 * pulse)
+        color = GetColor(self.colorCode)
+        pulseColor = (pulseAlpha << 24) | (color & 0x00FFFFFF)
+        self.borderTop.SetColor(pulseColor)
+        self.borderBottom.SetColor(pulseColor)
+        
+        # Nascondi dopo 5 secondi
+        if elapsed > 5.0:
+            self.startTime = 0
+            self.Hide()
+
+# ==============================================================================
 # 7. GATE SELECTED - Effetto selezione sorteggio Gate
 # ==============================================================================
 class GateSelectedEffect(ui.Window):

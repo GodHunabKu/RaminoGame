@@ -219,6 +219,8 @@ class BossAlertWindow(ui.Window):
     def OnUpdate(self):
         if not self.isFlashing:
             return
+        if self.mainBar is None:
+            return
 
         currentTime = app.GetTime()
 
@@ -723,6 +725,8 @@ class AwakeningEffect(ui.Window):
     def OnUpdate(self):
         if not self.IsShow():
             return
+        if self.flash is None:
+            return
 
         elapsed = app.GetTime() - self.startTime
         color = self.config.get("color", 0xFFFFFFFF)
@@ -1066,6 +1070,8 @@ class RankUpEffect(ui.Window):
     def OnUpdate(self):
         if not self.IsShow():
             return
+        if self.flash is None:
+            return
 
         elapsed = app.GetTime() - self.startTime
         newColor = RANK_COLORS.get(self.newRank, 0xFFFFFFFF)
@@ -1246,7 +1252,6 @@ def ResetAllEffects():
     # Reset SystemInitWindow
     if g_systemInitWindow is not None:
         try:
-            g_systemInitWindow.isActive = False
             g_systemInitWindow.Hide()
         except:
             pass
@@ -1254,7 +1259,6 @@ def ResetAllEffects():
     # Reset AwakeningEffect
     if g_awakeningEffect is not None:
         try:
-            g_awakeningEffect.isActive = False
             g_awakeningEffect.Hide()
         except:
             pass
@@ -1262,7 +1266,6 @@ def ResetAllEffects():
     # Reset RankUpEffect
     if g_rankUpEffect is not None:
         try:
-            g_rankUpEffect.isActive = False
             g_rankUpEffect.Hide()
         except:
             pass

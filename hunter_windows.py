@@ -9,10 +9,12 @@ import net
 import wndMgr
 import app
 import math
+import player  # Per GetMainCharacterPosition
 
 from hunter_core import (
     DraggableMixin,
     SaveWindowPosition, GetWindowPosition, HasSavedPosition,
+    GetDefaultPosition, ResetAllWindowPositions, ResetWindowPosition,
     COLOR_BG_DARK, COLOR_TEXT_NORMAL, COLOR_TEXT_MUTED,
     COLOR_SCHEMES, DEFAULT_SCHEME, FRACTURE_ID_MAP,
     GetColorScheme, GetColorFromKey, DetectColorFromText,
@@ -81,7 +83,17 @@ class WhatIfChoiceWindow(SoloLevelingWindow, DraggableMixin):
         self.SetColorScheme(scheme)
         self.headerText.SetPackedFontColor(scheme.get("title", 0xFFFFFFFF))
         
-        # Reset UI
+        # Reset UI - distruggi vecchi widget prima di ricreare
+        for btn in self.buttons:
+            try:
+                btn.Hide()
+            except:
+                pass
+        for tl in self.textLines:
+            try:
+                tl.Hide()
+            except:
+                pass
         self.buttons = []
         self.textLines = []
         
@@ -130,10 +142,11 @@ class WhatIfChoiceWindow(SoloLevelingWindow, DraggableMixin):
         self.borders[3].SetSize(2, totalHeight)
         self.borders[3].SetPosition(windowWidth - 2, 0)
         
-        # Centra nello schermo
-        screenWidth = wndMgr.GetScreenWidth()
-        screenHeight = wndMgr.GetScreenHeight()
-        self.SetPosition((screenWidth - windowWidth) // 2, (screenHeight - totalHeight) // 3)
+        # Centra nello schermo SOLO se non esiste posizione salvata
+        if not HasSavedPosition("WhatIfChoiceWindow"):
+            screenWidth = wndMgr.GetScreenWidth()
+            screenHeight = wndMgr.GetScreenHeight()
+            self.SetPosition((screenWidth - windowWidth) // 2, (screenHeight - totalHeight) // 3)
         
         self.Show()
         self.SetTop()
@@ -165,7 +178,7 @@ class SystemMessageWindow(ui.Window):
         ui.Window.__init__(self)
         self.SetSize(500, 60)
         screenWidth = wndMgr.GetScreenWidth()
-        self.SetPosition((screenWidth - 500) // 2, 280)
+        self.SetPosition((screenWidth - 500) // 2, 180)
         self.AddFlag("not_pick")
         self.AddFlag("float")
 
@@ -213,7 +226,7 @@ class SystemMessageWindow(ui.Window):
     def ShowMessage(self, msg, color=None):
         """Aggiungi messaggio alla coda"""
         screenWidth = wndMgr.GetScreenWidth()
-        self.SetPosition((screenWidth - 500) // 2, 280)
+        self.SetPosition((screenWidth - 500) // 2, 180)
 
         finalColor = self.currentColor
         if color:
@@ -229,6 +242,9 @@ class SystemMessageWindow(ui.Window):
                     finalColor = GetColorFromKey(str(color))
 
         self.messageQueue.append((msg.replace("+", " "), finalColor))
+        # Anti-leak: limita coda messaggi
+        if len(self.messageQueue) > 20:
+            self.messageQueue.pop(0)
 
         if not self.currentMessage:
             self.__ShowNextMessage()
@@ -282,9 +298,8 @@ class EmergencyQuestWindow(ui.Window, DraggableMixin):
     def __init__(self):
         ui.Window.__init__(self)
         self.SetSize(420, 220)
-        screenWidth = wndMgr.GetScreenWidth()
-        defaultX = (screenWidth - 420) // 2
-        defaultY = 180
+        # Usa posizioni default ottimizzate
+        defaultX, defaultY = GetDefaultPosition("EmergencyQuestWindow", 420, 220)
 
         self.InitDraggable("EmergencyQuestWindow", defaultX, defaultY)
 
@@ -674,9 +689,8 @@ class EventStatusWindow(ui.Window, DraggableMixin):
         ui.Window.__init__(self)
         self.SetSize(220, 60)
 
-        screenWidth = wndMgr.GetScreenWidth()
-        defaultX = screenWidth - 230
-        defaultY = 140
+        # Usa posizioni default ottimizzate
+        defaultX, defaultY = GetDefaultPosition("EventStatusWindow", 220, 60)
         
         self.InitDraggable("EventStatusWindow", defaultX, defaultY)
         
@@ -767,14 +781,13 @@ class EventStatusWindow(ui.Window, DraggableMixin):
         else:
             self.timeText.SetText("")
         
-        if not HasSavedPosition("EventStatusWindow"):
-            screenWidth = wndMgr.GetScreenWidth()
-            self.SetPosition(screenWidth - 230, 140)
+        # NON resettiamo la posizione - usa quella salvata dal DraggableMixin
+        # La posizione viene impostata solo in InitDraggable()
 
         self.Show()
         self.SetTop()
     
-    def ShowEvent(self, eventName, duration=0, eventType="default", desc="", reward=""):
+    def ShowEvent(self, eventName, duration=0, eventType="default", desc="", reward="", minRank="E", winnerPrize=0):
         if not eventName or eventName == "Nessuno" or eventName == "":
             self.currentEvent = ""
             self.Hide()
@@ -785,6 +798,8 @@ class EventStatusWindow(ui.Window, DraggableMixin):
         self.eventType = eventType
         self.eventDesc = desc
         self.eventReward = reward
+        self.eventMinRank = minRank
+        self.eventWinnerPrize = winnerPrize
         
         if duration > 0:
             self.endTime = app.GetTime() + duration
@@ -801,13 +816,14 @@ class EventStatusWindow(ui.Window, DraggableMixin):
             "fracture": 0xFF9900FF,
             "glory_rush": 0xFFFFD700,
             "time_trial": 0xFFFFD700,
+            "first_rift": 0xFF9900FF,
+            "first_boss": 0xFFFF0000,
             "custom": 0xFF00FFFF
         }
         color = eventColors.get(eventType, 0xFFFFD700)
         self.SetEventColor(color)
 
-        screenWidth = wndMgr.GetScreenWidth()
-        self.SetPosition(screenWidth - 230, 140)
+        # NON resettiamo la posizione - usa quella salvata dal DraggableMixin
 
         self.Show()
         self.SetTop()
@@ -849,7 +865,7 @@ class EventStatusWindow(ui.Window, DraggableMixin):
         self.eventType = eventType
     
     def OnMouseOverIn(self):
-        """Mostra tooltip con dettagli evento"""
+        """Mostra tooltip con dettagli evento completi"""
         if not self.currentEvent:
             return
         
@@ -860,10 +876,11 @@ class EventStatusWindow(ui.Window, DraggableMixin):
                 self.toolTip.ClearToolTip()
             
             self.toolTip.ClearToolTip()
-            self.toolTip.SetThinBoardSize(200)
+            self.toolTip.SetThinBoardSize(220)
             
             # Titolo evento
-            self.toolTip.AppendTextLine(self.currentEvent, 0xFFFFD700)
+            self.toolTip.AppendTextLine("[EVENTO IN CORSO]", 0xFFFFD700)
+            self.toolTip.AppendTextLine(self.currentEvent, 0xFFFFFFFF)
             self.toolTip.AppendSpace(5)
             
             # Tipo evento
@@ -871,22 +888,42 @@ class EventStatusWindow(ui.Window, DraggableMixin):
                 "default": "Evento Standard",
                 "boss_hunt": "Caccia ai Boss",
                 "fracture": "Frattura",
-                "glory_rush": "Gloria Rush",
+                "glory_rush": "Gloria Rush (+100% Gloria)",
                 "time_trial": "Sfida a Tempo",
+                "first_rift": "PRIMO che conquista VINCE!",
+                "first_boss": "PRIMO che uccide boss VINCE!",
+                "rift_hunt": "Fratture +50% spawn",
+                "boss_massacre": "Boss Gloria +50%",
+                "metin_frenzy": "Metin Bonus +50%",
+                "double_spawn": "Spawn Elite x2",
                 "custom": "Evento Speciale"
             }
             typeName = eventTypeNames.get(self.eventType, "Evento")
-            self.toolTip.AppendTextLine("Tipo: %s" % typeName, 0xFFAAAAAA)
+            self.toolTip.AppendTextLine("Tipo: %s" % typeName, 0xFF00CCFF)
+            
+            # Rank minimo
+            if hasattr(self, 'eventMinRank') and self.eventMinRank:
+                self.toolTip.AppendTextLine("Rank Minimo: %s" % self.eventMinRank, 0xFFAAAAAA)
             
             # Descrizione
             if self.eventDesc:
                 self.toolTip.AppendSpace(5)
-                self.toolTip.AppendTextLine(self.eventDesc[:40], 0xFFCCCCCC)
+                # Split descrizione lunga
+                desc = self.eventDesc
+                if len(desc) > 35:
+                    self.toolTip.AppendTextLine(desc[:35], 0xFFCCCCCC)
+                    self.toolTip.AppendTextLine(desc[35:70], 0xFFCCCCCC)
+                else:
+                    self.toolTip.AppendTextLine(desc, 0xFFCCCCCC)
             
-            # Reward
+            # Premio base
             if self.eventReward:
                 self.toolTip.AppendSpace(5)
-                self.toolTip.AppendTextLine("Reward: %s" % self.eventReward, 0xFF00FF00)
+                self.toolTip.AppendTextLine("Premio Base: %s Gloria" % self.eventReward, 0xFF00FF00)
+            
+            # Premio vincitore
+            if hasattr(self, 'eventWinnerPrize') and self.eventWinnerPrize > 0:
+                self.toolTip.AppendTextLine("Premio Vincitore: +%d Gloria!" % self.eventWinnerPrize, 0xFFFFD700)
             
             # Tempo rimasto
             if hasattr(self, 'endTime') and self.endTime > 0:
@@ -895,7 +932,11 @@ class EventStatusWindow(ui.Window, DraggableMixin):
                     mins = int(remaining) // 60
                     secs = int(remaining) % 60
                     self.toolTip.AppendSpace(5)
-                    self.toolTip.AppendTextLine("Tempo: %d:%02d" % (mins, secs), 0xFFFF8800)
+                    self.toolTip.AppendTextLine("Tempo Rimasto: %d:%02d" % (mins, secs), 0xFFFF8800)
+            
+            # Hint doppio click
+            self.toolTip.AppendSpace(8)
+            self.toolTip.AppendTextLine("[Doppio Click = Tutti gli Eventi]", 0xFF888888)
             
             self.toolTip.ShowToolTip()
         except:
@@ -905,72 +946,167 @@ class EventStatusWindow(ui.Window, DraggableMixin):
         """Nasconde tooltip"""
         if self.toolTip:
             self.toolTip.HideToolTip()
+    
+    def OnMouseLeftButtonDoubleClick(self):
+        """Doppio click: Apre la finestra con tutti gli eventi del giorno"""
+        try:
+            # Cerca la finestra principale Hunter
+            if self.parentWindow and hasattr(self.parentWindow, 'OpenEventsPanel'):
+                self.parentWindow.OpenEventsPanel()
+            else:
+                # Fallback: cerca la finestra globale
+                import uihunterlevel
+                if hasattr(uihunterlevel, 'g_hunterWindow') and uihunterlevel.g_hunterWindow:
+                    wnd = uihunterlevel.g_hunterWindow
+                    if hasattr(wnd, 'OpenEventsPanel'):
+                        wnd.OpenEventsPanel()
+                    elif hasattr(wnd, 'ShowPage'):
+                        # Apre la pagina degli eventi (pagina 3 = Guida Eventi)
+                        wnd.Show()
+                        wnd.SetTop()
+                        wnd.ShowPage(3)  # Pagina Guida Eventi
+        except Exception as e:
+            pass
+        return True
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
 #  RIVAL TRACKER WINDOW - Tracker rivale in classifica
 # ═══════════════════════════════════════════════════════════════════════════════
 class RivalTrackerWindow(ui.Window, DraggableMixin):
-    """Tracker Rivale - Finestra Movibile"""
+    """
+    ═══════════════════════════════════════════════════════════════════════════
+     RIVAL TRACKER - Sistema Rivale Solo Leveling Style
+     Mostra il tuo rivale piu' vicino in classifica con tema hunter
+    ═══════════════════════════════════════════════════════════════════════════
+    """
     
     def __init__(self):
         ui.Window.__init__(self)
-        self.SetSize(200, 80)
+        self.SetSize(240, 100)
         self.screenWidth = wndMgr.GetScreenWidth()
         
-        defaultX = self.screenWidth - 210
-        defaultY = 80
+        # Usa posizioni default ottimizzate
+        defaultX, defaultY = GetDefaultPosition("RivalTrackerWindow", 240, 100)
         
         self.InitDraggable("RivalTrackerWindow", defaultX, defaultY)
         self.eventWndRef = None
         
+        # === SFONDO PRINCIPALE ===
         self.bg = ui.Bar()
         self.bg.SetParent(self)
         self.bg.SetPosition(0, 0)
-        self.bg.SetSize(200, 80)
-        self.bg.SetColor(COLOR_BG_DARK)
+        self.bg.SetSize(240, 100)
+        self.bg.SetColor(0xEE0A0A12)  # Nero profondo
         self.bg.AddFlag("not_pick")
         self.bg.Show()
         
-        # Bordi Rossi
-        self.borders = []
-        color = COLOR_SCHEMES["RED"]["border"]
-        for y in [0, 78]:
-            b = ui.Bar(); b.SetParent(self); b.SetPosition(0, y); b.SetSize(200, 2); b.SetColor(color); b.AddFlag("not_pick"); b.Show()
-            self.borders.append(b)
-        for x in [0, 198]:
-            b = ui.Bar(); b.SetParent(self); b.SetPosition(x, 0); b.SetSize(2, 80); b.SetColor(color); b.AddFlag("not_pick"); b.Show()
-            self.borders.append(b)
+        # === CORNICE ESTERNA ===
+        self.frameOuter = []
+        frameColor = 0xFF1A1A2E
+        # Top
+        b = ui.Bar(); b.SetParent(self); b.SetPosition(0, 0); b.SetSize(240, 3); b.SetColor(frameColor); b.AddFlag("not_pick"); b.Show()
+        self.frameOuter.append(b)
+        # Bottom
+        b = ui.Bar(); b.SetParent(self); b.SetPosition(0, 97); b.SetSize(240, 3); b.SetColor(frameColor); b.AddFlag("not_pick"); b.Show()
+        self.frameOuter.append(b)
+        # Left
+        b = ui.Bar(); b.SetParent(self); b.SetPosition(0, 0); b.SetSize(3, 100); b.SetColor(frameColor); b.AddFlag("not_pick"); b.Show()
+        self.frameOuter.append(b)
+        # Right
+        b = ui.Bar(); b.SetParent(self); b.SetPosition(237, 0); b.SetSize(3, 100); b.SetColor(frameColor); b.AddFlag("not_pick"); b.Show()
+        self.frameOuter.append(b)
         
-        self.text = ui.TextLine()
-        self.text.SetParent(self)
-        self.text.SetPosition(100, 10)
-        self.text.SetHorizontalAlignCenter()
-        self.text.SetText("RIVALE DI CLASSIFICA")
-        self.text.SetPackedFontColor(COLOR_SCHEMES["RED"]["title"])
-        self.text.SetOutline()
-        self.text.AddFlag("not_pick")
-        self.text.Show()
+        # === BARRA SUPERIORE COLORATA ===
+        self.topAccent = ui.Bar()
+        self.topAccent.SetParent(self)
+        self.topAccent.SetPosition(3, 3)
+        self.topAccent.SetSize(234, 22)
+        self.topAccent.SetColor(0xFF8B0000)  # Rosso sangue
+        self.topAccent.AddFlag("not_pick")
+        self.topAccent.Show()
+        
+        # === ICONA RANKING (simulata con testo) ===
+        self.iconText = ui.TextLine()
+        self.iconText.SetParent(self)
+        self.iconText.SetPosition(15, 6)
+        self.iconText.SetText("[!]")
+        self.iconText.SetPackedFontColor(0xFFFF4444)
+        self.iconText.SetOutline()
+        self.iconText.AddFlag("not_pick")
+        self.iconText.Show()
+        
+        # === TITOLO ===
+        self.titleText = ui.TextLine()
+        self.titleText.SetParent(self)
+        self.titleText.SetPosition(120, 6)
+        self.titleText.SetHorizontalAlignCenter()
+        self.titleText.SetText("BERSAGLIO RILEVATO")
+        self.titleText.SetPackedFontColor(0xFFFFFFFF)
+        self.titleText.SetOutline()
+        self.titleText.AddFlag("not_pick")
+        self.titleText.Show()
+        
+        # === LINEA SEPARATRICE ===
+        self.sepLine = ui.Bar()
+        self.sepLine.SetParent(self)
+        self.sepLine.SetPosition(10, 28)
+        self.sepLine.SetSize(220, 1)
+        self.sepLine.SetColor(0xFF333355)
+        self.sepLine.AddFlag("not_pick")
+        self.sepLine.Show()
+        
+        # === NOME RIVALE ===
+        self.rivalLabel = ui.TextLine()
+        self.rivalLabel.SetParent(self)
+        self.rivalLabel.SetPosition(15, 35)
+        self.rivalLabel.SetText("Hunter:")
+        self.rivalLabel.SetPackedFontColor(0xFF888899)
+        self.rivalLabel.AddFlag("not_pick")
+        self.rivalLabel.Show()
         
         self.nameText = ui.TextLine()
         self.nameText.SetParent(self)
-        self.nameText.SetPosition(100, 30)
-        self.nameText.SetHorizontalAlignCenter()
-        self.nameText.SetText("")
-        self.nameText.SetPackedFontColor(COLOR_TEXT_NORMAL)
+        self.nameText.SetPosition(225, 35)
+        self.nameText.SetHorizontalAlignRight()
+        self.nameText.SetText("---")
+        self.nameText.SetPackedFontColor(0xFFFFDD44)
+        self.nameText.SetOutline()
         self.nameText.AddFlag("not_pick")
         self.nameText.Show()
 
-        self.descText = ui.TextLine()
-        self.descText.SetParent(self)
-        self.descText.SetPosition(100, 50)
-        self.descText.SetHorizontalAlignCenter()
-        self.descText.SetText("Nuovo bersaglio attivo.")
-        self.descText.SetPackedFontColor(COLOR_TEXT_MUTED)
-        self.descText.AddFlag("not_pick")
-        self.descText.Show()
+        # === DISTACCO ===
+        self.distLabel = ui.TextLine()
+        self.distLabel.SetParent(self)
+        self.distLabel.SetPosition(15, 55)
+        self.distLabel.SetText("Distacco:")
+        self.distLabel.SetPackedFontColor(0xFF888899)
+        self.distLabel.AddFlag("not_pick")
+        self.distLabel.Show()
+        
+        self.distText = ui.TextLine()
+        self.distText.SetParent(self)
+        self.distText.SetPosition(225, 55)
+        self.distText.SetHorizontalAlignRight()
+        self.distText.SetText("0 Gloria")
+        self.distText.SetPackedFontColor(0xFFFF8844)
+        self.distText.SetOutline()
+        self.distText.AddFlag("not_pick")
+        self.distText.Show()
+        
+        # === MESSAGGIO STATUS ===
+        self.statusText = ui.TextLine()
+        self.statusText.SetParent(self)
+        self.statusText.SetPosition(120, 78)
+        self.statusText.SetHorizontalAlignCenter()
+        self.statusText.SetText("Superalo per salire in classifica!")
+        self.statusText.SetPackedFontColor(0xFF666688)
+        self.statusText.AddFlag("not_pick")
+        self.statusText.Show()
         
         self.endTime = 0
+        self.mode = "VICINO"
+        self.pulsePhase = 0.0
     
     def SetEventWindowRef(self, eventWnd):
         self.eventWndRef = eventWnd
@@ -978,111 +1114,212 @@ class RivalTrackerWindow(ui.Window, DraggableMixin):
     def ShowRival(self, name, diff, label="Gloria", mode="VICINO"):
         if not HasSavedPosition("RivalTrackerWindow"):
             self.screenWidth = wndMgr.GetScreenWidth()
-            self.SetPosition(self.screenWidth - 210, 80)
+            self.SetPosition(self.screenWidth - 250, 10)
         
-        self.nameText.SetText(name.replace("+", " "))
+        cleanName = name.replace("+", " ")
+        self.nameText.SetText(cleanName)
+        self.mode = mode
         
         if mode == "SUPERATO":
-            self.text.SetText("SEI STATO SUPERATO!")
-            self.text.SetPackedFontColor(COLOR_SCHEMES["RED"]["title"])
-            self.descText.SetText("%s ti ha superato di %s pt!" % (name.replace("+", " "), str(diff)))
-            self.descText.SetPackedFontColor(COLOR_SCHEMES["RED"]["title"])
+            # Sei stato superato - tema rosso intenso
+            self.topAccent.SetColor(0xFFCC0000)
+            self.titleText.SetText("SORPASSATO!")
+            self.titleText.SetPackedFontColor(0xFFFF4444)
+            self.iconText.SetText("[X]")
+            self.iconText.SetPackedFontColor(0xFFFF0000)
+            self.distText.SetText("-%s Gloria" % str(diff))
+            self.distText.SetPackedFontColor(0xFFFF4444)
+            self.statusText.SetText("%s ti ha superato!" % cleanName)
+            self.statusText.SetPackedFontColor(0xFFFF6666)
         else:
-            self.text.SetText("RIVALE DI CLASSIFICA")
-            self.text.SetPackedFontColor(COLOR_SCHEMES["RED"]["title"])
-            self.descText.SetText("Distacco %s: %s pt" % (label, str(diff)))
-            self.descText.SetPackedFontColor(COLOR_SCHEMES["ORANGE"]["title"])
+            # Rivale da superare - tema ambra
+            self.topAccent.SetColor(0xFF8B4000)
+            self.titleText.SetText("BERSAGLIO RILEVATO")
+            self.titleText.SetPackedFontColor(0xFFFFFFFF)
+            self.iconText.SetText("[!]")
+            self.iconText.SetPackedFontColor(0xFFFFAA00)
+            self.distText.SetText("+%s %s" % (str(diff), label))
+            self.distText.SetPackedFontColor(0xFFFFAA44)
+            self.statusText.SetText("Superalo per salire in classifica!")
+            self.statusText.SetPackedFontColor(0xFF666688)
         
-        self.endTime = app.GetTime() + 30.0
+        self.endTime = app.GetTime() + 25.0
         self.Show()
         self.SetTop()
         
     def OnUpdate(self):
-        if self.endTime > 0 and app.GetTime() > self.endTime:
-            self.Hide()
-            self.endTime = 0
+        if self.endTime > 0:
+            remaining = self.endTime - app.GetTime()
+            if remaining <= 0:
+                self.Hide()
+                self.endTime = 0
+                return
+            
+            # Effetto pulse per SUPERATO
+            if self.mode == "SUPERATO":
+                self.pulsePhase += 0.15
+                pulse = abs(math.sin(self.pulsePhase))
+                r = int(140 + pulse * 60)
+                color = (0xFF << 24) | (r << 16) | (0x00 << 8) | 0x00
+                self.topAccent.SetColor(color)
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
-#  OVERTAKE WINDOW - Sorpasso in classifica
+#  OVERTAKE WINDOW - Notifica Sorpasso Solo Leveling Style
+#  Appare quando superi qualcuno in classifica
 # ═══════════════════════════════════════════════════════════════════════════════
-class OvertakeWindow(ui.Window):
-    """Effetto quando sorpassi qualcuno in classifica"""
+class OvertakeWindow(ui.Window, DraggableMixin):
+    """
+    Effetto quando sorpassi qualcuno in classifica
+    Tema Solo Leveling - Stile "LEVEL UP" / "RANK UP"
+    """
     
     def __init__(self):
         ui.Window.__init__(self)
         
         self.screenWidth = wndMgr.GetScreenWidth()
         self.screenHeight = wndMgr.GetScreenHeight()
-        self.SetSize(400, 80)
+        self.SetSize(300, 120)
         
-        self.defaultY = 80
-        self.eventActiveY = 210
-        self.SetPosition(self.screenWidth - 410, self.defaultY)
+        # Usa posizioni default ottimizzate
+        defaultX, defaultY = GetDefaultPosition("OvertakeWindow", 300, 120)
         
-        self.AddFlag("not_pick")
-        self.AddFlag("float")
-        self.AddFlag("attach")
-        
+        self.InitDraggable("OvertakeWindow", defaultX, defaultY)
         self.eventWndRef = None
         
-        # Sfondo
+        # === SFONDO PRINCIPALE ===
         self.bg = ui.Bar()
         self.bg.SetParent(self)
         self.bg.SetPosition(0, 0)
-        self.bg.SetSize(400, 80)
-        self.bg.SetColor(0xDD111111)
+        self.bg.SetSize(300, 120)
+        self.bg.SetColor(0xEE080810)
         self.bg.AddFlag("not_pick")
         self.bg.Show()
         
-        # Bordi
+        # === GLOW ESTERNO (simulato con barre) ===
+        self.glowBars = []
+        # Top glow
+        for i in range(3):
+            b = ui.Bar()
+            b.SetParent(self)
+            b.SetPosition(0, i)
+            b.SetSize(300, 1)
+            alpha = 0x88 - (i * 0x28)
+            b.SetColor((alpha << 24) | 0x00FF88)
+            b.AddFlag("not_pick")
+            b.Show()
+            self.glowBars.append(b)
+        # Bottom glow
+        for i in range(3):
+            b = ui.Bar()
+            b.SetParent(self)
+            b.SetPosition(0, 117 + i)
+            b.SetSize(300, 1)
+            alpha = 0x88 - (i * 0x28)
+            b.SetColor((alpha << 24) | 0x00FF88)
+            b.AddFlag("not_pick")
+            b.Show()
+            self.glowBars.append(b)
+        
+        # === BORDI PRINCIPALI ===
         self.borderTop = ui.Bar()
         self.borderTop.SetParent(self)
-        self.borderTop.SetPosition(0, 0)
-        self.borderTop.SetSize(400, 3)
-        self.borderTop.SetColor(0xFF00FF00)
+        self.borderTop.SetPosition(0, 3)
+        self.borderTop.SetSize(300, 2)
+        self.borderTop.SetColor(0xFF00FF66)
         self.borderTop.AddFlag("not_pick")
         self.borderTop.Show()
         
         self.borderBottom = ui.Bar()
         self.borderBottom.SetParent(self)
-        self.borderBottom.SetPosition(0, 77)
-        self.borderBottom.SetSize(400, 3)
-        self.borderBottom.SetColor(0xFF00FF00)
+        self.borderBottom.SetPosition(0, 115)
+        self.borderBottom.SetSize(300, 2)
+        self.borderBottom.SetColor(0xFF00FF66)
         self.borderBottom.AddFlag("not_pick")
         self.borderBottom.Show()
         
-        # Freccia
+        # Bordi laterali
+        self.borderLeft = ui.Bar()
+        self.borderLeft.SetParent(self)
+        self.borderLeft.SetPosition(0, 3)
+        self.borderLeft.SetSize(2, 114)
+        self.borderLeft.SetColor(0xFF00CC55)
+        self.borderLeft.AddFlag("not_pick")
+        self.borderLeft.Show()
+        
+        self.borderRight = ui.Bar()
+        self.borderRight.SetParent(self)
+        self.borderRight.SetPosition(298, 3)
+        self.borderRight.SetSize(2, 114)
+        self.borderRight.SetColor(0xFF00CC55)
+        self.borderRight.AddFlag("not_pick")
+        self.borderRight.Show()
+        
+        # === HEADER BAR ===
+        self.headerBar = ui.Bar()
+        self.headerBar.SetParent(self)
+        self.headerBar.SetPosition(2, 5)
+        self.headerBar.SetSize(296, 25)
+        self.headerBar.SetColor(0xFF0A3020)
+        self.headerBar.AddFlag("not_pick")
+        self.headerBar.Show()
+        
+        # === FRECCE VERSO L'ALTO ===
         self.arrowText = ui.TextLine()
         self.arrowText.SetParent(self)
-        self.arrowText.SetPosition(200, 10)
+        self.arrowText.SetPosition(150, 10)
         self.arrowText.SetHorizontalAlignCenter()
-        self.arrowText.SetText("^ ^ ^")
-        self.arrowText.SetPackedFontColor(0xFF00FF00)
+        self.arrowText.SetText("RANK UP")
+        self.arrowText.SetPackedFontColor(0xFF00FF88)
         self.arrowText.SetOutline()
+        self.arrowText.AddFlag("not_pick")
         self.arrowText.Show()
         
-        # Testo principale
+        # === LINEA DECORATIVA ===
+        self.decLine = ui.Bar()
+        self.decLine.SetParent(self)
+        self.decLine.SetPosition(20, 32)
+        self.decLine.SetSize(260, 1)
+        self.decLine.SetColor(0xFF00AA44)
+        self.decLine.AddFlag("not_pick")
+        self.decLine.Show()
+        
+        # === TESTO PRINCIPALE ===
         self.mainText = ui.TextLine()
         self.mainText.SetParent(self)
-        self.mainText.SetPosition(200, 30)
+        self.mainText.SetPosition(150, 42)
         self.mainText.SetHorizontalAlignCenter()
         self.mainText.SetText("")
         self.mainText.SetPackedFontColor(0xFFFFFFFF)
         self.mainText.SetOutline()
+        self.mainText.AddFlag("not_pick")
         self.mainText.Show()
         
-        # Posizione
+        # === NOME SUPERATO ===
+        self.nameText = ui.TextLine()
+        self.nameText.SetParent(self)
+        self.nameText.SetPosition(150, 62)
+        self.nameText.SetHorizontalAlignCenter()
+        self.nameText.SetText("")
+        self.nameText.SetPackedFontColor(0xFFFFDD00)
+        self.nameText.SetOutline()
+        self.nameText.AddFlag("not_pick")
+        self.nameText.Show()
+        
+        # === NUOVA POSIZIONE ===
         self.posText = ui.TextLine()
         self.posText.SetParent(self)
-        self.posText.SetPosition(200, 55)
+        self.posText.SetPosition(150, 88)
         self.posText.SetHorizontalAlignCenter()
         self.posText.SetText("")
-        self.posText.SetPackedFontColor(0xFFFFD700)
+        self.posText.SetPackedFontColor(0xFF00FF88)
+        self.posText.SetOutline()
+        self.posText.AddFlag("not_pick")
         self.posText.Show()
         
         self.startTime = 0
         self.endTime = 0
+        self.pulsePhase = 0.0
         
         self.Hide()
     
@@ -1090,17 +1327,18 @@ class OvertakeWindow(ui.Window):
         self.eventWndRef = eventWnd
     
     def ShowOvertake(self, overtakenName, newPosition):
-        self.mainText.SetText("Hai superato %s!" % overtakenName)
+        if not HasSavedPosition("OvertakeWindow"):
+            self.screenWidth = wndMgr.GetScreenWidth()
+            self.SetPosition((self.screenWidth - 300) // 2, 150)
+        
+        cleanName = overtakenName.replace("+", " ")
+        self.mainText.SetText("Hai superato un Hunter!")
+        self.nameText.SetText(cleanName)
         self.posText.SetText("Nuova Posizione: #%d" % newPosition)
         
-        yPos = self.defaultY
-        if self.eventWndRef and self.eventWndRef.IsShow():
-            yPos = self.eventActiveY
-        
-        self.SetPosition(self.screenWidth - 410, yPos)
-        
         self.startTime = app.GetTime()
-        self.endTime = self.startTime + 4.5
+        self.endTime = self.startTime + 5.0
+        self.pulsePhase = 0.0
         self.Show()
         self.SetTop()
     
@@ -1115,18 +1353,21 @@ class OvertakeWindow(ui.Window):
             self.endTime = 0
             return
         
-        elapsed = currentTime - self.startTime
+        # Effetto pulse sui bordi
+        self.pulsePhase += 0.12
+        pulse = abs(math.sin(self.pulsePhase))
         
-        # Lampeggio verde
-        cycle = (elapsed * 4) % 2
-        if cycle < 1:
-            self.borderTop.SetColor(0xFF00FF00)
-            self.borderBottom.SetColor(0xFF00FF00)
-            self.arrowText.SetPackedFontColor(0xFF00FF00)
-        else:
-            self.borderTop.SetColor(0xFF00CC00)
-            self.borderBottom.SetColor(0xFF00CC00)
-            self.arrowText.SetPackedFontColor(0xFF88FF88)
+        # Colore che pulsa tra verde chiaro e verde scuro
+        g = int(200 + pulse * 55)
+        borderColor = (0xFF << 24) | (0x00 << 16) | (g << 8) | 0x66
+        self.borderTop.SetColor(borderColor)
+        self.borderBottom.SetColor(borderColor)
+        
+        # Glow che pulsa
+        for i, bar in enumerate(self.glowBars):
+            baseAlpha = 0x66 - (i % 3) * 0x20
+            alpha = int(baseAlpha * (0.5 + pulse * 0.5))
+            bar.SetColor((alpha << 24) | 0x00FF88)
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -1148,12 +1389,12 @@ DEFENSE_RANK_COLORS = {
 class FractureDefenseWindow(ui.Window, DraggableMixin):
     """Finestra Difesa Frattura - Solo Leveling Style - Separata dall'Emergency"""
 
+
     def __init__(self):
         ui.Window.__init__(self)
-        self.SetSize(380, 200)
-        screenWidth = wndMgr.GetScreenWidth()
-        defaultX = screenWidth - 400
-        defaultY = 200
+        self.SetSize(380, 240)  # Aumentato per includere sezione distanza
+        # Usa posizioni default ottimizzate
+        defaultX, defaultY = GetDefaultPosition("FractureDefenseWindow", 380, 240)
 
         self.InitDraggable("FractureDefenseWindow", defaultX, defaultY)
 
@@ -1168,6 +1409,14 @@ class FractureDefenseWindow(ui.Window, DraggableMixin):
         self.fractureRank = "E"
         self.pulsePhase = 0.0
         self.isActive = False
+        self.zeroTimeStart = 0  # FIX: Timestamp di quando il timer ha raggiunto 00:00
+        
+        # Coordinate zona difesa
+        self.defenseCenterX = 0
+        self.defenseCenterY = 0
+        self.defenseRadius = 1000  # Default 10 metri
+        self.currentDistance = 0
+        self.distanceStatus = "OK"
 
         # Schema colori corrente
         self.colorScheme = DEFENSE_RANK_COLORS["E"]
@@ -1177,7 +1426,7 @@ class FractureDefenseWindow(ui.Window, DraggableMixin):
         self.bgOuter = ui.Bar()
         self.bgOuter.SetParent(self)
         self.bgOuter.SetPosition(0, 0)
-        self.bgOuter.SetSize(380, 200)
+        self.bgOuter.SetSize(380, 240)
         self.bgOuter.SetColor(0xEE0A0A14)
         self.bgOuter.AddFlag("not_pick")
         self.bgOuter.Show()
@@ -1186,7 +1435,7 @@ class FractureDefenseWindow(ui.Window, DraggableMixin):
         self.glowInner = ui.Bar()
         self.glowInner.SetParent(self)
         self.glowInner.SetPosition(3, 3)
-        self.glowInner.SetSize(374, 194)
+        self.glowInner.SetSize(374, 234)
         self.glowInner.SetColor(0x22FFFFFF)
         self.glowInner.AddFlag("not_pick")
         self.glowInner.Show()
@@ -1195,7 +1444,7 @@ class FractureDefenseWindow(ui.Window, DraggableMixin):
         self.bgInner = ui.Bar()
         self.bgInner.SetParent(self)
         self.bgInner.SetPosition(5, 5)
-        self.bgInner.SetSize(370, 190)
+        self.bgInner.SetSize(370, 230)
         self.bgInner.SetColor(0xDD080812)
         self.bgInner.AddFlag("not_pick")
         self.bgInner.Show()
@@ -1207,13 +1456,13 @@ class FractureDefenseWindow(ui.Window, DraggableMixin):
         b = ui.Bar(); b.SetParent(self); b.SetPosition(0, 0); b.SetSize(380, 3); b.SetColor(borderColor); b.AddFlag("not_pick"); b.Show()
         self.borders.append(b)
         # Bottom
-        b = ui.Bar(); b.SetParent(self); b.SetPosition(0, 197); b.SetSize(380, 3); b.SetColor(borderColor); b.AddFlag("not_pick"); b.Show()
+        b = ui.Bar(); b.SetParent(self); b.SetPosition(0, 237); b.SetSize(380, 3); b.SetColor(borderColor); b.AddFlag("not_pick"); b.Show()
         self.borders.append(b)
         # Left
-        b = ui.Bar(); b.SetParent(self); b.SetPosition(0, 0); b.SetSize(3, 200); b.SetColor(borderColor); b.AddFlag("not_pick"); b.Show()
+        b = ui.Bar(); b.SetParent(self); b.SetPosition(0, 0); b.SetSize(3, 240); b.SetColor(borderColor); b.AddFlag("not_pick"); b.Show()
         self.borders.append(b)
         # Right
-        b = ui.Bar(); b.SetParent(self); b.SetPosition(377, 0); b.SetSize(3, 200); b.SetColor(borderColor); b.AddFlag("not_pick"); b.Show()
+        b = ui.Bar(); b.SetParent(self); b.SetPosition(377, 0); b.SetSize(3, 240); b.SetColor(borderColor); b.AddFlag("not_pick"); b.Show()
         self.borders.append(b)
 
         # ═══════════ HEADER ═══════════
@@ -1281,7 +1530,7 @@ class FractureDefenseWindow(ui.Window, DraggableMixin):
         # Label "PROGRESSO"
         self.progressLabel = ui.TextLine()
         self.progressLabel.SetParent(self)
-        self.progressLabel.SetPosition(15, 58)
+        self.progressLabel.SetPosition(15, 55)
         self.progressLabel.SetText("PROGRESSO DIFESA")
         self.progressLabel.SetPackedFontColor(0xFFCCCCCC)
         self.progressLabel.AddFlag("not_pick")
@@ -1290,8 +1539,8 @@ class FractureDefenseWindow(ui.Window, DraggableMixin):
         # Progress bar background
         self.progressBarBg = ui.Bar()
         self.progressBarBg.SetParent(self)
-        self.progressBarBg.SetPosition(15, 78)
-        self.progressBarBg.SetSize(350, 25)
+        self.progressBarBg.SetPosition(15, 73)
+        self.progressBarBg.SetSize(350, 20)
         self.progressBarBg.SetColor(0xFF1A1A2E)
         self.progressBarBg.AddFlag("not_pick")
         self.progressBarBg.Show()
@@ -1299,8 +1548,8 @@ class FractureDefenseWindow(ui.Window, DraggableMixin):
         # Progress bar fill
         self.progressBarFill = ui.Bar()
         self.progressBarFill.SetParent(self)
-        self.progressBarFill.SetPosition(17, 80)
-        self.progressBarFill.SetSize(0, 21)
+        self.progressBarFill.SetPosition(17, 75)
+        self.progressBarFill.SetSize(0, 16)
         self.progressBarFill.SetColor(0xFF00FF00)
         self.progressBarFill.AddFlag("not_pick")
         self.progressBarFill.Show()
@@ -1308,8 +1557,8 @@ class FractureDefenseWindow(ui.Window, DraggableMixin):
         # Progress bar glow overlay
         self.progressBarGlow = ui.Bar()
         self.progressBarGlow.SetParent(self)
-        self.progressBarGlow.SetPosition(17, 80)
-        self.progressBarGlow.SetSize(0, 10)
+        self.progressBarGlow.SetPosition(17, 75)
+        self.progressBarGlow.SetSize(0, 8)
         self.progressBarGlow.SetColor(0x44FFFFFF)
         self.progressBarGlow.AddFlag("not_pick")
         self.progressBarGlow.Show()
@@ -1317,7 +1566,7 @@ class FractureDefenseWindow(ui.Window, DraggableMixin):
         # Progress text (0 / 20)
         self.progressText = ui.TextLine()
         self.progressText.SetParent(self)
-        self.progressText.SetPosition(190, 82)
+        self.progressText.SetPosition(190, 75)
         self.progressText.SetHorizontalAlignCenter()
         self.progressText.SetText("0 / 0")
         self.progressText.SetPackedFontColor(0xFFFFFFFF)
@@ -1328,7 +1577,7 @@ class FractureDefenseWindow(ui.Window, DraggableMixin):
         # ═══════════ WAVE INDICATORS ═══════════
         self.waveLabel = ui.TextLine()
         self.waveLabel.SetParent(self)
-        self.waveLabel.SetPosition(15, 112)
+        self.waveLabel.SetPosition(15, 100)
         self.waveLabel.SetText("WAVE:")
         self.waveLabel.SetPackedFontColor(0xFFCCCCCC)
         self.waveLabel.AddFlag("not_pick")
@@ -1339,25 +1588,72 @@ class FractureDefenseWindow(ui.Window, DraggableMixin):
         for i in range(5):
             ind = ui.Bar()
             ind.SetParent(self)
-            ind.SetPosition(70 + i * 30, 112)
-            ind.SetSize(22, 18)
+            ind.SetPosition(70 + i * 30, 100)
+            ind.SetSize(22, 16)
             ind.SetColor(0xFF333333)
             ind.AddFlag("not_pick")
             ind.Show()
             self.waveIndicators.append(ind)
 
+        # ═══════════ DISTANZA DALLA FRATTURA ═══════════
+        # Separatore
+        self.distSep = ui.Bar()
+        self.distSep.SetParent(self)
+        self.distSep.SetPosition(10, 125)
+        self.distSep.SetSize(360, 1)
+        self.distSep.SetColor(0x66FFFFFF)
+        self.distSep.AddFlag("not_pick")
+        self.distSep.Show()
+        
+        # Label distanza
+        self.distLabel = ui.TextLine()
+        self.distLabel.SetParent(self)
+        self.distLabel.SetPosition(15, 132)
+        self.distLabel.SetText("DISTANZA DALLA FRATTURA:")
+        self.distLabel.SetPackedFontColor(0xFFCCCCCC)
+        self.distLabel.AddFlag("not_pick")
+        self.distLabel.Show()
+        
+        # Valore distanza (in metri)
+        self.distValue = ui.TextLine()
+        self.distValue.SetParent(self)
+        self.distValue.SetPosition(365, 132)
+        self.distValue.SetHorizontalAlignRight()
+        self.distValue.SetText("0m")
+        self.distValue.SetPackedFontColor(0xFF00FF00)
+        self.distValue.SetOutline()
+        self.distValue.AddFlag("not_pick")
+        self.distValue.Show()
+        
+        # Barra distanza
+        self.distBarBg = ui.Bar()
+        self.distBarBg.SetParent(self)
+        self.distBarBg.SetPosition(15, 150)
+        self.distBarBg.SetSize(350, 12)
+        self.distBarBg.SetColor(0xFF1A1A2E)
+        self.distBarBg.AddFlag("not_pick")
+        self.distBarBg.Show()
+        
+        self.distBarFill = ui.Bar()
+        self.distBarFill.SetParent(self)
+        self.distBarFill.SetPosition(17, 152)
+        self.distBarFill.SetSize(0, 8)
+        self.distBarFill.SetColor(0xFF00AA00)
+        self.distBarFill.AddFlag("not_pick")
+        self.distBarFill.Show()
+
         # ═══════════ STATUS MESSAGE ═══════════
         self.statusBg = ui.Bar()
         self.statusBg.SetParent(self)
-        self.statusBg.SetPosition(15, 140)
-        self.statusBg.SetSize(350, 50)
+        self.statusBg.SetPosition(15, 170)
+        self.statusBg.SetSize(350, 60)
         self.statusBg.SetColor(0x44000000)
         self.statusBg.AddFlag("not_pick")
         self.statusBg.Show()
 
         self.statusText = ui.TextLine()
         self.statusText.SetParent(self)
-        self.statusText.SetPosition(190, 150)
+        self.statusText.SetPosition(190, 180)
         self.statusText.SetHorizontalAlignCenter()
         self.statusText.SetText("Preparati alla difesa...")
         self.statusText.SetPackedFontColor(0xFFFFD700)
@@ -1367,12 +1663,23 @@ class FractureDefenseWindow(ui.Window, DraggableMixin):
 
         self.statusSubText = ui.TextLine()
         self.statusSubText.SetParent(self)
-        self.statusSubText.SetPosition(190, 168)
+        self.statusSubText.SetPosition(190, 198)
         self.statusSubText.SetHorizontalAlignCenter()
         self.statusSubText.SetText("Uccidi i mob per aprire la frattura!")
         self.statusSubText.SetPackedFontColor(0xFFAAAAAA)
         self.statusSubText.AddFlag("not_pick")
         self.statusSubText.Show()
+        
+        # Warning text per distanza
+        self.warningText = ui.TextLine()
+        self.warningText.SetParent(self)
+        self.warningText.SetPosition(190, 215)
+        self.warningText.SetHorizontalAlignCenter()
+        self.warningText.SetText("")
+        self.warningText.SetPackedFontColor(0xFFFF0000)
+        self.warningText.SetOutline()
+        self.warningText.AddFlag("not_pick")
+        self.warningText.Hide()
 
         self.Hide()
 
@@ -1403,6 +1710,9 @@ class FractureDefenseWindow(ui.Window, DraggableMixin):
 
         # Aggiorna progress bar
         self.progressBarFill.SetColor(borderColor)
+        
+        # Aggiorna barra distanza
+        self.distBarFill.SetColor(borderColor)
 
         # Aggiorna glow
         self.glowInner.SetColor(self.colorScheme["glow"])
@@ -1410,7 +1720,13 @@ class FractureDefenseWindow(ui.Window, DraggableMixin):
         # Aggiorna status text color
         self.statusText.SetPackedFontColor(titleColor)
 
-    def StartDefense(self, fractureName, rank, duration, totalMobs):
+    def SetDefenseZone(self, centerX, centerY, radius):
+        """Imposta la zona di difesa"""
+        self.defenseCenterX = centerX
+        self.defenseCenterY = centerY
+        self.defenseRadius = radius
+
+    def StartDefense(self, fractureName, rank, duration, totalMobs, centerX=0, centerY=0, radius=1000):
         """Inizia la difesa di una frattura"""
         self.fractureName = fractureName
         self.fractureRank = rank
@@ -1421,23 +1737,34 @@ class FractureDefenseWindow(ui.Window, DraggableMixin):
         self.startTime = app.GetTime()
         self.endTime = self.startTime + duration
         self.isActive = True
+        self.zeroTimeStart = 0  # Reset failsafe
 
         # Imposta colori
         self.SetRankColors(rank)
+        
+        # Imposta zona difesa
+        if centerX > 0 and centerY > 0:
+            self.SetDefenseZone(centerX, centerY, radius)
 
         # Aggiorna UI
         self.fractureNameLabel.SetText(fractureName)
         self.progressText.SetText("0 / %d" % totalMobs)
         self.statusText.SetText("DIFESA IN CORSO!")
         self.statusSubText.SetText("Uccidi tutti i mob per aprire la frattura!")
+        self.warningText.Hide()
 
         # Reset wave indicators
         for ind in self.waveIndicators:
             ind.SetColor(0xFF333333)
 
         # Reset progress bar
-        self.progressBarFill.SetSize(0, 21)
-        self.progressBarGlow.SetSize(0, 10)
+        self.progressBarFill.SetSize(0, 16)
+        self.progressBarGlow.SetSize(0, 8)
+        
+        # Reset distanza
+        self.distValue.SetText("0m")
+        self.distValue.SetPackedFontColor(0xFF00FF00)
+        self.distBarFill.SetSize(0, 8)
 
         self.Show()
         self.SetTop()
@@ -1453,8 +1780,8 @@ class FractureDefenseWindow(ui.Window, DraggableMixin):
             self.progressText.SetText("%d / %d - COMPLETATO!" % (self.mobsRequired, self.mobsRequired))
             self.progressText.SetPackedFontColor(0xFF00FF00)
             # Barra al 100%
-            self.progressBarFill.SetSize(346, 21)
-            self.progressBarGlow.SetSize(346, 10)
+            self.progressBarFill.SetSize(346, 16)
+            self.progressBarGlow.SetSize(346, 8)
             self.progressBarFill.SetColor(0xFF00FF00)  # Verde
             # Status
             self.statusText.SetText("OBIETTIVO RAGGIUNTO!")
@@ -1468,8 +1795,8 @@ class FractureDefenseWindow(ui.Window, DraggableMixin):
             if self.mobsRequired > 0:
                 progress = float(killed) / float(self.mobsRequired)
                 barWidth = int(346 * min(1.0, progress))
-                self.progressBarFill.SetSize(barWidth, 21)
-                self.progressBarGlow.SetSize(barWidth, 10)
+                self.progressBarFill.SetSize(barWidth, 16)
+                self.progressBarGlow.SetSize(barWidth, 8)
                 self.progressBarFill.SetColor(self.colorScheme["border"])
 
         # Aggiorna wave
@@ -1481,10 +1808,64 @@ class FractureDefenseWindow(ui.Window, DraggableMixin):
                 else:
                     ind.SetColor(0xFF333333)
 
+    def UpdateDistance(self):
+        """Aggiorna la distanza dalla frattura"""
+        if not self.isActive or self.defenseCenterX == 0:
+            return
+        
+        try:
+            # Ottieni posizione player
+            px, py, pz = player.GetMainCharacterPosition()
+            
+            # Calcola distanza dal centro
+            dx = px - self.defenseCenterX
+            dy = py - self.defenseCenterY
+            distance = math.sqrt(dx * dx + dy * dy)
+            
+            # Converti in metri (100 unita' = 1 metro)
+            distMeters = int(distance / 100)
+            maxMeters = int(self.defenseRadius / 100)
+            
+            self.currentDistance = distance
+            self.distValue.SetText("%dm" % distMeters)
+            
+            # Calcola percentuale per la barra
+            if self.defenseRadius > 0:
+                ratio = min(1.0, distance / self.defenseRadius)
+                barWidth = int(346 * ratio)
+                self.distBarFill.SetSize(barWidth, 8)
+            
+            # Colori in base alla distanza (con buffer di 50 unita = 0.5m per evitare falsi positivi)
+            if distance >= self.defenseRadius + 50:
+                # FUORI ZONA!
+                self.distValue.SetPackedFontColor(0xFFFF0000)
+                self.distBarFill.SetColor(0xFFFF0000)
+                self.warningText.SetText("!!! TORNA NELLA ZONA !!!")
+                self.warningText.Show()
+                self.distanceStatus = "DANGER"
+            elif distance >= self.defenseRadius * 0.8:
+                # Warning
+                self.distValue.SetPackedFontColor(0xFFFFAA00)
+                self.distBarFill.SetColor(0xFFFFAA00)
+                self.warningText.SetText("ATTENZIONE: Stai uscendo dalla zona!")
+                self.warningText.SetPackedFontColor(0xFFFFAA00)
+                self.warningText.Show()
+                self.distanceStatus = "WARNING"
+            else:
+                # OK
+                self.distValue.SetPackedFontColor(0xFF00FF00)
+                self.distBarFill.SetColor(self.colorScheme["border"])
+                self.warningText.Hide()
+                self.distanceStatus = "OK"
+                
+        except Exception as e:
+            pass
+
     def EndDefense(self, success):
         """Termina la difesa"""
         self.isActive = False
         self.endTime = 0
+        self.zeroTimeStart = 0
 
         if success:
             self.statusText.SetText("DIFESA COMPLETATA!")
@@ -1500,6 +1881,8 @@ class FractureDefenseWindow(ui.Window, DraggableMixin):
             # Bordi rossi
             for b in self.borders:
                 b.SetColor(0xFFFF0000)
+        
+        self.warningText.Hide()
 
         # Auto-hide dopo 3 secondi
         self.endTime = app.GetTime() + 3.0
@@ -1508,6 +1891,9 @@ class FractureDefenseWindow(ui.Window, DraggableMixin):
         """Chiude la finestra"""
         self.isActive = False
         self.endTime = 0
+        self.zeroTimeStart = 0
+        self.defenseCenterX = 0
+        self.defenseCenterY = 0
         self.Hide()
 
     def OnUpdate(self):
@@ -1530,6 +1916,26 @@ class FractureDefenseWindow(ui.Window, DraggableMixin):
             seconds = int(remaining) % 60
             self.timerText.SetText("%02d:%02d" % (minutes, seconds))
 
+            # FIX BUG DIFESA BLOCCATA: Failsafe client-side
+            # Se il timer e' a 00:00 per 30+ secondi senza risposta dal server,
+            # mostra messaggio di errore e chiudi la finestra
+            if remaining <= 0:
+                if self.zeroTimeStart == 0:
+                    self.zeroTimeStart = currentTime
+                elif currentTime - self.zeroTimeStart > 30:
+                    self.isActive = False
+                    self.endTime = currentTime + 3.0
+                    self.statusText.SetText("DIFESA TERMINATA")
+                    self.statusText.SetPackedFontColor(0xFFFF4444)
+                    self.statusSubText.SetText("Nessuna risposta dal server.")
+                    self.warningText.Hide()
+                    self.zeroTimeStart = 0
+                    for b in self.borders:
+                        b.SetColor(0xFFFF0000)
+                    return
+            else:
+                self.zeroTimeStart = 0
+
             # Colore timer (rosso se poco tempo)
             if remaining < 10:
                 self.timerText.SetPackedFontColor(0xFFFF0000)
@@ -1537,6 +1943,9 @@ class FractureDefenseWindow(ui.Window, DraggableMixin):
                 self.timerText.SetPackedFontColor(0xFFFFAA00)
             else:
                 self.timerText.SetPackedFontColor(0xFFFFFFFF)
+            
+            # Aggiorna distanza in tempo reale
+            self.UpdateDistance()
 
         # Effetto pulse sui bordi
         self.pulsePhase += 0.08
@@ -1601,11 +2010,8 @@ class SpeedKillTimerWindow(ui.Window, DraggableMixin):
     def __init__(self):
         ui.Window.__init__(self)
         self.SetSize(320, 130)
-        screenWidth = wndMgr.GetScreenWidth()
-        screenHeight = wndMgr.GetScreenHeight()
-        # Posizione in alto a destra
-        defaultX = screenWidth - 340
-        defaultY = 80
+        # Usa posizioni default ottimizzate
+        defaultX, defaultY = GetDefaultPosition("SpeedKillTimerWindow", 320, 130)
 
         self.InitDraggable("SpeedKillTimerWindow", defaultX, defaultY)
 
@@ -1689,12 +2095,12 @@ class SpeedKillTimerWindow(ui.Window, DraggableMixin):
         self.typeLabel.AddFlag("not_pick")
         self.typeLabel.Show()
 
-        # Sottotitolo "GLORIA x2"
+        # Sottotitolo bonus
         self.bonusLabel = ui.TextLine()
         self.bonusLabel.SetParent(self)
         self.bonusLabel.SetPosition(160, 26)
         self.bonusLabel.SetHorizontalAlignCenter()
-        self.bonusLabel.SetText(">>> GLORIA x2 <<<")
+        self.bonusLabel.SetText(">>> BONUS GLORIA <<<")
         self.bonusLabel.SetPackedFontColor(0xFFFFD700)
         self.bonusLabel.AddFlag("not_pick")
         self.bonusLabel.Show()
@@ -1852,7 +2258,7 @@ class SpeedKillTimerWindow(ui.Window, DraggableMixin):
         else:
             self.timerText.SetPackedFontColor(0xFFFFFFFF)
 
-    def EndSpeedKill(self, success):
+    def EndSpeedKill(self, success, bonusGlory=0):
         """Termina la sfida"""
         self.isActive = False
 
@@ -1860,7 +2266,10 @@ class SpeedKillTimerWindow(ui.Window, DraggableMixin):
             # Successo!
             self.typeLabel.SetText("SUCCESS!")
             self.typeLabel.SetPackedFontColor(0xFF00FF00)
-            self.bonusLabel.SetText("GLORIA x2 OTTENUTA!")
+            if bonusGlory > 0:
+                self.bonusLabel.SetText("+%d GLORIA BONUS!" % bonusGlory)
+            else:
+                self.bonusLabel.SetText("GLORIA BONUS OTTENUTA!")
             self.bonusLabel.SetPackedFontColor(0xFF00FF00)
             self.timerText.SetText("VITTORIA!")
             self.timerText.SetPackedFontColor(0xFF00FF00)
@@ -1900,12 +2309,14 @@ class SpeedKillTimerWindow(ui.Window, DraggableMixin):
                 self.endTime = 0
                 return
 
-        # FALLBACK: Se nessun update ricevuto per 5 secondi mentre attivo,
-        # assume che la kill e' avvenuta e chiudi (server non ha mandato End)
+        # FALLBACK: Se nessun update ricevuto per 15 secondi mentre attivo,
+        # il server potrebbe non aver mandato il segnale End - chiudi in modo neutro
         if self.isActive and self.lastUpdateTime > 0:
-            if currentTime - self.lastUpdateTime > 5.0:
-                # Assume successo (kill completata senza segnale End)
-                self.EndSpeedKill(True)
+            if currentTime - self.lastUpdateTime > 15.0:
+                # NON assumere vittoria - chiudi senza risultato
+                self.isActive = False
+                self.Hide()
+                self.endTime = 0
                 return
 
         # Effetto pulse sui bordi quando attivo
@@ -1947,11 +2358,8 @@ class HunterTipsWindow(ui.Window, DraggableMixin):
     def __init__(self):
         ui.Window.__init__(self)
         self.SetSize(420, 85)
-        screenWidth = wndMgr.GetScreenWidth()
-        screenHeight = wndMgr.GetScreenHeight()
-        # Posizione a sinistra
-        defaultX = 10
-        defaultY = 250
+        # Usa posizioni default ottimizzate
+        defaultX, defaultY = GetDefaultPosition("HunterTipsWindow", 420, 85)
 
         self.InitDraggable("HunterTipsWindow", defaultX, defaultY)
 
@@ -2198,17 +2606,22 @@ class HunterNotificationWindow(ui.Window, DraggableMixin):
             "header_bg": 0x55CC6600, # Orange background
             "icon": "[E]",
             "title_text": "EVENTO"
+        },
+        "world_boss": {
+            "border": 0xFFFF0000,    # Red (pericolo!)
+            "glow": 0x88FF0000,      # Red glow intenso
+            "title": 0xFFFF5555,     # Light red
+            "header_bg": 0x88CC0000, # Red background
+            "icon": "[!]",
+            "title_text": "SUPREMO!"
         }
     }
 
     def __init__(self):
         ui.Window.__init__(self)
         self.SetSize(450, 90)
-        screenWidth = wndMgr.GetScreenWidth()
-        screenHeight = wndMgr.GetScreenHeight()
-        # Posizione in alto a sinistra (sopra tips)
-        defaultX = 10
-        defaultY = 150
+        # Usa posizioni default ottimizzate
+        defaultX, defaultY = GetDefaultPosition("HunterNotificationWindow", 450, 90)
 
         self.InitDraggable("HunterNotificationWindow", defaultX, defaultY)
 
@@ -2452,6 +2865,1110 @@ class HunterNotificationWindow(ui.Window, DraggableMixin):
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
+#  SUPREMO SYSTEM - AWAKENING WINDOW
+#  Annuncio globale stile Solo Leveling quando un Supremo viene risvegliato
+# ═══════════════════════════════════════════════════════════════════════════════
+class SupremoAwakeningWindow(ui.Window):
+    """Finestra di annuncio globale quando un Supremo viene risvegliato - visibile a TUTTI"""
+    
+    RANK_COLORS = {
+        "E": {"border": 0xFF808080, "title": 0xFFFFFFFF, "text": 0xFFCCCCCC},
+        "D": {"border": 0xFF00AA00, "title": 0xFF00FF00, "text": 0xFFAAFFAA},
+        "C": {"border": 0xFF0088FF, "title": 0xFF00CCFF, "text": 0xFFAADDFF},
+        "B": {"border": 0xFFAA00AA, "title": 0xFFFF00FF, "text": 0xFFFFAAFF},
+        "A": {"border": 0xFFFF6600, "title": 0xFFFF9900, "text": 0xFFFFCC88},
+        "S": {"border": 0xFFFF0000, "title": 0xFFFF4444, "text": 0xFFFFAAAA},
+        "SS": {"border": 0xFFFFD700, "title": 0xFFFFD700, "text": 0xFFFFEEAA},
+        "SSS": {"border": 0xFFFF1493, "title": 0xFFFF1493, "text": 0xFFFFAACC}
+    }
+    
+    def __init__(self):
+        ui.Window.__init__(self)
+        screenW = wndMgr.GetScreenWidth()
+        screenH = wndMgr.GetScreenHeight()
+        
+        # Dimensioni finestra
+        self.winW = 500
+        self.winH = 160
+        
+        self.SetSize(self.winW, self.winH)
+        self.SetPosition((screenW - self.winW) // 2, int(screenH * 0.2))
+        
+        self.endTime = 0
+        self.pulsePhase = 0.0
+        self.currentRank = "E"
+        
+        # Background principale scuro con overlay
+        self.bgOuter = ui.Bar()
+        self.bgOuter.SetParent(self)
+        self.bgOuter.SetPosition(0, 0)
+        self.bgOuter.SetSize(self.winW, self.winH)
+        self.bgOuter.SetColor(0xEE080810)
+        self.bgOuter.AddFlag("not_pick")
+        self.bgOuter.Show()
+        
+        # Inner glow
+        self.glowInner = ui.Bar()
+        self.glowInner.SetParent(self)
+        self.glowInner.SetPosition(3, 3)
+        self.glowInner.SetSize(self.winW - 6, self.winH - 6)
+        self.glowInner.SetColor(0x22FFFFFF)
+        self.glowInner.AddFlag("not_pick")
+        self.glowInner.Show()
+        
+        # Inner background
+        self.bgInner = ui.Bar()
+        self.bgInner.SetParent(self)
+        self.bgInner.SetPosition(5, 5)
+        self.bgInner.SetSize(self.winW - 10, self.winH - 10)
+        self.bgInner.SetColor(0xDD0A0A14)
+        self.bgInner.AddFlag("not_pick")
+        self.bgInner.Show()
+        
+        # Bordi animati
+        self.borders = []
+        for y in [0, self.winH - 2]:
+            b = ui.Bar(); b.SetParent(self); b.SetPosition(0, y); b.SetSize(self.winW, 2); b.SetColor(0xFFFFD700); b.AddFlag("not_pick"); b.Show()
+            self.borders.append(b)
+        for x in [0, self.winW - 2]:
+            b = ui.Bar(); b.SetParent(self); b.SetPosition(x, 0); b.SetSize(2, self.winH); b.SetColor(0xFFFFD700); b.AddFlag("not_pick"); b.Show()
+            self.borders.append(b)
+        
+        # Sistema Warning Label
+        self.warningLabel = ui.TextLine()
+        self.warningLabel.SetParent(self)
+        self.warningLabel.SetPosition(self.winW // 2, 15)
+        self.warningLabel.SetHorizontalAlignCenter()
+        self.warningLabel.SetText("⚠ SISTEMA HUNTER ⚠")
+        self.warningLabel.SetPackedFontColor(0xFFFF4444)
+        self.warningLabel.SetOutline()
+        self.warningLabel.AddFlag("not_pick")
+        self.warningLabel.Show()
+        
+        # Titolo principale - RISVEGLIO
+        self.titleText = ui.TextLine()
+        self.titleText.SetParent(self)
+        self.titleText.SetPosition(self.winW // 2, 38)
+        self.titleText.SetHorizontalAlignCenter()
+        self.titleText.SetText("UN SUPREMO SI E' RISVEGLIATO!")
+        self.titleText.SetPackedFontColor(0xFFFFD700)
+        self.titleText.SetOutline()
+        self.titleText.AddFlag("not_pick")
+        self.titleText.Show()
+        
+        # Nome Supremo
+        self.supremoNameText = ui.TextLine()
+        self.supremoNameText.SetParent(self)
+        self.supremoNameText.SetPosition(self.winW // 2, 62)
+        self.supremoNameText.SetHorizontalAlignCenter()
+        self.supremoNameText.SetText("")
+        self.supremoNameText.SetPackedFontColor(0xFFFFFFFF)
+        self.supremoNameText.SetOutline()
+        self.supremoNameText.AddFlag("not_pick")
+        self.supremoNameText.Show()
+        
+        # Grado Supremo
+        self.rankText = ui.TextLine()
+        self.rankText.SetParent(self)
+        self.rankText.SetPosition(self.winW // 2, 82)
+        self.rankText.SetHorizontalAlignCenter()
+        self.rankText.SetText("")
+        self.rankText.SetPackedFontColor(0xFFFFD700)
+        self.rankText.SetOutline()
+        self.rankText.AddFlag("not_pick")
+        self.rankText.Show()
+        
+        # Linea separatore
+        self.separator = ui.Bar()
+        self.separator.SetParent(self)
+        self.separator.SetPosition(50, 105)
+        self.separator.SetSize(self.winW - 100, 1)
+        self.separator.SetColor(0x66FFFFFF)
+        self.separator.AddFlag("not_pick")
+        self.separator.Show()
+        
+        # Evocatore
+        self.summonerText = ui.TextLine()
+        self.summonerText.SetParent(self)
+        self.summonerText.SetPosition(self.winW // 2, 115)
+        self.summonerText.SetHorizontalAlignCenter()
+        self.summonerText.SetText("")
+        self.summonerText.SetPackedFontColor(0xFFCCCCCC)
+        self.summonerText.AddFlag("not_pick")
+        self.summonerText.Show()
+        
+        # Warning Text
+        self.warningSubText = ui.TextLine()
+        self.warningSubText.SetParent(self)
+        self.warningSubText.SetPosition(self.winW // 2, 135)
+        self.warningSubText.SetHorizontalAlignCenter()
+        self.warningSubText.SetText("Preparati alla battaglia...")
+        self.warningSubText.SetPackedFontColor(0xFFFF6666)
+        self.warningSubText.AddFlag("not_pick")
+        self.warningSubText.Show()
+        
+        self.Hide()
+    
+    def ShowAwakening(self, summonerName, supremoName, rank):
+        """Mostra l'annuncio di risveglio Supremo"""
+        self.currentRank = rank.upper() if rank else "E"
+        colors = self.RANK_COLORS.get(self.currentRank, self.RANK_COLORS["E"])
+        
+        # Aggiorna testi
+        self.supremoNameText.SetText("【 %s 】" % supremoName.replace("+", " "))
+        self.supremoNameText.SetPackedFontColor(colors["title"])
+        
+        self.rankText.SetText("Grado: %s" % self.currentRank)
+        self.rankText.SetPackedFontColor(colors["title"])
+        
+        self.summonerText.SetText("Evocato da: %s" % summonerName.replace("+", " "))
+        
+        # Aggiorna colori bordi
+        for b in self.borders:
+            b.SetColor(colors["border"])
+        
+        # Mostra per 6 secondi
+        self.endTime = app.GetTime() + 6.0
+        self.pulsePhase = 0.0
+        
+        self.Show()
+        self.SetTop()
+    
+    def OnUpdate(self):
+        if self.endTime > 0:
+            now = app.GetTime()
+            if now >= self.endTime:
+                self.Hide()
+                self.endTime = 0
+            else:
+                # Effetto pulse
+                self.pulsePhase += 0.12
+                colors = self.RANK_COLORS.get(self.currentRank, self.RANK_COLORS["E"])
+                
+                pulse = (math.sin(self.pulsePhase) + 1.0) / 2.0
+                alpha = int(200 + 55 * pulse)
+                borderColor = (alpha << 24) | (colors["border"] & 0x00FFFFFF)
+                for b in self.borders:
+                    b.SetColor(borderColor)
+    
+    def OnPressEscapeKey(self):
+        return True  # Blocca chiusura con ESC
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+#  SUPREMO SYSTEM - CHALLENGE WINDOW
+#  UI dedicata per la sfida Supremo con timer, distanza e stato
+# ═══════════════════════════════════════════════════════════════════════════════
+class SupremoChallengeWindow(ui.Window, DraggableMixin):
+    """Finestra sfida Supremo - visibile solo ai partecipanti"""
+    
+    RANK_COLORS = {
+        "E": {"border": 0xFF808080, "progress": 0xFF606060},
+        "D": {"border": 0xFF00AA00, "progress": 0xFF008800},
+        "C": {"border": 0xFF0088FF, "progress": 0xFF0066CC},
+        "B": {"border": 0xFFAA00AA, "progress": 0xFF880088},
+        "A": {"border": 0xFFFF6600, "progress": 0xFFCC5500},
+        "S": {"border": 0xFFFF0000, "progress": 0xFFCC0000},
+        "SS": {"border": 0xFFFFD700, "progress": 0xFFCCAA00},
+        "SSS": {"border": 0xFFFF1493, "progress": 0xFFCC1177}
+    }
+    
+    def __init__(self):
+        ui.Window.__init__(self)
+        
+        self.winW = 380
+        self.winH = 200
+        self.SetSize(self.winW, self.winH)
+        
+        # Posizione default
+        defaultX, defaultY = GetDefaultPosition("SupremoChallengeWindow", self.winW, self.winH)
+        self.InitDraggable("SupremoChallengeWindow", defaultX, defaultY)
+        
+        self.endTime = 0
+        self.totalDuration = 0
+        self.maxDistance = 0
+        self.currentDistance = 0
+        self.reward = 0
+        self.penalty = 0
+        self.currentRank = "E"
+        self.pulsePhase = 0.0
+        self.status = "FIGHTING"
+        
+        # Background
+        self.bgOuter = ui.Bar()
+        self.bgOuter.SetParent(self)
+        self.bgOuter.SetPosition(0, 0)
+        self.bgOuter.SetSize(self.winW, self.winH)
+        self.bgOuter.SetColor(0xEE0A0A14)
+        self.bgOuter.AddFlag("not_pick")
+        self.bgOuter.Show()
+        
+        # Inner glow
+        self.glowInner = ui.Bar()
+        self.glowInner.SetParent(self)
+        self.glowInner.SetPosition(3, 3)
+        self.glowInner.SetSize(self.winW - 6, self.winH - 6)
+        self.glowInner.SetColor(0x22FFFFFF)
+        self.glowInner.AddFlag("not_pick")
+        self.glowInner.Show()
+        
+        # Inner background
+        self.bgInner = ui.Bar()
+        self.bgInner.SetParent(self)
+        self.bgInner.SetPosition(5, 5)
+        self.bgInner.SetSize(self.winW - 10, self.winH - 10)
+        self.bgInner.SetColor(0xDD080812)
+        self.bgInner.AddFlag("not_pick")
+        self.bgInner.Show()
+        
+        # Bordi
+        self.borders = []
+        for y in [0, self.winH - 2]:
+            b = ui.Bar(); b.SetParent(self); b.SetPosition(0, y); b.SetSize(self.winW, 2); b.SetColor(0xFFFF4444); b.AddFlag("not_pick"); b.Show()
+            self.borders.append(b)
+        for x in [0, self.winW - 2]:
+            b = ui.Bar(); b.SetParent(self); b.SetPosition(x, 0); b.SetSize(2, self.winH); b.SetColor(0xFFFF4444); b.AddFlag("not_pick"); b.Show()
+            self.borders.append(b)
+        
+        # Header
+        self.headerText = ui.TextLine()
+        self.headerText.SetParent(self)
+        self.headerText.SetPosition(self.winW // 2, 10)
+        self.headerText.SetHorizontalAlignCenter()
+        self.headerText.SetText("⚔ SFIDA SUPREMO ⚔")
+        self.headerText.SetPackedFontColor(0xFFFF4444)
+        self.headerText.SetOutline()
+        self.headerText.AddFlag("not_pick")
+        self.headerText.Show()
+        
+        # Nome Supremo
+        self.supremoName = ui.TextLine()
+        self.supremoName.SetParent(self)
+        self.supremoName.SetPosition(self.winW // 2, 30)
+        self.supremoName.SetHorizontalAlignCenter()
+        self.supremoName.SetText("")
+        self.supremoName.SetPackedFontColor(0xFFFFFFFF)
+        self.supremoName.SetOutline()
+        self.supremoName.AddFlag("not_pick")
+        self.supremoName.Show()
+        
+        # Linea separatore
+        self.sep1 = ui.Bar()
+        self.sep1.SetParent(self)
+        self.sep1.SetPosition(10, 50)
+        self.sep1.SetSize(self.winW - 20, 1)
+        self.sep1.SetColor(0x66FFFFFF)
+        self.sep1.AddFlag("not_pick")
+        self.sep1.Show()
+        
+        # Timer Section
+        self.timerLabel = ui.TextLine()
+        self.timerLabel.SetParent(self)
+        self.timerLabel.SetPosition(20, 58)
+        self.timerLabel.SetText("TEMPO RIMANENTE:")
+        self.timerLabel.SetPackedFontColor(0xFFCCCCCC)
+        self.timerLabel.AddFlag("not_pick")
+        self.timerLabel.Show()
+        
+        self.timerValue = ui.TextLine()
+        self.timerValue.SetParent(self)
+        self.timerValue.SetPosition(self.winW - 20, 58)
+        self.timerValue.SetHorizontalAlignRight()
+        self.timerValue.SetText("00:00")
+        self.timerValue.SetPackedFontColor(0xFFFFD700)
+        self.timerValue.SetOutline()
+        self.timerValue.AddFlag("not_pick")
+        self.timerValue.Show()
+        
+        # Timer Progress Bar
+        self.timerBarBg = ui.Bar()
+        self.timerBarBg.SetParent(self)
+        self.timerBarBg.SetPosition(15, 78)
+        self.timerBarBg.SetSize(self.winW - 30, 12)
+        self.timerBarBg.SetColor(0xFF1A1A2E)
+        self.timerBarBg.AddFlag("not_pick")
+        self.timerBarBg.Show()
+        
+        self.timerBarFill = ui.Bar()
+        self.timerBarFill.SetParent(self)
+        self.timerBarFill.SetPosition(15, 78)
+        self.timerBarFill.SetSize(self.winW - 30, 12)
+        self.timerBarFill.SetColor(0xFF00CCFF)
+        self.timerBarFill.AddFlag("not_pick")
+        self.timerBarFill.Show()
+        
+        # Distance Section
+        self.distLabel = ui.TextLine()
+        self.distLabel.SetParent(self)
+        self.distLabel.SetPosition(20, 98)
+        self.distLabel.SetText("DISTANZA DAL SUPREMO:")
+        self.distLabel.SetPackedFontColor(0xFFCCCCCC)
+        self.distLabel.AddFlag("not_pick")
+        self.distLabel.Show()
+        
+        self.distValue = ui.TextLine()
+        self.distValue.SetParent(self)
+        self.distValue.SetPosition(self.winW - 20, 98)
+        self.distValue.SetHorizontalAlignRight()
+        self.distValue.SetText("0m")
+        self.distValue.SetPackedFontColor(0xFF00FF00)
+        self.distValue.SetOutline()
+        self.distValue.AddFlag("not_pick")
+        self.distValue.Show()
+        
+        # Distance Progress Bar
+        self.distBarBg = ui.Bar()
+        self.distBarBg.SetParent(self)
+        self.distBarBg.SetPosition(15, 118)
+        self.distBarBg.SetSize(self.winW - 30, 12)
+        self.distBarBg.SetColor(0xFF1A1A2E)
+        self.distBarBg.AddFlag("not_pick")
+        self.distBarBg.Show()
+        
+        self.distBarFill = ui.Bar()
+        self.distBarFill.SetParent(self)
+        self.distBarFill.SetPosition(15, 118)
+        self.distBarFill.SetSize(0, 12)
+        self.distBarFill.SetColor(0xFF00AA00)
+        self.distBarFill.AddFlag("not_pick")
+        self.distBarFill.Show()
+        
+        # Linea separatore
+        self.sep2 = ui.Bar()
+        self.sep2.SetParent(self)
+        self.sep2.SetPosition(10, 138)
+        self.sep2.SetSize(self.winW - 20, 1)
+        self.sep2.SetColor(0x66FFFFFF)
+        self.sep2.AddFlag("not_pick")
+        self.sep2.Show()
+        
+        # Reward/Penalty Section
+        self.rewardLabel = ui.TextLine()
+        self.rewardLabel.SetParent(self)
+        self.rewardLabel.SetPosition(20, 145)
+        self.rewardLabel.SetText("Ricompensa:")
+        self.rewardLabel.SetPackedFontColor(0xFFAAFFAA)
+        self.rewardLabel.AddFlag("not_pick")
+        self.rewardLabel.Show()
+        
+        self.rewardValue = ui.TextLine()
+        self.rewardValue.SetParent(self)
+        self.rewardValue.SetPosition(100, 145)
+        self.rewardValue.SetText("+0 Gloria")
+        self.rewardValue.SetPackedFontColor(0xFF00FF00)
+        self.rewardValue.AddFlag("not_pick")
+        self.rewardValue.Show()
+        
+        self.penaltyLabel = ui.TextLine()
+        self.penaltyLabel.SetParent(self)
+        self.penaltyLabel.SetPosition(self.winW // 2 + 10, 145)
+        self.penaltyLabel.SetText("Penalita':")
+        self.penaltyLabel.SetPackedFontColor(0xFFFFAAAA)
+        self.penaltyLabel.AddFlag("not_pick")
+        self.penaltyLabel.Show()
+        
+        self.penaltyValue = ui.TextLine()
+        self.penaltyValue.SetParent(self)
+        self.penaltyValue.SetPosition(self.winW // 2 + 75, 145)
+        self.penaltyValue.SetText("-0 Gloria")
+        self.penaltyValue.SetPackedFontColor(0xFFFF4444)
+        self.penaltyValue.AddFlag("not_pick")
+        self.penaltyValue.Show()
+        
+        # Status Text
+        self.statusText = ui.TextLine()
+        self.statusText.SetParent(self)
+        self.statusText.SetPosition(self.winW // 2, 170)
+        self.statusText.SetHorizontalAlignCenter()
+        self.statusText.SetText("⚔ COMBATTI! ⚔")
+        self.statusText.SetPackedFontColor(0xFFFFD700)
+        self.statusText.SetOutline()
+        self.statusText.AddFlag("not_pick")
+        self.statusText.Show()
+        
+        # Warning Text (nascosto inizialmente)
+        self.warningText = ui.TextLine()
+        self.warningText.SetParent(self)
+        self.warningText.SetPosition(self.winW // 2, 185)
+        self.warningText.SetHorizontalAlignCenter()
+        self.warningText.SetText("")
+        self.warningText.SetPackedFontColor(0xFFFF0000)
+        self.warningText.SetOutline()
+        self.warningText.AddFlag("not_pick")
+        self.warningText.Hide()
+        
+        self.Hide()
+    
+    def StartChallenge(self, summonerName, supremoName, vnum, rank, duration, reward, penalty, spawnX, spawnY, maxDistance):
+        """Avvia la sfida Supremo"""
+        self.currentRank = rank.upper() if rank else "E"
+        self.totalDuration = duration
+        self.maxDistance = maxDistance
+        self.reward = reward
+        self.penalty = penalty
+        
+        colors = self.RANK_COLORS.get(self.currentRank, self.RANK_COLORS["E"])
+        
+        # Aggiorna testi
+        self.supremoName.SetText("【 %s 】" % supremoName.replace("+", " "))
+        self.rewardValue.SetText("+%d Gloria" % reward)
+        self.penaltyValue.SetText("-%d Gloria" % penalty)
+        
+        # Aggiorna colori
+        for b in self.borders:
+            b.SetColor(colors["border"])
+        self.timerBarFill.SetColor(colors["progress"])
+        
+        # Timer
+        self.endTime = app.GetTime() + duration
+        
+        # Reset stato
+        self.status = "FIGHTING"
+        self.statusText.SetText("⚔ COMBATTI! ⚔")
+        self.statusText.SetPackedFontColor(0xFFFFD700)
+        self.warningText.Hide()
+        
+        self.Show()
+        self.SetTop()
+    
+    def UpdateChallenge(self, timeLeft, distance, status):
+        """Aggiorna UI con tempo e distanza"""
+        self.currentDistance = distance
+        self.status = status
+        
+        # Timer
+        mins = timeLeft // 60
+        secs = timeLeft % 60
+        self.timerValue.SetText("%02d:%02d" % (mins, secs))
+        
+        # Timer bar
+        if self.totalDuration > 0:
+            progress = float(timeLeft) / float(self.totalDuration)
+            fillWidth = int(progress * (self.winW - 30))
+            self.timerBarFill.SetSize(max(1, fillWidth), 12)
+        
+        # Distanza
+        self.distValue.SetText("%dm / %dm" % (distance, self.maxDistance))
+        
+        # Distance bar (inverso - piu' lontano = piu' piena = piu' rosso)
+        if self.maxDistance > 0:
+            distProgress = min(1.0, float(distance) / float(self.maxDistance))
+            fillWidth = int(distProgress * (self.winW - 30))
+            self.distBarFill.SetSize(fillWidth, 12)
+            
+            # Colore distanza
+            if distProgress < 0.5:
+                self.distBarFill.SetColor(0xFF00AA00)  # Verde
+                self.distValue.SetPackedFontColor(0xFF00FF00)
+            elif distProgress < 0.75:
+                self.distBarFill.SetColor(0xFFFFAA00)  # Giallo
+                self.distValue.SetPackedFontColor(0xFFFFD700)
+            else:
+                self.distBarFill.SetColor(0xFFFF0000)  # Rosso
+                self.distValue.SetPackedFontColor(0xFFFF0000)
+        
+        # Status
+        if status == "WARNING":
+            self.statusText.SetText("⚠ TROPPO LONTANO! ⚠")
+            self.statusText.SetPackedFontColor(0xFFFF0000)
+            self.warningText.SetText("Torna vicino al Supremo!")
+            self.warningText.Show()
+        else:
+            self.statusText.SetText("⚔ COMBATTI! ⚔")
+            self.statusText.SetPackedFontColor(0xFFFFD700)
+            self.warningText.Hide()
+    
+    def EndChallenge(self, result, gloriaChange, message):
+        """Termina la sfida con risultato"""
+        self.endTime = app.GetTime() + 4.0  # Mostra risultato per 4 secondi
+        
+        if result == "SUCCESS":
+            self.headerText.SetText("⭐ VITTORIA! ⭐")
+            self.headerText.SetPackedFontColor(0xFF00FF00)
+            self.statusText.SetText("+%d Gloria!" % gloriaChange)
+            self.statusText.SetPackedFontColor(0xFF00FF00)
+            for b in self.borders:
+                b.SetColor(0xFF00FF00)
+        elif result == "STOLEN":
+            self.headerText.SetText("💀 RUBATO! 💀")
+            self.headerText.SetPackedFontColor(0xFFFF6600)
+            self.statusText.SetText("-%d Gloria (rubato)" % abs(gloriaChange))
+            self.statusText.SetPackedFontColor(0xFFFF6600)
+            for b in self.borders:
+                b.SetColor(0xFFFF6600)
+        elif result == "TIMEOUT":
+            self.headerText.SetText("⏰ TEMPO SCADUTO ⏰")
+            self.headerText.SetPackedFontColor(0xFFFF0000)
+            self.statusText.SetText("-%d Gloria!" % abs(gloriaChange))
+            self.statusText.SetPackedFontColor(0xFFFF0000)
+            for b in self.borders:
+                b.SetColor(0xFFFF0000)
+        elif result == "ABANDON":
+            self.headerText.SetText("🚫 ABBANDONATO 🚫")
+            self.headerText.SetPackedFontColor(0xFFFF0000)
+            self.statusText.SetText("-%d Gloria (troppo lontano)" % abs(gloriaChange))
+            self.statusText.SetPackedFontColor(0xFFFF0000)
+            for b in self.borders:
+                b.SetColor(0xFFFF0000)
+        
+        self.warningText.SetText(message.replace("+", " "))
+        self.warningText.Show()
+    
+    def OnUpdate(self):
+        if self.endTime > 0:
+            now = app.GetTime()
+            if now >= self.endTime:
+                self.Hide()
+                self.endTime = 0
+            else:
+                # Effetto pulse
+                self.pulsePhase += 0.1
+                colors = self.RANK_COLORS.get(self.currentRank, self.RANK_COLORS["E"])
+                
+                pulse = (math.sin(self.pulsePhase) + 1.0) / 2.0
+                alpha = int(200 + 55 * pulse)
+                borderColor = (alpha << 24) | (colors["border"] & 0x00FFFFFF)
+                
+                # Pulse piu' intenso se in pericolo
+                if self.status == "WARNING":
+                    borderColor = (alpha << 24) | 0x00FF0000
+                
+                for b in self.borders:
+                    b.SetColor(borderColor)
+    
+    def OnPressEscapeKey(self):
+        return True  # Blocca chiusura con ESC
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+#  SUPREMO SYSTEM - VICTORY WINDOW
+#  Effetto vittoria epico dopo aver sconfitto un Supremo
+# ═══════════════════════════════════════════════════════════════════════════════
+class SupremoVictoryWindow(ui.Window):
+    """Finestra effetto vittoria Supremo - epica e celebrativa"""
+    
+    RANK_COLORS = {
+        "E": 0xFF808080, "D": 0xFF00AA00, "C": 0xFF0088FF, "B": 0xFFAA00AA,
+        "A": 0xFFFF6600, "S": 0xFFFF0000, "SS": 0xFFFFD700, "SSS": 0xFFFF1493
+    }
+    
+    def __init__(self):
+        ui.Window.__init__(self)
+        screenW = wndMgr.GetScreenWidth()
+        screenH = wndMgr.GetScreenHeight()
+        
+        self.winW = 450
+        self.winH = 200
+        self.SetSize(self.winW, self.winH)
+        self.SetPosition((screenW - self.winW) // 2, int(screenH * 0.25))
+        
+        self.endTime = 0
+        self.pulsePhase = 0.0
+        self.borderColor = 0xFFFFD700
+        
+        # Background con effetto glow
+        self.bgOuter = ui.Bar()
+        self.bgOuter.SetParent(self)
+        self.bgOuter.SetPosition(0, 0)
+        self.bgOuter.SetSize(self.winW, self.winH)
+        self.bgOuter.SetColor(0xEE0A140A)  # Verde scuro
+        self.bgOuter.AddFlag("not_pick")
+        self.bgOuter.Show()
+        
+        # Inner glow dorato
+        self.glowInner = ui.Bar()
+        self.glowInner.SetParent(self)
+        self.glowInner.SetPosition(3, 3)
+        self.glowInner.SetSize(self.winW - 6, self.winH - 6)
+        self.glowInner.SetColor(0x33FFD700)
+        self.glowInner.AddFlag("not_pick")
+        self.glowInner.Show()
+        
+        # Inner background
+        self.bgInner = ui.Bar()
+        self.bgInner.SetParent(self)
+        self.bgInner.SetPosition(5, 5)
+        self.bgInner.SetSize(self.winW - 10, self.winH - 10)
+        self.bgInner.SetColor(0xDD081208)
+        self.bgInner.AddFlag("not_pick")
+        self.bgInner.Show()
+        
+        # Bordi dorati
+        self.borders = []
+        for y in [0, self.winH - 2]:
+            b = ui.Bar(); b.SetParent(self); b.SetPosition(0, y); b.SetSize(self.winW, 2); b.SetColor(0xFFFFD700); b.AddFlag("not_pick"); b.Show()
+            self.borders.append(b)
+        for x in [0, self.winW - 2]:
+            b = ui.Bar(); b.SetParent(self); b.SetPosition(x, 0); b.SetSize(2, self.winH); b.SetColor(0xFFFFD700); b.AddFlag("not_pick"); b.Show()
+            self.borders.append(b)
+        
+        # Titolo VITTORIA
+        self.victoryTitle = ui.TextLine()
+        self.victoryTitle.SetParent(self)
+        self.victoryTitle.SetPosition(self.winW // 2, 20)
+        self.victoryTitle.SetHorizontalAlignCenter()
+        self.victoryTitle.SetText("⭐ SUPREMO SCONFITTO! ⭐")
+        self.victoryTitle.SetPackedFontColor(0xFFFFD700)
+        self.victoryTitle.SetOutline()
+        self.victoryTitle.AddFlag("not_pick")
+        self.victoryTitle.Show()
+        
+        # Nome Supremo
+        self.supremoName = ui.TextLine()
+        self.supremoName.SetParent(self)
+        self.supremoName.SetPosition(self.winW // 2, 50)
+        self.supremoName.SetHorizontalAlignCenter()
+        self.supremoName.SetText("")
+        self.supremoName.SetPackedFontColor(0xFFFFFFFF)
+        self.supremoName.SetOutline()
+        self.supremoName.AddFlag("not_pick")
+        self.supremoName.Show()
+        
+        # Grado
+        self.rankText = ui.TextLine()
+        self.rankText.SetParent(self)
+        self.rankText.SetPosition(self.winW // 2, 75)
+        self.rankText.SetHorizontalAlignCenter()
+        self.rankText.SetText("")
+        self.rankText.SetPackedFontColor(0xFFFFD700)
+        self.rankText.SetOutline()
+        self.rankText.AddFlag("not_pick")
+        self.rankText.Show()
+        
+        # Linea separatore
+        self.separator = ui.Bar()
+        self.separator.SetParent(self)
+        self.separator.SetPosition(50, 105)
+        self.separator.SetSize(self.winW - 100, 1)
+        self.separator.SetColor(0x66FFD700)
+        self.separator.AddFlag("not_pick")
+        self.separator.Show()
+        
+        # Ricompensa Gloria
+        self.rewardLabel = ui.TextLine()
+        self.rewardLabel.SetParent(self)
+        self.rewardLabel.SetPosition(self.winW // 2, 120)
+        self.rewardLabel.SetHorizontalAlignCenter()
+        self.rewardLabel.SetText("GLORIA GUADAGNATA:")
+        self.rewardLabel.SetPackedFontColor(0xFFCCCCCC)
+        self.rewardLabel.AddFlag("not_pick")
+        self.rewardLabel.Show()
+        
+        self.rewardValue = ui.TextLine()
+        self.rewardValue.SetParent(self)
+        self.rewardValue.SetPosition(self.winW // 2, 145)
+        self.rewardValue.SetHorizontalAlignCenter()
+        self.rewardValue.SetText("+0")
+        self.rewardValue.SetPackedFontColor(0xFF00FF00)
+        self.rewardValue.SetOutline()
+        self.rewardValue.AddFlag("not_pick")
+        self.rewardValue.Show()
+        
+        # Messaggio motivazionale
+        self.motivationText = ui.TextLine()
+        self.motivationText.SetParent(self)
+        self.motivationText.SetPosition(self.winW // 2, 175)
+        self.motivationText.SetHorizontalAlignCenter()
+        self.motivationText.SetText("Sei diventato piu' forte!")
+        self.motivationText.SetPackedFontColor(0xFFAAFFAA)
+        self.motivationText.AddFlag("not_pick")
+        self.motivationText.Show()
+        
+        self.Hide()
+    
+    def ShowVictory(self, supremoName, rank, gloriaReward):
+        """Mostra effetto vittoria"""
+        self.borderColor = self.RANK_COLORS.get(rank.upper(), 0xFFFFD700)
+        
+        self.supremoName.SetText("【 %s 】" % supremoName.replace("+", " "))
+        self.rankText.SetText("Grado: %s" % rank.upper())
+        self.rankText.SetPackedFontColor(self.borderColor)
+        self.rewardValue.SetText("+%d Gloria" % gloriaReward)
+        
+        # Messaggi motivazionali basati su rank
+        messages = {
+            "E": "Un buon inizio!",
+            "D": "La tua forza cresce!",
+            "C": "Degno di un vero Cacciatore!",
+            "B": "Il tuo potere e' impressionante!",
+            "A": "Sei tra i migliori!",
+            "S": "Leggendario!",
+            "SS": "Hai raggiunto l'impossibile!",
+            "SSS": "SEI IL MONARCA!"
+        }
+        self.motivationText.SetText(messages.get(rank.upper(), "Vittoria!"))
+        
+        # Aggiorna colori
+        for b in self.borders:
+            b.SetColor(self.borderColor)
+        self.glowInner.SetColor((0x33 << 24) | (self.borderColor & 0x00FFFFFF))
+        
+        self.endTime = app.GetTime() + 5.0
+        self.pulsePhase = 0.0
+        
+        self.Show()
+        self.SetTop()
+    
+    def OnUpdate(self):
+        if self.endTime > 0:
+            now = app.GetTime()
+            if now >= self.endTime:
+                self.Hide()
+                self.endTime = 0
+            else:
+                # Effetto pulse dorato
+                self.pulsePhase += 0.15
+                pulse = (math.sin(self.pulsePhase) + 1.0) / 2.0
+                alpha = int(200 + 55 * pulse)
+                borderColor = (alpha << 24) | (self.borderColor & 0x00FFFFFF)
+                for b in self.borders:
+                    b.SetColor(borderColor)
+    
+    def OnPressEscapeKey(self):
+        return True  # Blocca chiusura con ESC
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+#  GLORY DETAIL WINDOW - Pannello dettaglio Gloria (sostituisce syschat)
+#  Appare a sinistra, auto-size, mostra tutti i bonus/malus.
+#  Visibile a killer, party, e partecipanti (ognuno vede il proprio dettaglio).
+# ═══════════════════════════════════════════════════════════════════════════════
+
+GLORY_CONTEXT_COLORS = {
+    "KILLER":          {"border": 0xFFFFD700, "header_bg": 0xCC332200, "label": "DETTAGLIO GLORIA"},
+    "PARTY":           {"border": 0xFF00FFFF, "header_bg": 0xCC002233, "label": "GLORIA PARTY"},
+    "PARTECIPAZIONE":  {"border": 0xFF00FF00, "header_bg": 0xCC003300, "label": "PARTECIPAZIONE"},
+    "BAULE":           {"border": 0xFFFFAA00, "header_bg": 0xCC332200, "label": "BAULE APERTO"},
+}
+
+GLORY_TYPE_ICONS = {
+    "BOSS":        "|cffFF6600BOSS|r",
+    "SUPER_METIN": "|cff00FFFFSM|r",
+    "BAULE":       "|cffFFD700BAULE|r",
+    "ELITE":       "|cffFFAAAAELITE|r",
+    "FRATTURA":    "|cffAA00FFFRATTURA|r",
+}
+
+
+class GloryDetailWindow(ui.Window, DraggableMixin):
+    """Pannello dettaglio Gloria. Si auto-dimensiona in base ai modificatori.
+       Appare a sinistra dello schermo, fade-out automatico dopo ~8 secondi.
+       Coda messaggi: se arriva un nuovo dettaglio mentre uno e' visibile,
+       viene accodato e mostrato subito dopo."""
+
+    PANEL_WIDTH = 300
+    HEADER_H = 36
+    LINE_H = 16
+    FOOTER_H = 28
+    PADDING = 8
+    DISPLAY_TIME = 8.0   # secondi visibilita'
+    FADE_TIME = 1.5      # secondi fade-out
+
+    def __init__(self):
+        ui.Window.__init__(self)
+        self.SetSize(self.PANEL_WIDTH, 200)
+        # Default: centro schermo
+        screenW = wndMgr.GetScreenWidth()
+        screenH = wndMgr.GetScreenHeight()
+        defX = (screenW - self.PANEL_WIDTH) // 2
+        defY = (screenH - 200) // 2
+        self.InitDraggable("GloryDetail", defX, defY)
+        self.AddFlag("float")
+
+        self.queue = []
+        self.endTime = 0
+        self.fadeStart = 0
+        self.activeFadeTime = self.FADE_TIME
+        self.isShowing = False
+
+        # --- Sfondo principale ---
+        self.bg = ui.Bar()
+        self.bg.SetParent(self)
+        self.bg.SetPosition(0, 0)
+        self.bg.SetSize(self.PANEL_WIDTH, 200)
+        self.bg.SetColor(0xDD0A0A14)
+        self.bg.AddFlag("not_pick")
+        self.bg.Show()
+
+        # --- Header sfondo ---
+        self.headerBg = ui.Bar()
+        self.headerBg.SetParent(self)
+        self.headerBg.SetPosition(0, 0)
+        self.headerBg.SetSize(self.PANEL_WIDTH, self.HEADER_H)
+        self.headerBg.SetColor(0xCC332200)
+        self.headerBg.AddFlag("not_pick")
+        self.headerBg.Show()
+
+        # --- Bordi (top, bottom, left, right) ---
+        self.borders = []
+        for i in range(4):
+            b = ui.Bar()
+            b.SetParent(self)
+            b.SetColor(0xFFFFD700)
+            b.AddFlag("not_pick")
+            b.Show()
+            self.borders.append(b)
+
+        # --- Testo header (context label) ---
+        self.headerLabel = ui.TextLine()
+        self.headerLabel.SetParent(self)
+        self.headerLabel.SetPosition(self.PADDING, 3)
+        self.headerLabel.SetPackedFontColor(0xFFFFD700)
+        self.headerLabel.SetOutline()
+        self.headerLabel.AddFlag("not_pick")
+        self.headerLabel.Show()
+
+        # --- Testo source (tipo + nome mob) ---
+        self.sourceText = ui.TextLine()
+        self.sourceText.SetParent(self)
+        self.sourceText.SetPosition(self.PADDING, 19)
+        self.sourceText.SetPackedFontColor(0xFFCCCCCC)
+        self.sourceText.AddFlag("not_pick")
+        self.sourceText.Show()
+
+        # --- Separatore header ---
+        self.headerSep = ui.Bar()
+        self.headerSep.SetParent(self)
+        self.headerSep.SetPosition(4, self.HEADER_H - 1)
+        self.headerSep.SetSize(self.PANEL_WIDTH - 8, 1)
+        self.headerSep.SetColor(0x66FFFFFF)
+        self.headerSep.AddFlag("not_pick")
+        self.headerSep.Show()
+
+        # --- Pool di linee per base + modificatori (pre-allocate 15) ---
+        self.lineLabels = []
+        self.lineValues = []
+        for i in range(15):
+            lbl = ui.TextLine()
+            lbl.SetParent(self)
+            lbl.SetPosition(self.PADDING + 4, 0)
+            lbl.SetPackedFontColor(0xFFAAAAAA)
+            lbl.AddFlag("not_pick")
+            lbl.Show()
+            self.lineLabels.append(lbl)
+
+            val = ui.TextLine()
+            val.SetParent(self)
+            val.SetPosition(self.PANEL_WIDTH - self.PADDING - 4, 0)
+            val.SetHorizontalAlignRight()
+            val.SetPackedFontColor(0xFF00FF00)
+            val.AddFlag("not_pick")
+            val.Show()
+            self.lineValues.append(val)
+
+        # --- Separatore footer ---
+        self.footerSep = ui.Bar()
+        self.footerSep.SetParent(self)
+        self.footerSep.SetPosition(4, 0)
+        self.footerSep.SetSize(self.PANEL_WIDTH - 8, 1)
+        self.footerSep.SetColor(0x66FFFFFF)
+        self.footerSep.AddFlag("not_pick")
+        self.footerSep.Show()
+
+        # --- Totale (grande, evidenziato) ---
+        self.totalLabel = ui.TextLine()
+        self.totalLabel.SetParent(self)
+        self.totalLabel.SetPosition(self.PADDING + 4, 0)
+        self.totalLabel.SetPackedFontColor(0xFFFFFFFF)
+        self.totalLabel.SetOutline()
+        self.totalLabel.AddFlag("not_pick")
+        self.totalLabel.Show()
+
+        self.totalValue = ui.TextLine()
+        self.totalValue.SetParent(self)
+        self.totalValue.SetPosition(self.PANEL_WIDTH - self.PADDING - 4, 0)
+        self.totalValue.SetHorizontalAlignRight()
+        self.totalValue.SetPackedFontColor(0xFFFFD700)
+        self.totalValue.SetOutline()
+        self.totalValue.AddFlag("not_pick")
+        self.totalValue.Show()
+
+        self.Hide()
+
+    def ShowDetail(self, context, sourceType, sourceName, baseGlory, modifiers, finalGlory):
+        """Mostra (o accoda) un dettaglio Gloria.
+           context:    KILLER | PARTY | PARTECIPAZIONE | BAULE
+           sourceType: BOSS | SUPER_METIN | BAULE | ELITE | FRATTURA
+           sourceName: nome del mob/baule
+           baseGlory:  punti base
+           modifiers:  lista di tuple (name, valueStr, addInt)
+           finalGlory: totale finale
+        """
+        entry = (context, sourceType, sourceName, baseGlory, modifiers, finalGlory)
+        if self.isShowing:
+            # Anti-leak: max 12 in coda (party frattura con 5 membri puo' generare molti msg)
+            if len(self.queue) < 12:
+                self.queue.append(entry)
+            return
+        self._RenderDetail(entry)
+
+    def _RenderDetail(self, entry):
+        context, sourceType, sourceName, baseGlory, modifiers, finalGlory = entry
+
+        # --- Colori da context ---
+        ctx = GLORY_CONTEXT_COLORS.get(context, GLORY_CONTEXT_COLORS["KILLER"])
+        borderColor = ctx["border"]
+        headerBgColor = ctx["header_bg"]
+        headerText = ctx["label"]
+
+        for b in self.borders:
+            b.SetColor(borderColor)
+        self.headerBg.SetColor(headerBgColor)
+        self.headerLabel.SetPackedFontColor(borderColor)
+        self.headerLabel.SetText(headerText)
+
+        # Source text
+        typeTag = sourceType
+        self.sourceText.SetText(typeTag + " - " + sourceName)
+
+        # --- Calcola righe (base + mods) ---
+        numLines = 1 + len(modifiers)  # 1 per base
+        if numLines > 15:
+            numLines = 15
+
+        yOff = self.HEADER_H + 4
+
+        # Base Gloria (riga 0)
+        self.lineLabels[0].SetPosition(self.PADDING + 4, yOff)
+        self.lineLabels[0].SetText("Gloria Base")
+        self.lineLabels[0].SetPackedFontColor(0xFFCCCCCC)
+        self.lineValues[0].SetPosition(self.PANEL_WIDTH - self.PADDING - 4, yOff)
+        self.lineValues[0].SetText(str(baseGlory))
+        self.lineValues[0].SetPackedFontColor(0xFFFFFFFF)
+        yOff += self.LINE_H
+
+        # Modifier lines
+        for idx in range(len(modifiers)):
+            if idx + 1 >= 15:
+                break
+            name, valueStr, addVal = modifiers[idx]
+            lineIdx = idx + 1
+            self.lineLabels[lineIdx].SetPosition(self.PADDING + 4, yOff)
+            self.lineLabels[lineIdx].SetText(name + " (" + valueStr + ")")
+
+            self.lineValues[lineIdx].SetPosition(self.PANEL_WIDTH - self.PADDING - 4, yOff)
+            addInt = int(addVal)
+            if addInt >= 0:
+                self.lineValues[lineIdx].SetText("+" + str(addInt))
+                self.lineValues[lineIdx].SetPackedFontColor(0xFF00FF00)
+                self.lineLabels[lineIdx].SetPackedFontColor(0xFF88CC88)
+            else:
+                self.lineValues[lineIdx].SetText(str(addInt))
+                self.lineValues[lineIdx].SetPackedFontColor(0xFFFF4444)
+                self.lineLabels[lineIdx].SetPackedFontColor(0xFFCC8888)
+            yOff += self.LINE_H
+
+        # Nascondi linee inutilizzate
+        usedLines = min(numLines, 15)
+        for i in range(usedLines, 15):
+            self.lineLabels[i].SetText("")
+            self.lineValues[i].SetText("")
+
+        # Separatore footer
+        yOff += 3
+        self.footerSep.SetPosition(4, yOff)
+        yOff += 4
+
+        # TOTALE
+        self.totalLabel.SetPosition(self.PADDING + 4, yOff)
+        self.totalLabel.SetText("TOTALE")
+        self.totalLabel.SetPackedFontColor(0xFFFFFFFF)
+        self.totalValue.SetPosition(self.PANEL_WIDTH - self.PADDING - 4, yOff)
+        self.totalValue.SetText("+" + str(finalGlory) + " Gloria")
+        self.totalValue.SetPackedFontColor(borderColor)
+        yOff += self.LINE_H + self.PADDING
+
+        # --- Auto-size ---
+        totalH = yOff
+        self.SetSize(self.PANEL_WIDTH, totalH)
+        self.bg.SetSize(self.PANEL_WIDTH, totalH)
+        self.headerBg.SetSize(self.PANEL_WIDTH, self.HEADER_H)
+
+        # Bordi
+        self.borders[0].SetPosition(0, 0)
+        self.borders[0].SetSize(self.PANEL_WIDTH, 2)      # top
+        self.borders[1].SetPosition(0, totalH - 2)
+        self.borders[1].SetSize(self.PANEL_WIDTH, 2)      # bottom
+        self.borders[2].SetPosition(0, 0)
+        self.borders[2].SetSize(2, totalH)                 # left
+        self.borders[3].SetPosition(self.PANEL_WIDTH - 2, 0)
+        self.borders[3].SetSize(2, totalH)                 # right
+
+        # Posizione: centro schermo (o salvata se spostata manualmente)
+        screenW = wndMgr.GetScreenWidth()
+        screenH = wndMgr.GetScreenHeight()
+        defX = (screenW - self.PANEL_WIDTH) // 2
+        defY = (screenH - totalH) // 2
+        if HasSavedPosition("GloryDetail"):
+            defX, defY = GetWindowPosition("GloryDetail", defX, defY)
+        self.SetPosition(defX, defY)
+
+        # Timer - durata dinamica: se la coda e' piena, velocizza per non
+        # bloccare il player per 48+ secondi dopo 6 kill ravvicinati.
+        # Coda vuota: 8s normale. Coda piena: min 2.5s (drain veloce).
+        now = app.GetTime()
+        qLen = len(self.queue)
+        if qLen > 0:
+            displayTime = max(2.5, self.DISPLAY_TIME - qLen * 1.5)
+            fadeTime = min(0.8, displayTime * 0.3)
+        else:
+            displayTime = self.DISPLAY_TIME
+            fadeTime = self.FADE_TIME
+        self.endTime = now + displayTime
+        self.fadeStart = now + displayTime - fadeTime
+        self.activeFadeTime = fadeTime
+        self.isShowing = True
+        self.Show()
+        self.SetTop()
+
+    def OnUpdate(self):
+        if not self.isShowing:
+            return
+        now = app.GetTime()
+        if now >= self.endTime:
+            self.Hide()
+            self.isShowing = False
+            self.endTime = 0
+            # Mostra prossimo dalla coda
+            if len(self.queue) > 0:
+                nextEntry = self.queue.pop(0)
+                self._RenderDetail(nextEntry)
+            return
+        # Fade-out effect negli ultimi secondi (durata dinamica)
+        if now >= self.fadeStart:
+            ft = self.activeFadeTime if self.activeFadeTime > 0 else self.FADE_TIME
+            t = (now - self.fadeStart) / ft
+            alpha = int(255 * (1.0 - t))
+            if alpha < 30:
+                alpha = 30
+            bgAlpha = int(0xDD * (1.0 - t))
+            if bgAlpha < 0x20:
+                bgAlpha = 0x20
+            self.bg.SetColor((bgAlpha << 24) | 0x0A0A14)
+
+    def ClearQueue(self):
+        self.queue = []
+        self.Hide()
+        self.isShowing = False
+        self.endTime = 0
+
+    def OnMouseRightButtonUp(self):
+        """Click destro = salta al prossimo messaggio in coda (o chiudi).
+           Utile durante fratture con kill ravvicinati per non restare bloccati."""
+        if self.isShowing:
+            self.Hide()
+            self.isShowing = False
+            self.endTime = 0
+            if len(self.queue) > 0:
+                nextEntry = self.queue.pop(0)
+                self._RenderDetail(nextEntry)
+        return True
+
+    def OnPressEscapeKey(self):
+        return True
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
 #  GLOBAL INSTANCES
 # ═══════════════════════════════════════════════════════════════════════════════
 g_whatIfWindow = None
@@ -2464,6 +3981,10 @@ g_overtakeWindow = None
 g_speedKillWindow = None
 g_hunterTipsWindow = None
 g_hunterNotificationWindow = None
+g_supremoAwakeningWindow = None
+g_supremoChallengeWindow = None
+g_supremoVictoryWindow = None
+g_gloryDetailWindow = None
 
 def GetWhatIfWindow():
     global g_whatIfWindow
@@ -2526,6 +4047,31 @@ def GetHunterNotificationWindow():
     return g_hunterNotificationWindow
 
 
+def GetSupremoAwakeningWindow():
+    global g_supremoAwakeningWindow
+    if g_supremoAwakeningWindow is None:
+        g_supremoAwakeningWindow = SupremoAwakeningWindow()
+    return g_supremoAwakeningWindow
+
+def GetSupremoChallengeWindow():
+    global g_supremoChallengeWindow
+    if g_supremoChallengeWindow is None:
+        g_supremoChallengeWindow = SupremoChallengeWindow()
+    return g_supremoChallengeWindow
+
+def GetSupremoVictoryWindow():
+    global g_supremoVictoryWindow
+    if g_supremoVictoryWindow is None:
+        g_supremoVictoryWindow = SupremoVictoryWindow()
+    return g_supremoVictoryWindow
+
+def GetGloryDetailWindow():
+    global g_gloryDetailWindow
+    if g_gloryDetailWindow is None:
+        g_gloryDetailWindow = GloryDetailWindow()
+    return g_gloryDetailWindow
+
+
 # Alias per compatibilità con hunter.py
 GetWhatIfChoiceWindow = GetWhatIfWindow
 GetEmergencyQuestWindow = GetEmergencyWindow
@@ -2571,6 +4117,8 @@ def ResetAllHunterWindows():
     global g_defenseWindow, g_speedKillWindow, g_hunterTipsWindow, g_hunterNotificationWindow
     global g_emergencyWindow, g_whatIfWindow, g_systemMsgWindow
     global g_eventWindow, g_rivalWindow, g_overtakeWindow
+    global g_supremoAwakeningWindow, g_supremoChallengeWindow, g_supremoVictoryWindow
+    global g_gloryDetailWindow
 
     # Reset FractureDefenseWindow
     if g_defenseWindow is not None:
@@ -2645,5 +4193,33 @@ def ResetAllHunterWindows():
     if g_overtakeWindow is not None:
         try:
             g_overtakeWindow.Hide()
+        except:
+            pass
+
+    # Reset Supremo Windows
+    if g_supremoAwakeningWindow is not None:
+        try:
+            g_supremoAwakeningWindow.endTime = 0
+            g_supremoAwakeningWindow.Hide()
+        except:
+            pass
+
+    if g_supremoChallengeWindow is not None:
+        try:
+            g_supremoChallengeWindow.endTime = 0
+            g_supremoChallengeWindow.Hide()
+        except:
+            pass
+
+    if g_supremoVictoryWindow is not None:
+        try:
+            g_supremoVictoryWindow.endTime = 0
+            g_supremoVictoryWindow.Hide()
+        except:
+            pass
+
+    if g_gloryDetailWindow is not None:
+        try:
+            g_gloryDetailWindow.ClearQueue()
         except:
             pass

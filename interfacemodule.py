@@ -495,7 +495,17 @@ class Interface(object):
 		self.wndInventory = wndInventory
 		self.wndDragonSoul = wndDragonSoul
 		self.wndDragonSoulRefine = wndDragonSoulRefine
-		self.wndBotControl = uibotcontrol.BotControlWindow()
+		try:
+			self.wndBotControl = uibotcontrol.BotControlWindow()
+		except Exception as e:
+			import dbg
+			dbg.TraceError("BOT CONTROL ERROR: Failed to initialize BotControlWindow: " + str(e))
+			self.wndBotControl = None
+		try:
+			import autohunt
+			autohunt._botControlWnd = self.wndBotControl
+		except:
+			pass
 		if app.WJ_SPLIT_INVENTORY_SYSTEM:
 			self.wndExtendedInventory = wndExtendedInventory
 		self.wndMiniMap = wndMiniMap
@@ -548,11 +558,11 @@ class Interface(object):
 			self.wndPrivateShopPanel.BindInventoryClass(self.wndInventory)
 			self.wndPrivateShopPanel.BindDragonSoulInventoryClass(self.wndDragonSoul)
 
-			self.wndDragonSoul.BindPrivateShopClass(self.wndPrivateShopPanel)
-			self.wndDragonSoul.BindPrivateShopSearchClass(self.wndPrivateShopSearch)
-			
 			self.wndPrivateShopSearch = uiPrivateShopSearch.PrivateShopSeachWindow()
 			self.wndPrivateShopSearch.BindInterfaceClass(self)
+
+			self.wndDragonSoul.BindPrivateShopClass(self.wndPrivateShopPanel)
+			self.wndDragonSoul.BindPrivateShopSearchClass(self.wndPrivateShopSearch)
 			
 			self.wndInventory.BindWindow(self.wndPrivateShopPanel)
 			self.wndInventory.BindPrivateShopClass(self.wndPrivateShopPanel)
@@ -811,11 +821,15 @@ class Interface(object):
 		if app.ENABLE_LRN_LOCATION_SYSTEM:
 			self.__MakeLocationWindow()
 
-		# Hunter Level Window
-		self.wndHunterLevel = uihunterlevel.HunterLevelWindow()
-		self.wndHunterLevel.LoadWindow()
-		self.wndHunterLevel.Hide()
-		uihunterlevel.SetWindowManager(self.wndHunterLevel)
+		# Hunter Level Window - Con protezione errori
+		try:
+			self.wndHunterLevel = uihunterlevel.HunterLevelWindow()
+			self.wndHunterLevel.LoadWindow()
+			self.wndHunterLevel.Hide()
+			uihunterlevel.SetWindowManager(self.wndHunterLevel)
+		except Exception as e:
+			dbg.TraceError("HUNTER SYSTEM ERROR: Failed to initialize HunterLevelWindow: " + str(e))
+			self.wndHunterLevel = None
 
 		self.questButtonList = []
 		self.whisperButtonList = []
@@ -909,10 +923,45 @@ class Interface(object):
 			self.wndHunterLevel = None
 
 		# Reset tutte le finestre Hunter (FractureDefense, SpeedKill, Tips, Alert, Gate Effects)
+		for _hunterCleanupFn in (
+			lambda: hunter_windows.ResetAllHunterWindows(),
+			lambda: hunter_effects.ResetAllEffects(),
+			lambda: uihunterlevel_gate_effects.ResetAllGateEffects(),
+		):
+			try:
+				_hunterCleanupFn()
+			except Exception as e:
+				import dbg
+				dbg.TraceError("Hunter cleanup error: " + str(e))
+
+		# Cleanup WikiWindow (uipresentation)
 		try:
-			hunter_windows.ResetAllHunterWindows()
-			hunter_effects.ResetAllEffects()
-			uihunterlevel_gate_effects.ResetAllGateEffects()
+			import uipresentation
+			uipresentation.DestroyWindow()
+		except:
+			pass
+
+		# Cleanup Gate Trial globals
+		try:
+			import uihunterlevel_gate_trial
+			if hasattr(uihunterlevel_gate_trial, 'g_trialStatusWindow') and uihunterlevel_gate_trial.g_trialStatusWindow:
+				uihunterlevel_gate_trial.g_trialStatusWindow.Close()
+			if hasattr(uihunterlevel_gate_trial, 'g_systemSpeakWindow') and uihunterlevel_gate_trial.g_systemSpeakWindow:
+				uihunterlevel_gate_trial.g_systemSpeakWindow.messageQueue = []
+				uihunterlevel_gate_trial.g_systemSpeakWindow.Hide()
+		except:
+			pass
+
+		# Cleanup Mission globals
+		try:
+			import hunter_missions
+			for _gName in ('g_dailyMissionsWindow', 'g_missionProgressPopup', 'g_missionCompleteWindow', 'g_allMissionsCompleteWindow', 'g_eventsScheduleWindow'):
+				_gWnd = getattr(hunter_missions, _gName, None)
+				if _gWnd:
+					try:
+						_gWnd.Hide()
+					except:
+						pass
 		except:
 			pass
 
@@ -1092,8 +1141,10 @@ class Interface(object):
 				self.wndPrivateShopSearch.Hide()
 				self.wndPrivateShopSearch.Destroy()
 
-			del self.wndPrivateShopPanel
-			del self.wndPrivateShopSearch
+			if hasattr(self, 'wndPrivateShopPanel'):
+				del self.wndPrivateShopPanel
+			if hasattr(self, 'wndPrivateShopSearch'):
+				del self.wndPrivateShopSearch
 			self.privateShopTitleBoardDict = {}
 			
 		if app.__BL_CHEST_DROP_INFO__:
@@ -1133,7 +1184,6 @@ class Interface(object):
 		if app.ENABLE_CUBE_RENEWAL_WORLDARD:
 			if self.wndCubeRenewal:
 				self.wndCubeRenewal.Destroy()
-				self.wndCubeRenewal.Close()
 
 		if app.ENABLE_ASLAN_BUFF_NPC_SYSTEM:
 			if self.wndBuffNPCWindow:
@@ -1212,7 +1262,8 @@ class Interface(object):
 				self.wndLegendDamageWindow.Destroy()
 				del self.wndLegendDamageWindow
 
-		self.wndChatLog.Destroy()
+		if self.wndChatLog:
+			self.wndChatLog.Destroy()
 		if app.ENABLE_DUNGEON_INFO_SYSTEM:
 			if self.wndDungeonInfo:
 				self.wndDungeonInfo.Destroy()
@@ -1230,120 +1281,100 @@ class Interface(object):
 			dlg.Destroy()
 
 		# ITEM_MALL
-		del self.mallPageDlg
+		try:
+			del self.mallPageDlg
+		except:
+			pass
 		# END_OF_ITEM_MALL
 		
 		if app.ENABLE_MINIMAP_DUNGEONINFO:
-			del self.wndMiniMapDungeonInfo
+			if hasattr(self, 'wndMiniMapDungeonInfo'):
+				del self.wndMiniMapDungeonInfo
 
-		del self.wndMapaSw
-		del self.wndGuild
-		del self.wndMessenger
-		del self.wndUICurtain
-		del self.wndChat
-		del self.yangText
-		del self.wndTaskBar
-		del self.wndWonExchange
-		if self.wndExpandedTaskBar:
+		# Safe cleanup - attributes may already be deleted if Close() called twice
+		_safe_del_attrs = [
+			'wndMapaSw', 'wndGuild', 'wndMessenger', 'wndUICurtain', 'wndChat',
+			'yangText', 'wndTaskBar', 'wndWonExchange', 'wndEnergyBar',
+			'wndCharacter', 'wndInventory', 'dlgExchange', 'dlgPointReset',
+			'dlgShop', 'dlgRestart', 'dlgSystem', 'dlgPassword',
+			'hyperlinkItemTooltip', 'tooltipItem', 'tooltipSkill',
+			'wndMiniMap', 'wndSafebox', 'wndMall', 'wndParty', 'wndBotControl',
+			'wndHelp', 'wndCardsInfo', 'wndCards', 'wndCardsIcon',
+			'wndCube', 'wndCubeResult', 'privateShopBuilder', 'inputDialog',
+			'wndChatLog', 'dlgRefineNew', 'wndGuildBuilding',
+			'wndGameButton', 'wndIsIcon', 'tipBoard', 'bigBoard', 'wndItemSelect',
+			'wndChangerWindow', 'wndMarbleShopWindow', 'wndBonus',
+			'wndCollectWindow', 'wndWeeklyRankWindow_New', 'wndBlend',
+		]
+		for attr in _safe_del_attrs:
+			if hasattr(self, attr):
+				try:
+					delattr(self, attr)
+				except:
+					pass
+
+		if hasattr(self, 'wndExpandedTaskBar') and self.wndExpandedTaskBar:
 			del self.wndExpandedTaskBar
-		del self.wndEnergyBar
 		if app.ENABLE_CUBE_RENEWAL_WORLDARD:
-			del self.wndCubeRenewal
-		del self.wndCharacter
-		del self.wndInventory
-		if self.wndDragonSoul:
+			if hasattr(self, 'wndCubeRenewal'):
+				del self.wndCubeRenewal
+		if hasattr(self, 'wndDragonSoul') and self.wndDragonSoul:
 			del self.wndDragonSoul
-		if self.wndDragonSoulRefine:
+		if hasattr(self, 'wndDragonSoulRefine') and self.wndDragonSoulRefine:
 			del self.wndDragonSoulRefine
-		del self.dlgExchange
-		del self.dlgPointReset
-		del self.dlgShop
-		del self.dlgRestart
-		del self.dlgSystem
-		del self.dlgPassword
-		del self.hyperlinkItemTooltip
-		del self.tooltipItem
-		del self.tooltipSkill
-		del self.wndMiniMap
-		del self.wndSafebox
-		del self.wndMall
-		del self.wndParty
-		del self.wndBotControl
-		del self.wndHelp
-
-		del self.wndCardsInfo
-		del self.wndCards
-		del self.wndCardsIcon
-
-		del self.wndCube
-		del self.wndCubeResult
 		if constInfo.GIFT_CODE_SYSTEM:
-			del self.wndGiftCodeWindow
-		del self.privateShopBuilder
-		del self.inputDialog
-		del self.wndChatLog
-		del self.dlgRefineNew
-		del self.wndGuildBuilding
-		if app.ENABLE_NEW_PET_SYSTEM and self.pets_window:
+			if hasattr(self, 'wndGiftCodeWindow'):
+				del self.wndGiftCodeWindow
+		if app.ENABLE_NEW_PET_SYSTEM and hasattr(self, 'pets_window') and self.pets_window:
 			del self.pets_window
-		del self.wndGameButton
-		# del self.eventIcon
-		del self.wndIsIcon
-		# del self.wndPromoicon
-		# del self.rankingIcon
-		del self.tipBoard
-		del self.bigBoard
-		del self.wndItemSelect
 		if app.ENABLE_LRN_BATTLE_PASS:
-			del self.wndBattlePassDialog
+			if hasattr(self, 'wndBattlePassDialog'):
+				del self.wndBattlePassDialog
 		if app.ENABLE_COLLECTIONS_SYSTEM:
-			del self.wndCollections
-		#BONUS CHANGER
-		del self.wndChangerWindow
-		#END OF BONUS CHANGER
+			if hasattr(self, 'wndCollections'):
+				del self.wndCollections
 		if app.WJ_SPLIT_INVENTORY_SYSTEM:
-			if self.wndExtendedInventory:
+			if hasattr(self, 'wndExtendedInventory') and self.wndExtendedInventory:
 				del self.wndExtendedInventory
 		if app.ENABLE_SWITCHBOT:
-			del self.wndSwitchbot	
-		del self.wndMarbleShopWindow
-		del self.wndBonus
-		del self.wndCollectWindow
-		del self.wndWeeklyRankWindow_New
-		if self.wndHunterLevel: # PULIZIA AGGIUNTA
+			if hasattr(self, 'wndSwitchbot'):
+				del self.wndSwitchbot
+		if hasattr(self, 'wndHunterLevel') and self.wndHunterLevel:
 			del self.wndHunterLevel
-		del self.wndBlend
 		if app.ENABLE_LRN_LOCATION_SYSTEM:
-			del self.wndLocationWindow
+			if hasattr(self, 'wndLocationWindow'):
+				del self.wndLocationWindow
 		if app.ENABLE_OFFLINE_SHOP_SYSTEM:
-			del self.dlgOfflineShop
-			del self.wndOfflineShopAdminPanel
-			del self.wndOfflineShopLogPanel
+			if hasattr(self, 'dlgOfflineShop'):
+				del self.dlgOfflineShop
+			if hasattr(self, 'wndOfflineShopAdminPanel'):
+				del self.wndOfflineShopAdminPanel
+			if hasattr(self, 'wndOfflineShopLogPanel'):
+				del self.wndOfflineShopLogPanel
 			self.offlineShopAdvertisementBoardDict = {}
-
-		# if app.ENABLE_MOUNT_COSTUME_SYSTEM:
-		# 	del self.wndHorseShoe
-
 		if app.ENABLE_ODLAMKI_SYSTEM:
-			del self.wndOdlamki
-
+			if hasattr(self, 'wndOdlamki'):
+				del self.wndOdlamki
 		if app.ENABLE_ACCE_COSTUME_SYSTEM:
-			del self.wndAcceCombine
-			del self.wndAcceAbsorption
-
+			if hasattr(self, 'wndAcceCombine'):
+				del self.wndAcceCombine
+			if hasattr(self, 'wndAcceAbsorption'):
+				del self.wndAcceAbsorption
 		if app.ENABLE_AURA_SYSTEM:
-			del self.wndAuraAbsorption
-			del self.wndAuraRefine
-
+			if hasattr(self, 'wndAuraAbsorption'):
+				del self.wndAuraAbsorption
+			if hasattr(self, 'wndAuraRefine'):
+				del self.wndAuraRefine
 		if app.ENABLE_ASLAN_BUFF_NPC_SYSTEM:
-			del self.wndBuffNPCWindow
-			del self.wndBuffNPCCreateWindow
-
+			if hasattr(self, 'wndBuffNPCWindow'):
+				del self.wndBuffNPCWindow
+			if hasattr(self, 'wndBuffNPCCreateWindow'):
+				del self.wndBuffNPCCreateWindow
 		if app.ENABLE_VS_SHOP_SEARCH:
-			del self.wndOfflineShopSearch
-
+			if hasattr(self, 'wndOfflineShopSearch'):
+				del self.wndOfflineShopSearch
 		if constInfo.ENABLE_EXPANDED_MONEY_TASKBAR:
-			if self.wndExpandedMoneyTaskBar:
+			if hasattr(self, 'wndExpandedMoneyTaskBar') and self.wndExpandedMoneyTaskBar:
 				del self.wndExpandedMoneyTaskBar
 
 		self.questButtonList = []
@@ -1369,6 +1400,35 @@ class Interface(object):
 		if self.wndHunterLevel:
 			self.wndHunterLevel.UpdateGateStatus(gateId, gateName, remainingSeconds, colorCode)
 
+	def HunterSupremoStatus(self, accessId, supremoName, remainingSeconds, rank):
+		"""Aggiorna lo stato del Supremo disponibile (nuovo sistema World Boss)"""
+		if self.wndHunterLevel:
+			# Usa lo stesso metodo del Gate ma con dati Supremo
+			self.wndHunterLevel.UpdateGateStatus(accessId, supremoName, remainingSeconds, rank)
+		# Mostra info in chat se c'è un Supremo disponibile
+		if accessId > 0 and remainingSeconds > 0:
+			minutes = remainingSeconds // 60
+			chat.AppendChat(chat.CHAT_TYPE_INFO, "[SUPREMO] %s (%s-Rank) disponibile! Tempo rimasto: %d minuti" % (supremoName, rank, minutes))
+
+	def HunterSupremoSpawn(self, supremoName, rank, summonerName):
+		"""Chiamato quando un Supremo viene evocato nel mondo"""
+		# Mostra notifica epica
+		if self.wndHunterLevel:
+			try:
+				import hunter_windows
+				notifWnd = hunter_windows.GetHunterNotificationWindow()
+				if notifWnd:
+					notifWnd.AddNotification(
+						"world_boss",
+						"SUPREMO EVOCATO! %s (%s-Rank) e' apparso! Evocato da: %s" % (supremoName, rank, summonerName)
+					)
+			except Exception as e:
+				import dbg
+				dbg.TraceError("HunterSupremoSpawn notification error: " + str(e))
+		# Messaggio in chat
+		chat.AppendChat(chat.CHAT_TYPE_INFO, "[SUPREMO] %s (%s-Rank) è apparso nel mondo!" % (supremoName, rank))
+		chat.AppendChat(chat.CHAT_TYPE_INFO, "[SUPREMO] Evocato da: %s - Corri a ucciderlo!" % summonerName)
+
 	def HunterGateEnter(self, gateId, duration):
 		"""Chiamato quando il player entra nel Gate"""
 		if self.wndHunterLevel:
@@ -1392,20 +1452,26 @@ class Interface(object):
 	def HunterTrialStatus(self, trialId, trialName, toRank, colorCode, remainingSeconds,
 						  bossKills, bossReq, metinKills, metinReq,
 						  fractureSeals, fractureReq, chestOpens, chestReq,
-						  dailyMissions, dailyReq):
+						  dailyMissions, dailyReq, fromRank=None,
+						  bossNames="", metinNames="", fractureNames="", chestNames=""):
 		"""Aggiorna lo stato completo della Trial in corso"""
 		if self.wndHunterLevel:
 			self.wndHunterLevel.OnTrialStatus(
 				trialId, trialName, toRank, colorCode, remainingSeconds,
 				bossKills, bossReq, metinKills, metinReq,
 				fractureSeals, fractureReq, chestOpens, chestReq,
-				dailyMissions, dailyReq
+				dailyMissions, dailyReq, fromRank,
+				bossNames, metinNames, fractureNames, chestNames
 			)
 
-	def HunterTrialProgress(self, trialId, bossKills, metinKills, fractureSeals, chestOpens, dailyMissions):
+	def HunterTrialProgress(self, trialId, bossKills, metinKills, fractureSeals, chestOpens, dailyMissions,
+							bossReq=0, metinReq=0, fractureReq=0, chestReq=0, dailyReq=0):
 		"""Aggiorna solo il progresso della Trial (update leggero)"""
 		if self.wndHunterLevel:
-			self.wndHunterLevel.OnTrialProgress(trialId, bossKills, metinKills, fractureSeals, chestOpens, dailyMissions)
+			self.wndHunterLevel.OnTrialProgress(
+				trialId, bossKills, metinKills, fractureSeals, chestOpens, dailyMissions,
+				bossReq, metinReq, fractureReq, chestReq, dailyReq
+			)
 
 	def HunterTrialComplete(self, newRank, gloriaReward, trialName):
 		"""Chiamato quando la Trial viene completata"""
@@ -1447,11 +1513,13 @@ class Interface(object):
 		if self.wndEnergyBar:
 			self.wndEnergyBar.RefreshStatus()
 		if app.WJ_SPLIT_INVENTORY_SYSTEM:
-			self.wndExtendedInventory.RefreshStatus()
+			if self.wndExtendedInventory:
+				self.wndExtendedInventory.RefreshStatus()
 		if app.ENABLE_DRAGON_SOUL_SYSTEM:
-			self.wndDragonSoul.RefreshStatus()
+			if self.wndDragonSoul:
+				self.wndDragonSoul.RefreshStatus()
 		if app.ENABLE_PREMIUM_PRIVATE_SHOP_OFFICIAL:
-			if self.wndPrivateShopPanel.IsShow():
+			if hasattr(self, 'wndPrivateShopPanel') and self.wndPrivateShopPanel and self.wndPrivateShopPanel.IsShow():
 				self.wndPrivateShopPanel.Refresh()
 	def RefreshStamina(self):
 		self.wndTaskBar.RefreshStamina()
@@ -1468,15 +1536,20 @@ class Interface(object):
 			self.UpdateBonusChanger()
 		#END OF BONUS CHANGER
 		if app.ENABLE_DRAGON_SOUL_SYSTEM:
-			self.wndDragonSoul.RefreshItemSlot()
+			if self.wndDragonSoul:
+				self.wndDragonSoul.RefreshItemSlot()
 		if app.ENABLE_ASLAN_BUFF_NPC_SYSTEM:
-			self.wndBuffNPCWindow.RefreshEquipSlotWindow()
+			if self.wndBuffNPCWindow:
+				self.wndBuffNPCWindow.RefreshEquipSlotWindow()
 		if app.WJ_SPLIT_INVENTORY_SYSTEM:
-			self.wndExtendedInventory.RefreshItemSlot()
+			if self.wndExtendedInventory:
+				self.wndExtendedInventory.RefreshItemSlot()
 		if app.ENABLE_ARTEFAKT_SYSTEM:
-			self.wndArtefaktWindow.RefreshSlot()
+			if hasattr(self, 'wndArtefaktWindow') and self.wndArtefaktWindow:
+				self.wndArtefaktWindow.RefreshSlot()
 		if app.ENABLE_MOUNT_COSTUME_SYSTEM:
-			self.wndMount.RefreshSlots()
+			if hasattr(self, 'wndMount') and self.wndMount:
+				self.wndMount.RefreshSlots()
 
 
 	def RefreshCharacter(self):
@@ -1494,9 +1567,17 @@ class Interface(object):
 		self.wndMall.RefreshMall()
 
 	def OpenBotControl(self):
+		if not self.wndBotControl:
+			return
 		if self.wndBotControl.IsShow():
 			self.wndBotControl.Close()
 		else:
+			self.wndBotControl.Open()
+
+	def ShowBotControl(self):
+		if not self.wndBotControl:
+			return
+		if not self.wndBotControl.IsShow():
 			self.wndBotControl.Open()
 
 	if app.ENABLE_ARTEFAKT_SYSTEM:
@@ -1824,9 +1905,11 @@ class Interface(object):
 		if self.wndEnergyBar:
 			self.wndEnergyBar.Show()
 		if constInfo.ZAPAMIETAJ_OKNO_ZAPISU == True:
-			self.wndLocationWindow.Show()
+			if hasattr(self, 'wndLocationWindow') and self.wndLocationWindow:
+				self.wndLocationWindow.Show()
 		if constInfo.ZAPAMIETAJ_OKNO_TPMETKIBOSSY == True:
-			self.wndResp.Show()
+			if hasattr(self, 'wndResp') and self.wndResp:
+				self.wndResp.Show()
 
 	def ShowAllWindows(self):
 		self.wndTaskBar.Show()
@@ -1883,8 +1966,10 @@ class Interface(object):
 				self.wndExtendedInventory.Hide()
 
 		if app.ENABLE_DRAGON_SOUL_SYSTEM:
-			self.wndDragonSoul.Hide()
-			self.wndDragonSoulRefine.Hide()
+			if self.wndDragonSoul:
+				self.wndDragonSoul.Hide()
+			if self.wndDragonSoulRefine:
+				self.wndDragonSoulRefine.Hide()
 			
 		if self.wndMapaSw:
 			self.wndMapaSw.Hide()
@@ -1909,8 +1994,10 @@ class Interface(object):
 			self.wndGuild.Hide()
 
 		if app.ENABLE_PREMIUM_PRIVATE_SHOP_OFFICIAL:
-			self.wndPrivateShopPanel.Hide()
-			self.wndPrivateShopSearch.Hide()
+			if self.wndPrivateShopPanel:
+				self.wndPrivateShopPanel.Hide()
+			if self.wndPrivateShopSearch:
+				self.wndPrivateShopSearch.Hide()
 
 		if self.wndExpandedTaskBar:
 			self.wndExpandedTaskBar.Hide()
@@ -1950,10 +2037,45 @@ class Interface(object):
 			self.wndHunterLevel.Close()
 
 		# Reset tutte le finestre Hunter (FractureDefense, SpeedKill, Tips, Alert, Gate Effects)
+		for _hunterCleanupFn in (
+			lambda: hunter_windows.ResetAllHunterWindows(),
+			lambda: hunter_effects.ResetAllEffects(),
+			lambda: uihunterlevel_gate_effects.ResetAllGateEffects(),
+		):
+			try:
+				_hunterCleanupFn()
+			except Exception as e:
+				import dbg
+				dbg.TraceError("Hunter cleanup error: " + str(e))
+
+		# Cleanup WikiWindow (uipresentation)
 		try:
-			hunter_windows.ResetAllHunterWindows()
-			hunter_effects.ResetAllEffects()
-			uihunterlevel_gate_effects.ResetAllGateEffects()
+			import uipresentation
+			uipresentation.DestroyWindow()
+		except:
+			pass
+
+		# Cleanup Gate Trial globals
+		try:
+			import uihunterlevel_gate_trial
+			if hasattr(uihunterlevel_gate_trial, 'g_trialStatusWindow') and uihunterlevel_gate_trial.g_trialStatusWindow:
+				uihunterlevel_gate_trial.g_trialStatusWindow.Close()
+			if hasattr(uihunterlevel_gate_trial, 'g_systemSpeakWindow') and uihunterlevel_gate_trial.g_systemSpeakWindow:
+				uihunterlevel_gate_trial.g_systemSpeakWindow.messageQueue = []
+				uihunterlevel_gate_trial.g_systemSpeakWindow.Hide()
+		except:
+			pass
+
+		# Cleanup Mission globals
+		try:
+			import hunter_missions
+			for _gName in ('g_dailyMissionsWindow', 'g_missionProgressPopup', 'g_missionCompleteWindow', 'g_allMissionsCompleteWindow', 'g_eventsScheduleWindow'):
+				_gWnd = getattr(hunter_missions, _gName, None)
+				if _gWnd:
+					try:
+						_gWnd.Hide()
+					except:
+						pass
 		except:
 			pass
 
@@ -1975,21 +2097,21 @@ class Interface(object):
 				self.wndOfflineShopSearch.Hide()
 
 	def IsShowDlgQuestionWindow(self):
-		if self.wndDragonSoul.IsDlgQuestionShow():
+		if self.wndDragonSoul and self.wndDragonSoul.IsDlgQuestionShow():
 			return True
-		elif self.dlgShop.IsDlgQuestionShow():
+		elif self.dlgShop and self.dlgShop.IsDlgQuestionShow():
 			return True
-		elif self.wndWonExchange.IsDlgQuestionShow():
+		elif self.wndWonExchange and self.wndWonExchange.IsDlgQuestionShow():
 			return True
 		else:
 			return False
 
 	def CloseDlgQuestionWindow(self):
-		if self.wndDragonSoul.IsDlgQuestionShow():
+		if self.wndDragonSoul and self.wndDragonSoul.IsDlgQuestionShow():
 			self.wndDragonSoul.ExternQuestionDialog_Close()
-		if self.dlgShop.IsDlgQuestionShow():
+		if self.dlgShop and self.dlgShop.IsDlgQuestionShow():
 			self.dlgShop.ExternQuestionDialog_Close()
-		if self.wndWonExchange.IsDlgQuestionShow():
+		if self.wndWonExchange and self.wndWonExchange.IsDlgQuestionShow():
 			self.wndWonExchange.ExternQuestionDialog_Close()
 
 	def ShowMouseImage(self):
@@ -2058,22 +2180,24 @@ class Interface(object):
 				self.wndMiniMapDungeonInfo.Hide()
 	
 		def SetMiniMapDungeonInfoStage(self, cur_stage, max_stage):
-			# chat.AppendChat(chat.CHAT_TYPE_INFO, "SetMiniMapDungeonInfoStage %d %d" % (cur_stage, max_stage))
-			self.wndMiniMapDungeonInfo.SetStage(cur_stage, max_stage)
+			if self.wndMiniMapDungeonInfo:
+				self.wndMiniMapDungeonInfo.SetStage(cur_stage, max_stage)
 		
 		def SetMiniMapDungeonInfoGauge(self, gauge_type, value1, value2):
-			#chat.AppendChat(chat.CHAT_TYPE_INFO, "SetMiniMapDungeonInfoGauge %d %d %d" % (gauge_type, value1, value2))
-			self.wndMiniMapDungeonInfo.SetGauge(gauge_type, value1, value2)
+			if self.wndMiniMapDungeonInfo:
+				self.wndMiniMapDungeonInfo.SetGauge(gauge_type, value1, value2)
 		
 		def SetMiniMapDungeonInfoNotice(self, notice):
-			# chat.AppendChat(chat.CHAT_TYPE_INFO, "SetMiniMapDungeonInfoNotice %s" % (notice))
-			self.wndMiniMapDungeonInfo.SetNotice(notice)
+			if self.wndMiniMapDungeonInfo:
+				self.wndMiniMapDungeonInfo.SetNotice(notice)
 
 		def SetMiniMapDungeonInfoButton(self, status):
-			self.wndMiniMapDungeonInfo.SetButton(status)
+			if self.wndMiniMapDungeonInfo:
+				self.wndMiniMapDungeonInfo.SetButton(status)
 
 		def SetMiniMapDungeonInfoTimer(self, status, time):
-			self.wndMiniMapDungeonInfo.SetTimer(status, time)
+			if self.wndMiniMapDungeonInfo:
+				self.wndMiniMapDungeonInfo.SetTimer(status, time)
 
 	def ToggleMiniMap(self):
 		if app.IsPressed(app.DIK_LSHIFT) or app.IsPressed(app.DIK_RSHIFT):
@@ -2104,7 +2228,8 @@ class Interface(object):
 			self.ToggleMiniMap()
 
 	def SetMapName(self, mapName):
-		self.wndMiniMap.SetMapName(mapName)
+		if self.wndMiniMap:
+			self.wndMiniMap.SetMapName(mapName)
 
 	def MiniMapScaleUp(self):
 		self.wndMiniMap.ScaleUp()
@@ -2259,12 +2384,14 @@ class Interface(object):
 
 	def Highligt_Item(self, inven_type, inven_pos):
 		if player.DRAGON_SOUL_INVENTORY == inven_type:
-			if app.ENABLE_DRAGON_SOUL_SYSTEM:
+			if app.ENABLE_DRAGON_SOUL_SYSTEM and self.wndDragonSoul:
 				self.wndDragonSoul.HighlightSlot(inven_pos)
 
 		elif app.ENABLE_HIGHLIGHT_NEW_ITEM and player.SLOT_TYPE_INVENTORY == inven_type:
-			self.wndInventory.HighlightSlot(inven_pos)
-			self.wndExtendedInventory.HighlightSlot(inven_pos)
+			if self.wndInventory:
+				self.wndInventory.HighlightSlot(inven_pos)
+			if hasattr(self, 'wndExtendedInventory') and self.wndExtendedInventory:
+				self.wndExtendedInventory.HighlightSlot(inven_pos)
 
 	def DragonSoulGiveQuilification(self):
 		self.DRAGON_SOUL_IS_QUALIFIED = True
@@ -2534,9 +2661,12 @@ class Interface(object):
 
 	if app.ENABLE_LRN_LOCATION_SYSTEM:
 		def OpenLocationWindowInstantly(self):
-			self.wndLocationWindow.Show()
+			if self.wndLocationWindow:
+				self.wndLocationWindow.Show()
 
 		def OpenLocationWindow(self):
+			if not self.wndLocationWindow:
+				return
 			self.wndLocationWindow.OnCloseBoardSaveWindow()
 			
 			if self.wndLocationWindow.IsShow():
@@ -2546,27 +2676,33 @@ class Interface(object):
 
 	if app.ENABLE_RESP_SYSTEM:
 		def OpenRespWindow(self):
+			if not self.wndResp:
+				return
 			if self.wndResp.IsShow():
 				self.wndResp.Hide()
 			else:
 				self.wndResp.Show()
 
 		def ClearLocationWindow(self):
-			self.wndLocationWindow.ClearData()
+			if self.wndLocationWindow:
+				self.wndLocationWindow.ClearData()
 
 		def UpdateLocationWindowPos(self, position, index, posx, posy):
-			self.wndLocationWindow.AppendPosition(position, index, posx, posy)
+			if self.wndLocationWindow:
+				self.wndLocationWindow.AppendPosition(position, index, posx, posy)
 
 		def UpdateLocationWindowName(self, name):
-			self.wndLocationWindow.AppendName(name)
+			if self.wndLocationWindow:
+				self.wndLocationWindow.AppendName(name)
 
 	if app.ENABLE_DUNGEON_INFO_SYSTEM:
 		def ToggleDungeonInfoWindow(self):
 			if False == player.IsObserverMode():
-				if False == self.wndDungeonInfo.IsShow():
-					self.wndDungeonInfo.Open()
-				else:
-					self.wndDungeonInfo.Close()
+				if self.wndDungeonInfo:
+					if False == self.wndDungeonInfo.IsShow():
+						self.wndDungeonInfo.Open()
+					else:
+						self.wndDungeonInfo.Close()
 
 		def DungeonInfoOpen(self):
 			if self.wndDungeonInfo:
@@ -2582,38 +2718,54 @@ class Interface(object):
 
 	if app.ENABLE_LRN_BATTLE_PASS:
 		def ClearBattlePassQuest(self):
+			if not self.wndBattlePassDialog:
+				return
 			self.wndBattlePassDialog.ClearPageQuest()
 			self.wndBattlePassDialog.ClearQuest()
 
 		def AppendBattlePassQuest(self, *data):
+			if not self.wndBattlePassDialog:
+				return
 			self.wndBattlePassDialog.AppendQuest(*data)
 
 			self.wndBattlePassDialog.WindowRebuild("quest")
 			self.wndBattlePassDialog.RefreshPageQuest()
 
 		def AppendBattlePassQuestData(self, index, count, status):
+			if not self.wndBattlePassDialog:
+				return
 			self.wndBattlePassDialog.AppendQuestData(index, count, status)
 			self.wndBattlePassDialog.RefreshPageQuest()
 
 		def ClearBattlePassReward(self):
+			if not self.wndBattlePassDialog:
+				return
 			self.wndBattlePassDialog.ClearPageReward()
 			self.wndBattlePassDialog.ClearReward()
 
 		def AppendBattlePassReward(self, *data):
+			if not self.wndBattlePassDialog:
+				return
 			self.wndBattlePassDialog.AppendReward(*data)
 
 			self.wndBattlePassDialog.WindowRebuild("reward")
 			self.wndBattlePassDialog.RefreshPageReward()
 
 		def AppendBattlePassRewardData(self, level, status_free, status_premium):
+			if not self.wndBattlePassDialog:
+				return
 			self.wndBattlePassDialog.AppendRewardData(level, status_free, status_premium)
 			self.wndBattlePassDialog.RefreshPageReward()
 
 		def AppendBattlePassLevel(self, level, exp, exp_max):
+			if not self.wndBattlePassDialog:
+				return
 			self.wndBattlePassDialog.AppendLevel(level, exp, exp_max)
 			self.wndBattlePassDialog.RefreshLevel()
 
 		def BattlePassManager(self):
+			if not self.wndBattlePassDialog:
+				return
 			if self.wndBattlePassDialog.IsShow():
 				self.wndBattlePassDialog.Hide()
 			else:
@@ -2641,7 +2793,8 @@ class Interface(object):
 			hideWindows += self.wndExpandedTaskBar,
 
 		if app.ENABLE_COLLECTIONS_SYSTEM:
-			hideWindows += self.wndCollections,
+			if self.wndCollections:
+				hideWindows += self.wndCollections,
 
 		if self.wndRemoveItem:
 			hideWindows += self.wndRemoveItem,
@@ -2662,7 +2815,8 @@ class Interface(object):
 						self.wndDragonSoulRefine,
 
 		if app.ENABLE_LRN_LOCATION_SYSTEM:
-			hideWindows += self.wndLocationWindow,
+			if self.wndLocationWindow:
+				hideWindows += self.wndLocationWindow,
 
 		if app.ENABLE_SWITCHBOT and self.wndSwitchbot:
 			hideWindows += self.wndSwitchbot,
@@ -2670,8 +2824,10 @@ class Interface(object):
 		if self.wndMarbleShopWindow:
 			hideWindows += self.wndMarbleShopWindow,
 
-		if self.wndHunterLevel: # AGGIUNTA
-			hideWindows += self.wndHunterLevel,
+		# RIMOSSO: wndHunterLevel NON deve essere nascosta dalle QuestDialog
+		# Le funzioni Hunter usano cmdchat/syschat, non say/select
+		# if self.wndHunterLevel:
+		#     hideWindows += self.wndHunterLevel,
 
 		if app.ENABLE_ASLAN_BUFF_NPC_SYSTEM:
 			if self.wndBuffNPCWindow:
@@ -2696,17 +2852,20 @@ class Interface(object):
 				hideWindows += self.wndExpandedMoneyTaskBar,
                 
 		if app.ENABLE_LRN_BATTLE_PASS:
-			hideWindows += self.wndBattlePassDialog,
+			if self.wndBattlePassDialog:
+				hideWindows += self.wndBattlePassDialog,
 
 		if app.TAKE_LEGEND_DAMAGE_BOARD_SYSTEM:
 			if self.wndLegendDamageWindow:
 				hideWindows += self.wndLegendDamageWindow,
 
 		if app.ENABLE_PREMIUM_PRIVATE_SHOP_OFFICIAL:
-			hideWindows += self.wndPrivateShopPanel,\
-						self.wndPrivateShopSearch
+			if self.wndPrivateShopPanel:
+				hideWindows += self.wndPrivateShopPanel,
+			if self.wndPrivateShopSearch:
+				hideWindows += self.wndPrivateShopSearch,
 
-		hideWindows = filter(lambda x:x.IsShow(), hideWindows)
+		hideWindows = filter(lambda x: x and x.IsShow(), hideWindows)
 		map(lambda x:x.Hide(), hideWindows)
 
 		self.HideAllQuestButton()
@@ -3288,25 +3447,35 @@ class Interface(object):
 
 	#####################################################################################
 	def RequestOpenItemShop(self):
-		self.wndItemShop.RequestOpen()
+		if hasattr(self, 'wndItemShop') and self.wndItemShop:
+			self.wndItemShop.RequestOpen()
 
 	def TombolaStart(self, pos, to_pos, to_spin, time):
-		self.wndItemShop.StartSpinning(pos, to_pos, to_spin, time)
+		if hasattr(self, 'wndItemShop') and self.wndItemShop:
+			self.wndItemShop.StartSpinning(pos, to_pos, to_spin, time)
 
 	def TombolaSetSpinningItem(self, pos, vnum, count):
-		self.wndItemShop.SetSpinningItem(pos, vnum, count)
+		if hasattr(self, 'wndItemShop') and self.wndItemShop:
+			self.wndItemShop.SetSpinningItem(pos, vnum, count)
 
 	def TombolaOpen(self):
-		self.wndItemShop.Show()
+		if hasattr(self, 'wndItemShop') and self.wndItemShop:
+			self.wndItemShop.Show()
 
 	def TombolaSetPrice(self, group, price, price_type):
-		self.wndItemShop.SetPrice(group, price, price_type)
+		if hasattr(self, 'wndItemShop') and self.wndItemShop:
+			self.wndItemShop.SetPrice(group, price, price_type)
 
 	def TombolaSetItem(self, group, vnum, count, chance):
-		self.wndItemShop.SetItem(group, vnum, count, chance)
+		try:
+			if hasattr(self, 'wndItemShop') and self.wndItemShop:
+				self.wndItemShop.SetItem(group, vnum, count, chance)
+		except KeyError:
+			pass
 
 	def TombolaClear(self):
-		self.wndItemShop.TombolaClear()
+		if hasattr(self, 'wndItemShop') and self.wndItemShop:
+			self.wndItemShop.TombolaClear()
 
 	def IsEditLineFocus(self):
 		if self.wndChat.chatLine.IsFocus():
@@ -3327,7 +3496,8 @@ class Interface(object):
 		self.wndWeeklyRankWindow_New.Enable(id, val)
 
 	def OfflineShopLogs(self, id, item, count, price, price2, date, action):
-		self.wndOfflineShopLogPanel.SendLogs(id, item, count, price, price2, date, action)
+		if hasattr(self, 'wndOfflineShopLogPanel') and self.wndOfflineShopLogPanel:
+			self.wndOfflineShopLogPanel.SendLogs(id, item, count, price, price2, date, action)
 
 	def SelectPage(self, page, season):
 		self.wndWeeklyRankWindow_New.PutPage(page, season)
@@ -3363,7 +3533,8 @@ class Interface(object):
 			return self.onTopWindow
 
 		def RefreshMarkInventoryBag(self):
-			self.wndInventory.RefreshMarkSlots()
+			if self.wndInventory:
+				self.wndInventory.RefreshMarkSlots()
 
 	if app.ENABLE_LOADING_PERFORMANCE:
 		def OpenWarpShowerWindow(self):
@@ -3372,14 +3543,14 @@ class Interface(object):
 
 			if self.dlgSystem:
 				self.dlgSystem.Close()
-				self.dlgSystem.Destroy()
 
 			self.HideAllQuestButton()
 			self.HideAllWhisperButton()
 
 			self.HideAllWindows()
 
-			self.wndWarpShower.Open()
+			if hasattr(self, 'wndWarpShower') and self.wndWarpShower:
+				self.wndWarpShower.Open()
 
 		def CloseWarpShowerWindow(self):
 			if self.wndWarpShower:
@@ -3425,7 +3596,7 @@ class Interface(object):
 			if self.wndPrivateShopPanel:
 				self.wndPrivateShopPanel.Open()
 				
-			if not self.wndInventory.IsShow():
+			if self.wndInventory and not self.wndInventory.IsShow():
 				self.wndInventory.Show()
 				
 		def ClosePrivateShopPanel(self):
@@ -3439,13 +3610,15 @@ class Interface(object):
 				
 		def TogglePrivateShopPanelWindow(self):
 			if False == player.IsObserverMode():
-				if not self.wndPrivateShopPanel.RequestOpen():
-					self.wndPrivateShopPanel.Close()
+				if hasattr(self, 'wndPrivateShopPanel') and self.wndPrivateShopPanel:
+					if not self.wndPrivateShopPanel.RequestOpen():
+						self.wndPrivateShopPanel.Close()
 					
 		def TogglePrivateShopPanelWindowCheck(self):
 			if False == player.IsObserverMode():
-				if not self.wndPrivateShopPanel.RequestOpen(True):
-					self.wndPrivateShopPanel.Close()
+				if hasattr(self, 'wndPrivateShopPanel') and self.wndPrivateShopPanel:
+					if not self.wndPrivateShopPanel.RequestOpen(True):
+						self.wndPrivateShopPanel.Close()
 
 		def OpenPrivateShopSearch(self, mode):
 			if self.wndPrivateShopSearch:
@@ -3463,7 +3636,7 @@ class Interface(object):
 			if self.wndPrivateShopPanel and self.wndPrivateShopPanel.IsShow():
 				self.wndPrivateShopPanel.AppendMarketItemPrice(gold, cheque)
 				
-			elif self.self.privateShopBuilder and self.self.privateShopBuilder.IsShow():
+			elif self.privateShopBuilder and self.privateShopBuilder.IsShow():
 				self.privateShopBuilder.AppendMarketItemPrice(gold, cheque)
 				
 		def AddPrivateShopTitleBoard(self, vid, text, type):
@@ -3507,6 +3680,15 @@ class Interface(object):
 		if self.wndHunterLevel:
 			self.wndHunterLevel.ShowSystemMessage(msg, rankKey)
 
+	def HunterGloryDetail(self, context, sourceType, sourceName, baseGlory, modifiers, finalGlory):
+		"""Mostra il pannello dettaglio Gloria (sostituisce le syschat di dettaglio)."""
+		if self.wndHunterLevel:
+			self.wndHunterLevel.ShowGloryDetail(context, sourceType, sourceName, baseGlory, modifiers, finalGlory)
+
+	def SetChaosPossible(self, highestRank, fractureRank):
+		"""Segnala che la frattura potrebbe essere corrotta (rank B+ nelle vicinanze)."""
+		pass  # Indicatore visivo futuro; il syschat server-side e' gia' sufficiente
+
 	def HunterWelcome(self, rankKey, name, points):
 		"""Mostra il messaggio di benvenuto epico basato sul rank"""
 		if self.wndHunterLevel:
@@ -3523,6 +3705,32 @@ class Interface(object):
 	def HunterEmergencyClose(self, status):
 		if self.wndHunterLevel:
 			self.wndHunterLevel.EndEmergencyQuest(status == "SUCCESS")
+
+	# ==================== SUPREMO SYSTEM ====================
+	def HunterSupremoAwakening(self, summonerName, supremoName, rank):
+		"""Mostra announcement globale stile Solo Leveling quando un Supremo viene risvegliato"""
+		if self.wndHunterLevel:
+			self.wndHunterLevel.ShowSupremoAwakening(summonerName, supremoName, rank)
+
+	def HunterSupremoChallenge(self, summonerName, supremoName, vnum, rank, duration, reward, penalty, spawnX, spawnY, maxDistance):
+		"""Avvia la UI sfida Supremo dedicata"""
+		if self.wndHunterLevel:
+			self.wndHunterLevel.StartSupremoChallenge(summonerName, supremoName, vnum, rank, duration, reward, penalty, spawnX, spawnY, maxDistance)
+
+	def HunterSupremoChallengeUpdate(self, timeLeft, distance, status):
+		"""Aggiorna la UI sfida Supremo con tempo e distanza"""
+		if self.wndHunterLevel:
+			self.wndHunterLevel.UpdateSupremoChallenge(timeLeft, distance, status)
+
+	def HunterSupremoChallengeClose(self, result, gloriaChange, message):
+		"""Chiude la UI sfida Supremo con risultato"""
+		if self.wndHunterLevel:
+			self.wndHunterLevel.CloseSupremoChallenge(result, gloriaChange, message)
+
+	def HunterSupremoVictory(self, supremoName, rank, gloriaReward):
+		"""Mostra effetto vittoria Supremo epico"""
+		if self.wndHunterLevel:
+			self.wndHunterLevel.ShowSupremoVictory(supremoName, rank, gloriaReward)
 
 	def HunterRivalUpdate(self, name, points, label="Gloria", mode="VICINO"):
 		if self.wndHunterLevel:
@@ -3567,10 +3775,39 @@ class Interface(object):
 		if self.wndHunterLevel:
 			self.wndHunterLevel.ShowSystemMessage(msg, color)
 
-	def HunterEventStatus(self, eventName, duration, eventType="default", desc="", reward=""):
+	def HunterCloseAll(self):
+		"""Chiude tutte le finestre Hunter - usato per reset completo"""
+		if self.wndHunterLevel:
+			try:
+				self.wndHunterLevel.CloseEventStatus()
+			except:
+				pass
+			# Chiudi finestre missioni e emergency
+			try:
+				if self.wndHunterLevel.missionsWnd:
+					self.wndHunterLevel.missionsWnd.Hide()
+			except:
+				pass
+			try:
+				if self.wndHunterLevel.emergencyWnd:
+					self.wndHunterLevel.emergencyWnd.Hide()
+			except:
+				pass
+			# Chiudi finestre singleton (speed kill, defense)
+			try:
+				import hunter_windows
+				skw = hunter_windows.GetSpeedKillWindow()
+				if skw: skw.Close()
+				dfw = hunter_windows.GetDefenseWindow()
+				if dfw: dfw.Close()
+			except:
+				pass
+			self.wndHunterLevel.Hide()
+
+	def HunterEventStatus(self, eventName, duration, eventType="default", desc="", reward="", minRank="E", winnerPrize=0):
 		"""Mostra finestra stato evento"""
 		if self.wndHunterLevel:
-			self.wndHunterLevel.ShowEventStatus(eventName, duration, eventType, desc, reward)
+			self.wndHunterLevel.ShowEventStatus(eventName, duration, eventType, desc, reward, minRank, winnerPrize)
 
 	def HunterEventClose(self):
 		"""Chiude la finestra stato evento"""
@@ -3649,11 +3886,11 @@ class Interface(object):
 	# FRACTURE DEFENSE SYSTEM - Usa finestra dedicata
 	# ============================================================
 
-	def HunterFractureDefenseStart(self, fractureName, duration, rank, totalMobs=0):
+	def HunterFractureDefenseStart(self, fractureName, duration, rank, totalMobs=0, centerX=0, centerY=0, radius=1000):
 		"""Inizia difesa frattura con finestra dedicata"""
 		defenseWnd = hunter_windows.GetDefenseWindow()
 		if defenseWnd:
-			defenseWnd.StartDefense(fractureName, rank, duration, totalMobs)
+			defenseWnd.StartDefense(fractureName, rank, duration, totalMobs, centerX, centerY, radius)
 
 	def HunterFractureDefenseUpdate(self, killed, required, wave=0):
 		"""Aggiorna progresso difesa"""
@@ -3695,11 +3932,16 @@ class Interface(object):
 		if speedKillWnd:
 			speedKillWnd.UpdateTimer(remainingSeconds)
 
-	def HunterSpeedKillEnd(self, isSuccess):
-		"""Termina speed kill"""
+	def HunterSpeedKillEnd(self, isSuccess, bonusGlory=0):
+		"""Termina speed kill con bonus gloria
+		isSuccess: 1 = successo, 0 = tempo scaduto, 2 = boss rubato
+		"""
 		speedKillWnd = hunter_windows.GetSpeedKillWindow()
 		if speedKillWnd:
-			speedKillWnd.EndSpeedKill(isSuccess == 1 or isSuccess == "1")
+			# Converti a int per confronto sicuro
+			successCode = int(isSuccess) if str(isSuccess).isdigit() else 0
+			# 1 = successo, 0 = fallito, 2 = rubato (trattato come fallito)
+			speedKillWnd.EndSpeedKill(successCode == 1, bonusGlory)
 
 	def HunterShowTip(self, tipText):
 		"""Mostra un tip nella finestra Hunter Tips"""
@@ -3728,10 +3970,14 @@ class Interface(object):
 			if self.wndHunterLevel.IsShow():
 				self.wndHunterLevel.Close()
 			else:
+				# Richiede dati aggiornati dal server prima di aprire
+				net.SendChatPacket("/hunter_request_data")
 				self.wndHunterLevel.Open()
 
 	def OpenHunterLevelWindow(self):
 		if self.wndHunterLevel:
+			# Richiede dati aggiornati dal server
+			net.SendChatPacket("/hunter_request_data")
 			self.wndHunterLevel.Open()
 
 	def CloseHunterLevelWindow(self):

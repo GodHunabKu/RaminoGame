@@ -7,12 +7,520 @@
 import ui
 import wndMgr
 import app
+import nonplayer
 
 from hunter_core import DraggableMixin, WINDOW_POSITIONS, COLOR_SCHEMES, FormatNumber
 
 # Funzione T() - restituisce direttamente il testo (no multilingua)
 def T(key, default=None):
     return default if default else key
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+#  MISSION GUIDE TOOLTIP - Tooltip flottante per la guida missioni
+# ═══════════════════════════════════════════════════════════════════════════════
+_g_missionGuideTooltip = None
+
+def _GetMissionGuideTooltip():
+    global _g_missionGuideTooltip
+    if _g_missionGuideTooltip is None:
+        _g_missionGuideTooltip = MissionGuideTooltip()
+    return _g_missionGuideTooltip
+
+
+class MissionGuideTooltip(ui.Window):
+    """Tooltip flottante per spiegare il sistema missioni giornaliere."""
+
+    MAX_WIDTH = 360
+    LINE_H = 15
+    HEADER_H = 26
+
+    def __init__(self):
+        ui.Window.__init__(self)
+        self.SetSize(self.MAX_WIDTH, 50)
+        self.AddFlag("not_pick")
+        self.AddFlag("float")
+        self.tooltipH = 50
+        self.linePool = []
+        self.barPool = []
+        self.usedLines = 0
+        self.usedBars = 0
+        self.__BuildFrame()
+        self.__BuildPool()
+        self.Hide()
+
+    def __BuildFrame(self):
+        # Sfondo scuro
+        self.bg = ui.Bar()
+        self.bg.SetParent(self)
+        self.bg.SetPosition(0, 0)
+        self.bg.SetSize(self.MAX_WIDTH, 50)
+        self.bg.SetColor(0xF2080812)
+        self.bg.AddFlag("not_pick")
+        self.bg.Show()
+
+        # Header colorato
+        self.headerBg = ui.Bar()
+        self.headerBg.SetParent(self)
+        self.headerBg.SetPosition(0, 0)
+        self.headerBg.SetSize(self.MAX_WIDTH, self.HEADER_H)
+        self.headerBg.SetColor(0xCC001a33)
+        self.headerBg.AddFlag("not_pick")
+        self.headerBg.Show()
+
+        # Bordi cyan
+        self.borderTop = ui.Bar()
+        self.borderTop.SetParent(self)
+        self.borderTop.SetPosition(0, 0)
+        self.borderTop.SetSize(self.MAX_WIDTH, 2)
+        self.borderTop.SetColor(0xFF00CCFF)
+        self.borderTop.AddFlag("not_pick")
+        self.borderTop.Show()
+
+        self.borderBot = ui.Bar()
+        self.borderBot.SetParent(self)
+        self.borderBot.SetPosition(0, 48)
+        self.borderBot.SetSize(self.MAX_WIDTH, 2)
+        self.borderBot.SetColor(0xFF00CCFF)
+        self.borderBot.AddFlag("not_pick")
+        self.borderBot.Show()
+
+        self.borderLeft = ui.Bar()
+        self.borderLeft.SetParent(self)
+        self.borderLeft.SetPosition(0, 0)
+        self.borderLeft.SetSize(2, 50)
+        self.borderLeft.SetColor(0xFF00CCFF)
+        self.borderLeft.AddFlag("not_pick")
+        self.borderLeft.Show()
+
+        self.borderRight = ui.Bar()
+        self.borderRight.SetParent(self)
+        self.borderRight.SetPosition(self.MAX_WIDTH - 2, 0)
+        self.borderRight.SetSize(2, 50)
+        self.borderRight.SetColor(0xFF00CCFF)
+        self.borderRight.AddFlag("not_pick")
+        self.borderRight.Show()
+
+        self.headerLine = ui.Bar()
+        self.headerLine.SetParent(self)
+        self.headerLine.SetPosition(2, self.HEADER_H)
+        self.headerLine.SetSize(self.MAX_WIDTH - 4, 1)
+        self.headerLine.SetColor(0xFF00CCFF)
+        self.headerLine.AddFlag("not_pick")
+        self.headerLine.Show()
+
+        # Titolo header
+        self.titleText = ui.TextLine()
+        self.titleText.SetParent(self)
+        self.titleText.SetPosition(self.MAX_WIDTH // 2, 5)
+        self.titleText.SetHorizontalAlignCenter()
+        self.titleText.SetText("")
+        self.titleText.SetPackedFontColor(0xFFFFFFFF)
+        self.titleText.SetOutline()
+        self.titleText.AddFlag("not_pick")
+        self.titleText.Show()
+
+    def __BuildPool(self):
+        for i in range(35):
+            tl = ui.TextLine()
+            tl.SetParent(self)
+            tl.AddFlag("not_pick")
+            tl.Hide()
+            self.linePool.append(tl)
+        for i in range(8):
+            b = ui.Bar()
+            b.SetParent(self)
+            b.AddFlag("not_pick")
+            b.Hide()
+            self.barPool.append(b)
+
+    def __ResetPool(self):
+        for tl in self.linePool:
+            tl.Hide()
+        for b in self.barPool:
+            b.Hide()
+        self.usedLines = 0
+        self.usedBars = 0
+
+    def __PutLine(self, text, color, x, y, outline=False):
+        if self.usedLines < len(self.linePool):
+            tl = self.linePool[self.usedLines]
+            tl.SetPosition(x, y)
+            tl.SetText(text)
+            tl.SetPackedFontColor(color)
+            if outline:
+                tl.SetOutline()
+            tl.Show()
+            self.usedLines += 1
+
+    def __PutSep(self, y, color=0xFF003355):
+        if self.usedBars < len(self.barPool):
+            b = self.barPool[self.usedBars]
+            b.SetPosition(14, y)
+            b.SetSize(self.MAX_WIDTH - 28, 1)
+            b.SetColor(color)
+            b.Show()
+            self.usedBars += 1
+
+    def ShowGuide(self):
+        """Mostra la guida completa delle missioni giornaliere."""
+        self.__ResetPool()
+
+        titleColor = 0xFF00CCFF
+        self.titleText.SetText("GUIDA MISSIONI GIORNALIERE")
+        self.titleText.SetPackedFontColor(titleColor)
+        self.headerBg.SetColor(0xCC001a33)
+
+        y = self.HEADER_H + 10
+
+        # --- SEZIONE: Cosa sono ---
+        self.__PutLine("COSA SONO?", 0xFF00FFFF, 14, y, True)
+        y += self.LINE_H + 2
+        self.__PutLine("Ogni giorno ricevi 3 missioni da completare.", 0xFFCCCCCC, 14, y)
+        y += self.LINE_H
+        self.__PutLine("Uccidi mostri, raccogli oggetti o esplora", 0xFFCCCCCC, 14, y)
+        y += self.LINE_H
+        self.__PutLine("per ottenere Gloria e ricompense!", 0xFFCCCCCC, 14, y)
+        y += self.LINE_H + 6
+
+        # --- Separatore ---
+        self.__PutSep(y, 0xFF004466)
+        y += 10
+
+        # --- SEZIONE: Come vengono assegnate ---
+        self.__PutLine("COME VENGONO ASSEGNATE?", 0xFFFFD700, 14, y, True)
+        y += self.LINE_H + 2
+        self.__PutLine("Le missioni si basano sul LIVELLO del tuo PG.", 0xFFCCCCCC, 14, y)
+        y += self.LINE_H
+        self.__PutLine("Piu' il tuo livello e' alto, piu' le sfide", 0xFFFFAAAA, 14, y)
+        y += self.LINE_H
+        self.__PutLine("saranno ardue ma con ricompense maggiori!", 0xFFFFAAAA, 14, y)
+        y += self.LINE_H + 2
+        self.__PutLine("Lv 1-30: Missioni facili (mob bassi)", 0xFF88FF88, 14, y)
+        y += self.LINE_H
+        self.__PutLine("Lv 31-60: Missioni medie (mob intermedi)", 0xFFFFFF88, 14, y)
+        y += self.LINE_H
+        self.__PutLine("Lv 61-90: Missioni difficili (mob alti)", 0xFFFFAA66, 14, y)
+        y += self.LINE_H
+        self.__PutLine("Lv 90+: Missioni estreme (boss/elite)", 0xFFFF6666, 14, y)
+        y += self.LINE_H + 6
+
+        # --- Separatore ---
+        self.__PutSep(y, 0xFF004466)
+        y += 10
+
+        # --- SEZIONE: Bonus e Malus ---
+        self.__PutLine("BONUS & MALUS", 0xFF00FF00, 14, y, True)
+        y += self.LINE_H + 2
+        self.__PutLine("Completa TUTTE e 3 le missioni per ottenere", 0xFFCCCCCC, 14, y)
+        y += self.LINE_H
+        self.__PutLine("il BONUS Gloria x1.5 fino al reset!", 0xFF00FF00, 14, y)
+        y += self.LINE_H + 4
+        self.__PutLine("ATTENZIONE: Se NON completi una missione,", 0xFFFF4444, 14, y)
+        y += self.LINE_H
+        self.__PutLine("subisci una penalita' di Gloria (malus).", 0xFFFF4444, 14, y)
+        y += self.LINE_H + 6
+
+        # --- Separatore ---
+        self.__PutSep(y, 0xFF004466)
+        y += 10
+
+        # --- SEZIONE: Come completarle ---
+        self.__PutLine("COME COMPLETARLE?", 0xFF00CCFF, 14, y, True)
+        y += self.LINE_H + 2
+        self.__PutLine("1. Apri la finestra missioni dal Terminale", 0xFFCCCCCC, 14, y)
+        y += self.LINE_H
+        self.__PutLine("2. Leggi l'obiettivo di ogni missione", 0xFFCCCCCC, 14, y)
+        y += self.LINE_H
+        self.__PutLine("3. Uccidi i mob / raccogli gli oggetti", 0xFFCCCCCC, 14, y)
+        y += self.LINE_H
+        self.__PutLine("4. Il progresso si aggiorna in tempo reale", 0xFFCCCCCC, 14, y)
+        y += self.LINE_H
+        self.__PutLine("5. A missione completa appare [OK] verde", 0xFF00FF00, 14, y)
+        y += self.LINE_H + 6
+
+        # --- Separatore ---
+        self.__PutSep(y, 0xFF004466)
+        y += 10
+
+        # --- SEZIONE: Reset ---
+        self.__PutLine("RESET GIORNALIERO", 0xFF888888, 14, y, True)
+        y += self.LINE_H + 2
+        self.__PutLine("Le missioni si resettano ogni giorno a", 0xFFAAAAAA, 14, y)
+        y += self.LINE_H
+        self.__PutLine("mezzanotte (00:00). Nuove sfide ti aspettano!", 0xFFAAAAAA, 14, y)
+        y += self.LINE_H + 10
+
+        # Resize tooltip
+        self.tooltipH = y
+        self.SetSize(self.MAX_WIDTH, self.tooltipH)
+        self.bg.SetSize(self.MAX_WIDTH, self.tooltipH)
+        self.borderLeft.SetSize(2, self.tooltipH)
+        self.borderRight.SetPosition(self.MAX_WIDTH - 2, 0)
+        self.borderRight.SetSize(2, self.tooltipH)
+        self.borderBot.SetPosition(0, self.tooltipH - 2)
+        self.borderBot.SetSize(self.MAX_WIDTH, 2)
+
+        # Posiziona vicino al mouse
+        mouseX, mouseY = wndMgr.GetMousePosition()
+        screenW = wndMgr.GetScreenWidth()
+        screenH = wndMgr.GetScreenHeight()
+
+        px = mouseX + 15
+        py = mouseY - self.tooltipH // 2
+        if px + self.MAX_WIDTH > screenW:
+            px = mouseX - self.MAX_WIDTH - 10
+        if py < 5:
+            py = 5
+        if py + self.tooltipH > screenH - 5:
+            py = screenH - self.tooltipH - 5
+
+        self.SetPosition(max(0, px), max(0, py))
+        self.Show()
+        self.SetTop()
+
+    def HideGuide(self):
+        self.Hide()
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+#  MISSION LOCATION TOOLTIP - Tooltip hover su missione (dove trovare il mob)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+# Import location data from uipresentation (lazy to avoid circular import)
+def _GetMobLocationInfo(vnum, missionType):
+    """Restituisce (location, hint) per un dato vnum/tipo missione.
+    Usa i dati della wiki (BOSS_LOCATION, DATA_MGR) + fallback."""
+    try:
+        from uipresentation import BOSS_LOCATION, FRACTURE_BOSSES, FRACTURE_SUPERMETIN, FRACTURE_CHESTS, DATA_MGR
+
+        # Missioni generiche (vnum=0): qualsiasi mob
+        if vnum == 0:
+            if missionType == "kill_mob":
+                return "Qualsiasi mappa", "Uccidi qualsiasi mostro nel mondo di gioco"
+            elif missionType == "kill_boss":
+                return "Qualsiasi mappa", "Uccidi qualsiasi boss nel mondo di gioco"
+            elif missionType == "kill_metin":
+                return "Qualsiasi mappa", "Distruggi qualsiasi Metin nel mondo di gioco"
+            elif missionType == "seal_fracture":
+                return "Fratture dimensionali", "Sigilla le fratture usando il sistema Fratture"
+            elif missionType == "open_chest":
+                return "Fratture dimensionali", "Apri i forzieri che appaiono nelle fratture"
+            return "Sconosciuta", ""
+
+        # Boss frattura?
+        if vnum in FRACTURE_BOSSES:
+            fb = FRACTURE_BOSSES[vnum]
+            loc = BOSS_LOCATION.get(vnum, "Fratture dimensionali")
+            return loc, "Boss Frattura (Tier %d)" % fb.get("tier", 1)
+
+        # Super Metin frattura?
+        if vnum in FRACTURE_SUPERMETIN:
+            fm = FRACTURE_SUPERMETIN[vnum]
+            return "Fratture dimensionali", "Super Metin (Tier %d)" % fm.get("tier", 1)
+
+        # Forziere frattura?
+        if vnum in FRACTURE_CHESTS:
+            fc = FRACTURE_CHESTS[vnum]
+            return "Fratture dimensionali", "Forziere (Tier %d)" % fc.get("tier", 1)
+
+        # Boss con posizione nota?
+        if vnum in BOSS_LOCATION:
+            return BOSS_LOCATION[vnum], ""
+
+        # Fallback: usa il livello del mob per determinare la zona
+        loc = DATA_MGR.GetMobLocation(vnum)
+        if loc:
+            return loc, ""
+
+        # Ultimo fallback: livello diretto
+        try:
+            level = nonplayer.GetMonsterLevel(vnum)
+            if level > 0:
+                zoneName, phaseStr = DATA_MGR.GetZoneForLevel(level)
+                if zoneName:
+                    return "%s (%s)" % (zoneName, phaseStr), ""
+        except:
+            pass
+
+        return "Sconosciuta", ""
+    except:
+        return "Sconosciuta", ""
+
+
+def _GetMobName(vnum):
+    """Restituisce il nome del mob dato il vnum."""
+    if vnum <= 0:
+        return ""
+    try:
+        name = nonplayer.GetMonsterName(vnum)
+        if name:
+            return name
+    except:
+        pass
+    return ""
+
+
+_g_missionLocationTooltip = None
+
+def _GetMissionLocationTooltip():
+    global _g_missionLocationTooltip
+    if _g_missionLocationTooltip is None:
+        _g_missionLocationTooltip = MissionLocationTooltip()
+    return _g_missionLocationTooltip
+
+
+class MissionLocationTooltip(ui.Window):
+    """Tooltip flottante che mostra dove trovare il target della missione."""
+
+    TOOLTIP_WIDTH = 220
+    MAX_HEIGHT = 120
+
+    def __init__(self):
+        ui.Window.__init__(self)
+        self.SetSize(self.TOOLTIP_WIDTH, self.MAX_HEIGHT)
+        self.AddFlag("float")
+        self.SetWindowName("MissionLocationTooltip")
+
+        # Background
+        self.bg = ui.Bar()
+        self.bg.SetParent(self)
+        self.bg.SetPosition(0, 0)
+        self.bg.SetSize(self.TOOLTIP_WIDTH, self.MAX_HEIGHT)
+        self.bg.SetColor(0xEE0A0A0A)
+        self.bg.AddFlag("not_pick")
+        self.bg.Show()
+
+        # Bordo
+        self.borders = []
+        for pos in [(0, 0, self.TOOLTIP_WIDTH, 1), (0, 0, 1, self.MAX_HEIGHT),
+                     (self.TOOLTIP_WIDTH - 1, 0, 1, self.MAX_HEIGHT), (0, self.MAX_HEIGHT - 1, self.TOOLTIP_WIDTH, 1)]:
+            b = ui.Bar()
+            b.SetParent(self)
+            b.SetPosition(pos[0], pos[1])
+            b.SetSize(pos[2], pos[3])
+            b.SetColor(0xFF00CCFF)
+            b.AddFlag("not_pick")
+            b.Show()
+            self.borders.append(b)
+
+        # Icona tipo missione (testo)
+        self.typeLabel = ui.TextLine()
+        self.typeLabel.SetParent(self)
+        self.typeLabel.SetPosition(10, 8)
+        self.typeLabel.SetText("")
+        self.typeLabel.SetPackedFontColor(0xFF00FFFF)
+        self.typeLabel.AddFlag("not_pick")
+        self.typeLabel.Show()
+
+        # Nome target
+        self.targetLabel = ui.TextLine()
+        self.targetLabel.SetParent(self)
+        self.targetLabel.SetPosition(10, 28)
+        self.targetLabel.SetText("")
+        self.targetLabel.SetPackedFontColor(0xFFFFFFFF)
+        self.targetLabel.AddFlag("not_pick")
+        self.targetLabel.Show()
+
+        # Posizione / mappa
+        self.locIcon = ui.TextLine()
+        self.locIcon.SetParent(self)
+        self.locIcon.SetPosition(10, 50)
+        self.locIcon.SetText("Posizione:")
+        self.locIcon.SetPackedFontColor(0xFFAAAAAA)
+        self.locIcon.AddFlag("not_pick")
+        self.locIcon.Show()
+
+        self.locLabel = ui.TextLine()
+        self.locLabel.SetParent(self)
+        self.locLabel.SetPosition(10, 68)
+        self.locLabel.SetText("")
+        self.locLabel.SetPackedFontColor(0xFFFFD700)
+        self.locLabel.AddFlag("not_pick")
+        self.locLabel.Show()
+
+        # Hint extra (es. "Boss Frattura Tier 3")
+        self.hintLabel = ui.TextLine()
+        self.hintLabel.SetParent(self)
+        self.hintLabel.SetPosition(10, 88)
+        self.hintLabel.SetText("")
+        self.hintLabel.SetPackedFontColor(0xFF888888)
+        self.hintLabel.AddFlag("not_pick")
+        self.hintLabel.Show()
+
+        self.Hide()
+
+    def ShowForMission(self, mission, parentX, parentY):
+        """Mostra tooltip per una missione specifica.
+        mission = dict con id, name, type, target_vnum, ecc.
+        parentX, parentY = posizione del mission slot sullo schermo."""
+        mType = mission.get("type", "kill_mob")
+        vnum = mission.get("target_vnum", 0)
+
+        # Tipo missione label
+        TYPE_LABELS = {
+            "kill_mob":       "Tipo: Uccidi Mostri",
+            "kill_boss":      "Tipo: Caccia al Boss",
+            "kill_metin":     "Tipo: Distruggi Metin",
+            "seal_fracture":  "Tipo: Sigilla Frattura",
+            "open_chest":     "Tipo: Apri Forziere",
+        }
+        self.typeLabel.SetText(TYPE_LABELS.get(mType, "Tipo: %s" % mType))
+
+        # Nome mob target
+        mobName = _GetMobName(vnum)
+        if mobName:
+            self.targetLabel.SetText("Target: %s" % mobName[:30])
+        elif vnum > 0:
+            self.targetLabel.SetText("Target: Vnum %d" % vnum)
+        else:
+            self.targetLabel.SetText("Target: Qualsiasi")
+
+        # Posizione
+        location, hint = _GetMobLocationInfo(vnum, mType)
+        isDungeon = location.startswith("DG ")
+        if isDungeon:
+            locText = location[3:]
+            self.locIcon.SetText("Dungeon:")
+            self.locIcon.SetPackedFontColor(0xFFFF8800)
+        else:
+            locText = location
+            self.locIcon.SetText("Posizione:")
+            self.locIcon.SetPackedFontColor(0xFFAAAAAA)
+
+        self.locLabel.SetText(locText[:35])
+        self.hintLabel.SetText(hint[:40] if hint else "")
+
+        # Calcola altezza dinamica
+        h = 88
+        if hint:
+            h = 108
+        self.SetSize(self.TOOLTIP_WIDTH, h)
+        self.bg.SetSize(self.TOOLTIP_WIDTH, h)
+        # Aggiorna bordi
+        self.borders[1].SetSize(1, h)  # left
+        self.borders[2].SetSize(1, h)  # right
+        self.borders[3].SetPosition(0, h - 1)  # bottom
+
+        # Posiziona accanto allo slot (a destra)
+        screenW = wndMgr.GetScreenWidth()
+        screenH = wndMgr.GetScreenHeight()
+        tx = parentX + 250  # a destra dello slot
+        ty = parentY
+
+        # Se esce dallo schermo, mettilo a sinistra
+        if tx + self.TOOLTIP_WIDTH > screenW:
+            tx = parentX - self.TOOLTIP_WIDTH - 5
+
+        if ty + h > screenH:
+            ty = screenH - h - 5
+
+        self.SetPosition(tx, ty)
+        self.SetTop()
+        self.Show()
+
+    def HideTooltip(self):
+        self.Hide()
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -35,7 +543,7 @@ class DailyMissionsWindow(ui.Window, DraggableMixin):
         self.theme = None
         self.lastUpdateTime = 0
         self.autoCloseTimer = 0.0
-        self.resetTime = "05:00"  # Orario reset missioni
+        self.resetTime = "00:00"  # Orario reset missioni (mezzanotte)
         
         self.__BuildUI()
     
@@ -150,7 +658,7 @@ class DailyMissionsWindow(ui.Window, DraggableMixin):
         self.resetInfo.SetParent(self)
         self.resetInfo.SetPosition(170, 290)
         self.resetInfo.SetHorizontalAlignCenter()
-        self.resetInfo.SetText(T("RESET_INFO", "Reset giornaliero alle 05:00"))
+        self.resetInfo.SetText(T("RESET_INFO", "Reset giornaliero alle 00:00"))
         self.resetInfo.SetPackedFontColor(0xFF888888)
         self.resetInfo.Show()
         
@@ -163,15 +671,90 @@ class DailyMissionsWindow(ui.Window, DraggableMixin):
         self.bonusActiveText.SetPackedFontColor(0xFF00FF00)
         self.bonusActiveText.Show()
         
-        # Pulsante chiudi (tasto X)
-        self.closeBtn = ui.Button()
+        # ====== PULSANTE GUIDA [?] ======
+        self.helpBtn = ui.Window()
+        self.helpBtn.SetParent(self)
+        self.helpBtn.SetPosition(286, 6)
+        self.helpBtn.SetSize(22, 18)
+        self.helpBtn.Show()
+
+        self.helpBtnBg = ui.Bar()
+        self.helpBtnBg.SetParent(self.helpBtn)
+        self.helpBtnBg.SetPosition(0, 0)
+        self.helpBtnBg.SetSize(22, 18)
+        self.helpBtnBg.SetColor(0xFF004466)
+        self.helpBtnBg.AddFlag("not_pick")
+        self.helpBtnBg.Show()
+
+        self.helpBtnBorder = ui.Bar()
+        self.helpBtnBorder.SetParent(self.helpBtn)
+        self.helpBtnBorder.SetPosition(0, 0)
+        self.helpBtnBorder.SetSize(22, 1)
+        self.helpBtnBorder.SetColor(0xFF00CCFF)
+        self.helpBtnBorder.AddFlag("not_pick")
+        self.helpBtnBorder.Show()
+
+        self.helpBtnBorderB = ui.Bar()
+        self.helpBtnBorderB.SetParent(self.helpBtn)
+        self.helpBtnBorderB.SetPosition(0, 17)
+        self.helpBtnBorderB.SetSize(22, 1)
+        self.helpBtnBorderB.SetColor(0xFF00CCFF)
+        self.helpBtnBorderB.AddFlag("not_pick")
+        self.helpBtnBorderB.Show()
+
+        self.helpBtnBorderL = ui.Bar()
+        self.helpBtnBorderL.SetParent(self.helpBtn)
+        self.helpBtnBorderL.SetPosition(0, 0)
+        self.helpBtnBorderL.SetSize(1, 18)
+        self.helpBtnBorderL.SetColor(0xFF00CCFF)
+        self.helpBtnBorderL.AddFlag("not_pick")
+        self.helpBtnBorderL.Show()
+
+        self.helpBtnBorderR = ui.Bar()
+        self.helpBtnBorderR.SetParent(self.helpBtn)
+        self.helpBtnBorderR.SetPosition(21, 0)
+        self.helpBtnBorderR.SetSize(1, 18)
+        self.helpBtnBorderR.SetColor(0xFF00CCFF)
+        self.helpBtnBorderR.AddFlag("not_pick")
+        self.helpBtnBorderR.Show()
+
+        self.helpBtnText = ui.TextLine()
+        self.helpBtnText.SetParent(self.helpBtn)
+        self.helpBtnText.SetPosition(11, 2)
+        self.helpBtnText.SetHorizontalAlignCenter()
+        self.helpBtnText.SetText("?")
+        self.helpBtnText.SetPackedFontColor(0xFF00FFFF)
+        self.helpBtnText.AddFlag("not_pick")
+        self.helpBtnText.Show()
+
+        self.helpBtn.OnMouseOverIn = self.__OnHelpHoverIn
+        self.helpBtn.OnMouseOverOut = self.__OnHelpHoverOut
+
+        # Pulsante chiudi (tasto X) - FIX: usa ui.Window con SetSize per area cliccabile
+        self.closeBtn = ui.Window()
         self.closeBtn.SetParent(self)
-        self.closeBtn.SetPosition(310, 8)
-        self.closeBtn.SetUpVisual("d:/ymir work/ui/public/close_button_01.sub")
-        self.closeBtn.SetOverVisual("d:/ymir work/ui/public/close_button_02.sub")
-        self.closeBtn.SetDownVisual("d:/ymir work/ui/public/close_button_03.sub")
-        self.closeBtn.SetEvent(self.Close)
+        self.closeBtn.SetPosition(312, 6)
+        self.closeBtn.SetSize(20, 18)
         self.closeBtn.Show()
+
+        self.closeBtnBg = ui.Bar()
+        self.closeBtnBg.SetParent(self.closeBtn)
+        self.closeBtnBg.SetPosition(0, 0)
+        self.closeBtnBg.SetSize(20, 18)
+        self.closeBtnBg.SetColor(0xFFAA0000)
+        self.closeBtnBg.AddFlag("not_pick")
+        self.closeBtnBg.Show()
+
+        self.closeBtnText = ui.TextLine()
+        self.closeBtnText.SetParent(self.closeBtn)
+        self.closeBtnText.SetPosition(10, 2)
+        self.closeBtnText.SetHorizontalAlignCenter()
+        self.closeBtnText.SetText("X")
+        self.closeBtnText.SetPackedFontColor(0xFFFFFFFF)
+        self.closeBtnText.AddFlag("not_pick")
+        self.closeBtnText.Show()
+
+        self.closeBtn.OnMouseLeftButtonUp = lambda: self.Close()
         
         self.Hide()
     
@@ -266,6 +849,17 @@ class DailyMissionsWindow(ui.Window, DraggableMixin):
         statusText.SetPackedFontColor(0xFF00FF00)
         statusText.Show()
         slot["statusText"] = statusText
+        
+        # ====== HOVER AREA per tooltip posizione ======
+        hoverArea = ui.Window()
+        hoverArea.SetParent(self)
+        hoverArea.SetPosition(15, yBase + 8)
+        hoverArea.SetSize(260, 52)  # copre l'area del mission slot
+        hoverArea.Show()
+        slotIndex = index  # cattura per closure
+        hoverArea.OnMouseOverIn = lambda idx=slotIndex: self.__OnMissionHoverIn(idx)
+        hoverArea.OnMouseOverOut = lambda idx=slotIndex: self.__OnMissionHoverOut(idx)
+        slot["hoverArea"] = hoverArea
         
         return slot
     
@@ -364,7 +958,7 @@ class DailyMissionsWindow(ui.Window, DraggableMixin):
         if active:
             self.bonusActiveText.SetText(T("BONUS_GLORY_ACTIVE", ">>> BONUS GLORIA x1.5 ATTIVO! <<<"))
             self.bonusActiveText.SetPackedFontColor(0xFF00FF00)
-            self.bonusDesc.SetText(T("BONUS_ACTIVE_DESC", "ATTIVO! Gloria x1.5 fino alle 05:00!"))
+            self.bonusDesc.SetText(T("BONUS_ACTIVE_DESC", "ATTIVO! Gloria x1.5 fino alle 00:00!"))
             self.bonusDesc.SetPackedFontColor(0xFF00FF00)
         else:
             self.bonusActiveText.SetText("")
@@ -381,12 +975,51 @@ class DailyMissionsWindow(ui.Window, DraggableMixin):
     
     def OnPressEscapeKey(self):
         self.autoCloseTimer = 0.0
+        tip = _GetMissionGuideTooltip()
+        tip.HideGuide()
+        locTip = _GetMissionLocationTooltip()
+        locTip.HideTooltip()
         self.Hide()
         return True
     
     def Close(self):
         self.autoCloseTimer = 0.0
+        # Nascondi anche tooltip guida/posizione se aperti
+        tip = _GetMissionGuideTooltip()
+        tip.HideGuide()
+        locTip = _GetMissionLocationTooltip()
+        locTip.HideTooltip()
         self.Hide()
+
+    def __OnHelpHoverIn(self):
+        """Mostra tooltip guida quando hover sul ?"""
+        self.helpBtnBg.SetColor(0xFF006688)
+        tip = _GetMissionGuideTooltip()
+        tip.ShowGuide()
+
+    def __OnHelpHoverOut(self):
+        """Nasconde tooltip guida"""
+        self.helpBtnBg.SetColor(0xFF004466)
+        tip = _GetMissionGuideTooltip()
+        tip.HideGuide()
+
+    def __OnMissionHoverIn(self, slotIndex):
+        """Mostra tooltip posizione mob quando hover su uno slot missione"""
+        if slotIndex >= len(self.missions):
+            return
+        mission = self.missions[slotIndex]
+        # Calcola posizione assoluta dello slot sullo schermo
+        (selfX, selfY) = self.GetGlobalPosition()
+        yBase = 45 + slotIndex * 65
+        slotScreenX = selfX + 15
+        slotScreenY = selfY + yBase + 8
+        tip = _GetMissionLocationTooltip()
+        tip.ShowForMission(mission, slotScreenX, slotScreenY)
+
+    def __OnMissionHoverOut(self, slotIndex):
+        """Nasconde tooltip posizione mob"""
+        tip = _GetMissionLocationTooltip()
+        tip.HideTooltip()
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -867,10 +1500,15 @@ class EventSlotHoverArea(ui.Window):
             self.toolTip.AppendTextLine("Vincitore: +%d Gloria!" % winnerPrize, 0xFF00FF00)
             self.toolTip.AppendSpace(5)
             
-            # Status
+            # Status iscrizione player
+            isRegistered = self.eventData.get("is_registered", 0)
+            playerWon = self.eventData.get("player_won", 0)
             status = self.eventData.get("status", "pending")
-            if status == "joined":
-                self.toolTip.AppendTextLine("[SEI ISCRITTO!]", 0xFF00FF00)
+
+            if playerWon == 1:
+                self.toolTip.AppendTextLine("[HAI VINTO!]", 0xFF00FF00)
+            elif isRegistered == 1:
+                self.toolTip.AppendTextLine("[SEI ISCRITTO]", 0xFF00FFFF)
             elif status == "active":
                 self.toolTip.AppendTextLine("[EVENTO IN CORSO]", 0xFFFFAA00)
                 self.toolTip.AppendTextLine("Gioca per iscriverti!", 0xFFCCCCCC)
@@ -878,7 +1516,22 @@ class EventSlotHoverArea(ui.Window):
                 self.toolTip.AppendTextLine("[TERMINATO]", 0xFF888888)
             else:
                 self.toolTip.AppendTextLine("[NON ANCORA INIZIATO]", 0xFFAAAAAA)
-            
+
+            # Info vincitore (per eventi first_rift, first_boss)
+            winnerName = self.eventData.get("winner_name", "")
+            winnerRank = self.eventData.get("winner_rank", "")
+            if winnerName:
+                self.toolTip.AppendSpace(5)
+                self.toolTip.AppendTextLine("--------------------------------", 0xFF444444)
+                self.toolTip.AppendTextLine("[VINCITORE DI OGGI]", 0xFFFFD700)
+                rankColors = {"E": 0xFF808080, "D": 0xFF8B4513, "C": 0xFF00FF00, "B": 0xFF00BFFF, "A": 0xFFFFD700, "S": 0xFFFF4500, "N": 0xFFFF00FF}
+                rankColor = rankColors.get(winnerRank, 0xFFFFFFFF)
+                self.toolTip.AppendTextLine("%s [%s-Rank]" % (winnerName, winnerRank), rankColor)
+            elif etype in ("first_rift", "first_boss") and status == "active":
+                self.toolTip.AppendSpace(3)
+                self.toolTip.AppendTextLine("Nessun vincitore ancora!", 0xFFFF6600)
+                self.toolTip.AppendTextLine("Sii il primo!", 0xFFFFFF00)
+
             self.toolTip.AppendSpace(3)
             self.toolTip.Show()
         except:
@@ -950,6 +1603,58 @@ class EventsScheduleWindow(ui.Window, DraggableMixin):
         self.titleText.SetText(T("TODAY_EVENTS_TITLE", "< EVENTI DI OGGI >"))
         self.titleText.SetPackedFontColor(0xFFFFAA00)
         self.titleText.Show()
+
+        # Bottone chiudi (X)
+        self.btnClose = ui.Window()
+        self.btnClose.SetParent(self)
+        self.btnClose.SetPosition(420 - 30, 6)
+        self.btnClose.SetSize(24, 24)
+
+        self.btnCloseBg = ui.Bar()
+        self.btnCloseBg.SetParent(self.btnClose)
+        self.btnCloseBg.SetPosition(0, 0)
+        self.btnCloseBg.SetSize(24, 24)
+        self.btnCloseBg.SetColor(0xAA8B0000)
+        self.btnCloseBg.AddFlag("not_pick")
+        self.btnCloseBg.Show()
+
+        self.btnCloseText = ui.TextLine()
+        self.btnCloseText.SetParent(self.btnClose)
+        self.btnCloseText.SetPosition(12, 3)
+        self.btnCloseText.SetHorizontalAlignCenter()
+        self.btnCloseText.SetText("X")
+        self.btnCloseText.SetPackedFontColor(0xFFFFFFFF)
+        self.btnCloseText.AddFlag("not_pick")
+        self.btnCloseText.Show()
+
+        self.btnClose.OnMouseLeftButtonUp = lambda: self.Hide()
+        self.btnClose.Show()
+        
+        # Bottone info (?)
+        self.btnInfo = ui.Window()
+        self.btnInfo.SetParent(self)
+        self.btnInfo.SetPosition(420 - 58, 6)
+        self.btnInfo.SetSize(24, 24)
+
+        self.btnInfoBg = ui.Bar()
+        self.btnInfoBg.SetParent(self.btnInfo)
+        self.btnInfoBg.SetPosition(0, 0)
+        self.btnInfoBg.SetSize(24, 24)
+        self.btnInfoBg.SetColor(0xAA003366)
+        self.btnInfoBg.AddFlag("not_pick")
+        self.btnInfoBg.Show()
+
+        self.btnInfoText = ui.TextLine()
+        self.btnInfoText.SetParent(self.btnInfo)
+        self.btnInfoText.SetPosition(12, 3)
+        self.btnInfoText.SetHorizontalAlignCenter()
+        self.btnInfoText.SetText("?")
+        self.btnInfoText.SetPackedFontColor(0xFF00CCFF)
+        self.btnInfoText.AddFlag("not_pick")
+        self.btnInfoText.Show()
+
+        self.btnInfo.OnMouseLeftButtonUp = lambda: self.__ToggleInfoPopup()
+        self.btnInfo.Show()
         
         # Linea separatore titolo
         self.sepLine = ui.Bar()
@@ -1037,17 +1742,139 @@ class EventsScheduleWindow(ui.Window, DraggableMixin):
         self.infoLine2.SetPackedFontColor(0xFF88FF88)
         self.infoLine2.Show()
         
-        # Pulsante chiudi
-        self.closeBtn = ui.Button()
-        self.closeBtn.SetParent(self)
-        self.closeBtn.SetPosition(380, 8)
-        self.closeBtn.SetUpVisual("d:/ymir work/ui/public/close_button_01.sub")
-        self.closeBtn.SetOverVisual("d:/ymir work/ui/public/close_button_02.sub")
-        self.closeBtn.SetDownVisual("d:/ymir work/ui/public/close_button_03.sub")
-        self.closeBtn.SetEvent(self.Hide)
-        self.closeBtn.Show()
+        # Popup info eventi (nascosto di default)
+        self.__BuildInfoPopup()
         
         self.Hide()
+    
+    def __BuildInfoPopup(self):
+        """Crea il popup informativo sugli eventi"""
+        self.infoPopup = ui.Window()
+        self.infoPopup.SetParent(self)
+        self.infoPopup.SetPosition(20, 40)
+        self.infoPopup.SetSize(380, 390)
+        
+        # Sfondo scuro semi-trasparente
+        # NOTA: Tutti i widget figli DEVONO essere salvati come self.xxx
+        # altrimenti Python li garbage-collecta e wndMgr.Destroy() li elimina dal C++.
+        self.popupBg = ui.Bar()
+        self.popupBg.SetParent(self.infoPopup)
+        self.popupBg.SetPosition(0, 0)
+        self.popupBg.SetSize(380, 390)
+        self.popupBg.SetColor(0xF0080808)
+        self.popupBg.AddFlag("not_pick")
+        self.popupBg.Show()
+        
+        # Bordo arancione
+        self.popupBorders = []
+        for x, y, w, h in [
+            (0, 0, 380, 1), (0, 389, 380, 1),
+            (0, 0, 1, 390), (379, 0, 1, 390)
+        ]:
+            brd = ui.Bar()
+            brd.SetParent(self.infoPopup)
+            brd.SetPosition(x, y)
+            brd.SetSize(w, h)
+            brd.SetColor(0xFFFF6600)
+            brd.AddFlag("not_pick")
+            brd.Show()
+            self.popupBorders.append(brd)
+        
+        # Titolo
+        self.popupTitle = ui.TextLine()
+        self.popupTitle.SetParent(self.infoPopup)
+        self.popupTitle.SetPosition(190, 12)
+        self.popupTitle.SetHorizontalAlignCenter()
+        self.popupTitle.SetText("COME FUNZIONANO GLI EVENTI")
+        self.popupTitle.SetPackedFontColor(0xFFFFAA00)
+        self.popupTitle.AddFlag("not_pick")
+        self.popupTitle.Show()
+        
+        # Separatore
+        self.popupSep = ui.Bar()
+        self.popupSep.SetParent(self.infoPopup)
+        self.popupSep.SetPosition(15, 30)
+        self.popupSep.SetSize(350, 1)
+        self.popupSep.SetColor(0xAAFF6600)
+        self.popupSep.AddFlag("not_pick")
+        self.popupSep.Show()
+        
+        # Contenuto informativo
+        infoLines = [
+            (0xFFFF6600, "ISCRIZIONE"),
+            (0xFFCCCCCC, "Gli eventi non richiedono iscrizione manuale."),
+            (0xFFCCCCCC, "Basta giocare normalmente: uccidi boss, metinpietra"),
+            (0xFFCCCCCC, "o conquista fratture per iscriverti automaticamente."),
+            (0, ""),
+            (0xFFFF6600, "ORARI"),
+            (0xFFCCCCCC, "Ogni evento ha una fascia oraria precisa."),
+            (0xFFCCCCCC, "Se un evento e' [IN CORSO] puoi partecipare."),
+            (0xFFCCCCCC, "Quelli [TERMINATO] sono finiti per oggi."),
+            (0, ""),
+            (0xFFFF6600, "TIPI DI EVENTO"),
+            (0xFF88FF88, "  Glory Rush - Accumula piu' gloria possibile"),
+            (0xFF9932CC, "  First Rift / First Boss - Primo a completare vince"),
+            (0xFFFF8800, "  Metin Frenzy / Super Metin - Distruggi metinpietra"),
+            (0xFFFF4444, "  Boss Massacre - Uccidi il maggior numero di boss"),
+            (0, ""),
+            (0xFFFF6600, "PREMI"),
+            (0xFFCCCCCC, "Ogni evento assegna Gloria come ricompensa."),
+            (0xFFCCCCCC, "I premi vengono accreditati automaticamente."),
+            (0xFFFFD700, "  [HAI VINTO!] = Hai vinto l'evento"),
+            (0xFF00FFFF, "  [ISCRITTO] = Sei iscritto e partecipi"),
+        ]
+        
+        self.popupTextLines = []
+        yOff = 40
+        for color, text in infoLines:
+            if text == "":
+                yOff += 6
+                continue
+            line = ui.TextLine()
+            line.SetParent(self.infoPopup)
+            line.SetPosition(20, yOff)
+            line.SetText(text)
+            line.SetPackedFontColor(color)
+            line.AddFlag("not_pick")
+            line.Show()
+            self.popupTextLines.append(line)
+            yOff += 16
+        
+        # Bottone chiudi popup
+        self.closeInfoBtn = ui.Window()
+        self.closeInfoBtn.SetParent(self.infoPopup)
+        self.closeInfoBtn.SetPosition(155, 360)
+        self.closeInfoBtn.SetSize(70, 22)
+        
+        self.closeInfoBg = ui.Bar()
+        self.closeInfoBg.SetParent(self.closeInfoBtn)
+        self.closeInfoBg.SetPosition(0, 0)
+        self.closeInfoBg.SetSize(70, 22)
+        self.closeInfoBg.SetColor(0xAA8B0000)
+        self.closeInfoBg.AddFlag("not_pick")
+        self.closeInfoBg.Show()
+        
+        self.closeInfoText = ui.TextLine()
+        self.closeInfoText.SetParent(self.closeInfoBtn)
+        self.closeInfoText.SetPosition(35, 3)
+        self.closeInfoText.SetHorizontalAlignCenter()
+        self.closeInfoText.SetText("CHIUDI")
+        self.closeInfoText.SetPackedFontColor(0xFFFFFFFF)
+        self.closeInfoText.AddFlag("not_pick")
+        self.closeInfoText.Show()
+        
+        self.closeInfoBtn.OnMouseLeftButtonUp = lambda: self.infoPopup.Hide()
+        self.closeInfoBtn.Show()
+        
+        self.infoPopup.Hide()
+    
+    def __ToggleInfoPopup(self):
+        """Mostra/nasconde il popup informativo"""
+        if self.infoPopup.IsShow():
+            self.infoPopup.Hide()
+        else:
+            self.infoPopup.SetTop()
+            self.infoPopup.Show()
     
     def __CreateEventSlot(self, index):
         """Crea uno slot evento"""
@@ -1165,20 +1992,38 @@ class EventsScheduleWindow(ui.Window, DraggableMixin):
             "metin_frenzy": 0xFFFF8800,
             "double_spawn": 0xFFFF4444,
         }
-        
+
         etype = event.get("type", "glory_rush")
         typeColor = typeColors.get(etype, 0xFFFF6600)
-        
+
         slot["typeBar"].SetColor(typeColor)
         slot["nameText"].SetText(event.get("name", "Evento")[:40])
         slot["timeText"].SetText("%s - %s" % (event.get("start_time", "--:--"), event.get("end_time", "--:--")))
-        slot["rewardText"].SetText("+%s" % event.get("reward", "0"))
-        
+
+        # Mostra premio o vincitore se c'e'
+        winnerName = event.get("winner_name", "")
+        winnerRank = event.get("winner_rank", "")
+        if winnerName and etype in ("first_rift", "first_boss"):
+            # Mostra vincitore invece del premio
+            slot["rewardText"].SetText("Vinto da: %s [%s]" % (winnerName[:12], winnerRank))
+            slot["rewardText"].SetPackedFontColor(0xFFFFD700)
+        else:
+            slot["rewardText"].SetText("+%s" % event.get("reward", "0"))
+            slot["rewardText"].SetPackedFontColor(0xFF88FF88)
+
+        # Status con priorita': HAI VINTO > ISCRITTO > IN CORSO > TERMINATO
         status = event.get("status", "pending")
-        if status == "joined":
-            slot["statusText"].SetText("[ISCRITTO]")
+        playerWon = event.get("player_won", 0)
+        isRegistered = event.get("is_registered", 0)
+
+        if playerWon == 1:
+            slot["statusText"].SetText("[HAI VINTO!]")
             slot["statusText"].SetPackedFontColor(0xFF00FF00)
-            slot["bg"].SetColor(0x44003300)
+            slot["bg"].SetColor(0x44006600)
+        elif isRegistered == 1:
+            slot["statusText"].SetText("[ISCRITTO]")
+            slot["statusText"].SetPackedFontColor(0xFF00FFFF)
+            slot["bg"].SetColor(0x44003333)
         elif status == "active":
             slot["statusText"].SetText("[IN CORSO]")
             slot["statusText"].SetPackedFontColor(0xFFFFAA00)
