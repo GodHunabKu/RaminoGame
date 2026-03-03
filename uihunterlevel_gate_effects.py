@@ -5,17 +5,18 @@ import app
 import math
 
 # ==============================================================================
-# CONFIGURAZIONE E COLORI
+# CONFIGURAZIONE E COLORI – SOLO LEVELING DEFINITIVE PALETTE
 # ==============================================================================
 COLOR_CODES = {
-    "RED": 0xFFE74C3C,
-    "BLUE": 0xFF3498DB,
-    "PURPLE": 0xFF9B59B6,
-    "GOLD": 0xFFF1C40F,
-    "GREEN": 0xFF2ECC71,
-    "ORANGE": 0xFFE67E22,
-    "BLACKWHITE": 0xFFCCCCCC,
-    "SYSTEM": 0xFF00A8FF # Azzurro tipico del "Sistema"
+    "RED":        0xFFFF1111,  # Rosso sangue puro
+    "BLUE":       0xFF00AAFF,  # Blu azzurro vivace
+    "PURPLE":     0xFFBB00FF,  # Viola mistico profondo
+    "GOLD":       0xFFFFD700,  # Oro reale
+    "GREEN":      0xFF00FF44,  # Verde neon smeraldo
+    "ORANGE":     0xFFFF7700,  # Arancione fuoco
+    "BLACKWHITE": 0xFFDDDDDD,  # Bianco argentato
+    "SYSTEM":     0xFF00CCFF,  # Azzurro sistema vibrante
+    "CYAN":       0xFF00FFFF,  # Ciano cristallo
 }
 
 def GetColor(code):
@@ -43,7 +44,7 @@ class GateEntryEffect(ui.Window):
         self.Hide()
 
     def __BuildUI(self):
-        # 1. Sfondo Totale (Abisso digitale)
+        # 1. Sfondo Totale (Abisso digitale assoluto)
         self.bg = ui.Bar()
         self.bg.SetParent(self)
         self.bg.SetPosition(0, 0)
@@ -51,59 +52,148 @@ class GateEntryEffect(ui.Window):
         self.bg.SetColor(0xFF000000)
         self.bg.Show()
 
-        # 2. Linea di Scansione (Scanline verticale)
+        # 1b. Overlay colorato (tinta cromatica durante l'impatto)
+        self.bgOverlay = ui.Bar()
+        self.bgOverlay.SetParent(self)
+        self.bgOverlay.SetPosition(0, 0)
+        self.bgOverlay.SetSize(self.screenWidth, self.screenHeight)
+        self.bgOverlay.SetColor(0x00000000)
+        self.bgOverlay.AddFlag("not_pick")
+        self.bgOverlay.Show()
+
+        # 2. Glow Scanline (morbido, dietro la linea principale)
+        self.scanGlow = ui.Bar()
+        self.scanGlow.SetParent(self)
+        self.scanGlow.SetPosition(0, -4)
+        self.scanGlow.SetSize(self.screenWidth, 10)
+        self.scanGlow.SetColor(0x2200CCFF)
+        self.scanGlow.AddFlag("not_pick")
+        self.scanGlow.Hide()
+
+        # 2b. Linea di Scansione principale - 3px per impatto visivo
         self.scanLine = ui.Bar()
         self.scanLine.SetParent(self)
         self.scanLine.SetPosition(0, 0)
-        self.scanLine.SetSize(self.screenWidth, 2)
-        self.scanLine.SetColor(0xFF00A8FF) # Azzurro sistema
+        self.scanLine.SetSize(self.screenWidth, 3)
+        self.scanLine.SetColor(0xFF00CCFF)
         self.scanLine.Hide()
 
-        # 3. Box Centrale "ALERT"
+        # 3. Box Centrale "ALERT" - sfondo abissale blu-nero
         self.alertBox = ui.Bar()
         self.alertBox.SetParent(self)
         self.alertBox.SetSize(600, 150)
         self.alertBox.SetPosition(self.screenWidth/2 - 300, self.screenHeight/2 - 75)
-        self.alertBox.SetColor(0xDD000000) # Semi-trasparente
+        self.alertBox.SetColor(0xEE020210)
         self.alertBox.Hide()
 
-        # Bordi del box (Sinistra e Destra spessi)
+        # Layer interiore profondita'
+        self.alertBgInner = ui.Bar()
+        self.alertBgInner.SetParent(self.alertBox)
+        self.alertBgInner.SetPosition(6, 3)
+        self.alertBgInner.SetSize(588, 144)
+        self.alertBgInner.SetColor(0x0C080820)
+        self.alertBgInner.AddFlag("not_pick")
+        self.alertBgInner.Show()
+
+        # Striscia header superiore (effetto profondita')
+        self.alertTopStrip = ui.Bar()
+        self.alertTopStrip.SetParent(self.alertBox)
+        self.alertTopStrip.SetPosition(6, 3)
+        self.alertTopStrip.SetSize(588, 18)
+        self.alertTopStrip.SetColor(0x1800A8FF)
+        self.alertTopStrip.AddFlag("not_pick")
+        self.alertTopStrip.Show()
+
+        # Bordo superiore - 3px (spesso = priorita' visiva massima)
+        self.borderTop = ui.Bar()
+        self.borderTop.SetParent(self.alertBox)
+        self.borderTop.SetPosition(0, 0)
+        self.borderTop.SetSize(600, 3)
+        self.borderTop.SetColor(0xFF00CCFF)
+        self.borderTop.Show()
+
+        # Bordo inferiore - 2px (asimmetrico: meno importante)
+        self.borderBot = ui.Bar()
+        self.borderBot.SetParent(self.alertBox)
+        self.borderBot.SetPosition(0, 148)
+        self.borderBot.SetSize(600, 2)
+        self.borderBot.SetColor(0xFF00CCFF)
+        self.borderBot.Show()
+
+        # Bordo sinistro - 6px (accent bar dominante)
         self.borderLeft = ui.Bar()
         self.borderLeft.SetParent(self.alertBox)
         self.borderLeft.SetPosition(0, 0)
-        self.borderLeft.SetSize(5, 150)
-        self.borderLeft.SetColor(0xFF00A8FF)
+        self.borderLeft.SetSize(6, 150)
+        self.borderLeft.SetColor(0xFF00CCFF)
         self.borderLeft.Show()
 
+        # Bordo destro - 2px
         self.borderRight = ui.Bar()
         self.borderRight.SetParent(self.alertBox)
-        self.borderRight.SetPosition(595, 0)
-        self.borderRight.SetSize(5, 150)
-        self.borderRight.SetColor(0xFF00A8FF)
+        self.borderRight.SetPosition(598, 0)
+        self.borderRight.SetSize(2, 150)
+        self.borderRight.SetColor(0xFF00CCFF)
         self.borderRight.Show()
 
-        # Testo Principale
+        # Corner ticks L-bracket (angoli decorativi - stile Solo Leveling)
+        self.alertCorners = []
+        tickLen = 16
+        for (cx, cy, cw, ch) in [
+            (6, 3, tickLen, 1),   (6, 3, 1, tickLen),                          # TL H + V
+            (600-tickLen-2, 3, tickLen, 1), (598, 3, 1, tickLen),              # TR H + V
+            (6, 147, tickLen, 1), (6, 147-tickLen, 1, tickLen),                # BL H + V
+            (600-tickLen-2, 147, tickLen, 1), (598, 147-tickLen, 1, tickLen),  # BR H + V
+        ]:
+            ct = ui.Bar()
+            ct.SetParent(self.alertBox)
+            ct.SetPosition(cx, cy)
+            ct.SetSize(cw, ch)
+            ct.SetColor(0xFF00EEFF)
+            ct.AddFlag("not_pick")
+            ct.Show()
+            self.alertCorners.append(ct)
+
+        # Label "[ SYSTEM ALERT ]" nel header
+        self.alertHeaderText = ui.TextLine()
+        self.alertHeaderText.SetParent(self.alertBox)
+        self.alertHeaderText.SetPosition(300, 5)
+        self.alertHeaderText.SetHorizontalAlignCenter()
+        self.alertHeaderText.SetText("[ SYSTEM ALERT ]")
+        self.alertHeaderText.SetPackedFontColor(0xFF80CCFF)
+        self.alertHeaderText.SetOutline()
+        self.alertHeaderText.Show()
+
+        # Testo Principale (sotto header)
         self.mainText = ui.TextLine()
         self.mainText.SetParent(self.alertBox)
-        self.mainText.SetPosition(300, 30)
+        self.mainText.SetPosition(300, 35)
         self.mainText.SetHorizontalAlignCenter()
         self.mainText.SetText("! SYSTEM ALERT !")
         self.mainText.SetOutline()
-        # RIMOSSO: self.mainText.SetFontName(ui.def_font_large) -> Causava crash
         self.mainText.Show()
 
-        # Testo Secondario (Nome Gate)
+        # Separatore orizzontale tra main e sub
+        self.alertSep = ui.Bar()
+        self.alertSep.SetParent(self.alertBox)
+        self.alertSep.SetPosition(20, 65)
+        self.alertSep.SetSize(560, 1)
+        self.alertSep.SetColor(0x3300AAFF)
+        self.alertSep.AddFlag("not_pick")
+        self.alertSep.Show()
+
+        # Testo Secondario (Nome Gate - typewriter)
         self.subText = ui.TextLine()
         self.subText.SetParent(self.alertBox)
-        self.subText.SetPosition(300, 80)
+        self.subText.SetPosition(300, 75)
         self.subText.SetHorizontalAlignCenter()
         self.subText.SetText("")
         self.subText.SetOutline()
         self.subText.Show()
 
-        # Glitch Bars (Barre casuali che appaiono)
+        # Glitch Bars - aumentate a 22 per effetto piu' caotico
         self.glitchBars = []
-        for i in xrange(15): # Aumentate barre glitch
+        for i in xrange(22):
             b = ui.Bar()
             b.SetParent(self)
             b.SetColor(0xFFFFFFFF)
@@ -115,33 +205,62 @@ class GateEntryEffect(ui.Window):
         self.gateName = gateName.replace("+", " ").upper()
         self.baseColor = GetColor(colorCode)
         self.startTime = app.GetTime()
-        
+
+        # Colori derivati dal baseColor
+        r = (self.baseColor >> 16) & 0xFF
+        g = (self.baseColor >> 8) & 0xFF
+        b = self.baseColor & 0xFF
+        glowCol   = (0x22 << 24) | (r << 16) | (g << 8) | b
+        stripCol  = (0x18 << 24) | (r << 16) | (g << 8) | b
+        sepCol    = (0x33 << 24) | (r << 16) | (g << 8) | b
+        brightR = min(255, r + 60)
+        brightG = min(255, g + 60)
+        brightB = min(255, b + 60)
+        cyanCol = 0xFF000000 | (brightR << 16) | (brightG << 8) | brightB
+
         # ==========================================
         # HARD RESET DEGLI STATI VISIVI (FIX)
         # ==========================================
         self.bg.SetColor(0xFF000000)
-        
-        # 1. Ripristina dimensioni originali del box (che si era rimpicciolito alla fine)
+        self.bgOverlay.SetColor(0x00000000)
+
+        # Aggiorna colori elementi cromatici con baseColor
+        self.scanGlow.SetColor(glowCol)
+        self.scanLine.SetColor(self.baseColor)
+        self.alertTopStrip.SetColor(stripCol)
+        self.alertSep.SetColor(sepCol)
+        for ct in self.alertCorners:
+            ct.SetColor(cyanCol)
+
+        # 1. Ripristina dimensioni originali del box
         self.alertBox.SetSize(600, 150)
         self.alertBox.SetPosition(int(self.screenWidth/2 - 300), int(self.screenHeight/2 - 75))
-        
-        # 2. Mostra di nuovo i componenti interni (che erano stati nascosti)
+
+        # 2. Ripristina componenti interni
         self.mainText.Show()
         self.mainText.SetText("! DANGER !")
         self.mainText.SetPackedFontColor(0xFFFF0000)
-        
+
         self.subText.Show()
         self.subText.SetText("")
-        
+
+        self.alertHeaderText.Show()
+        self.borderLeft.SetColor(self.baseColor)
+        self.borderRight.SetColor(self.baseColor)
+        self.borderTop.SetColor(self.baseColor)
+        self.borderBot.SetColor(self.baseColor)
         self.borderLeft.Show()
         self.borderRight.Show()
-        
+        self.borderTop.Show()
+        self.borderBot.Show()
+
         # 3. Nascondi container principali per l'inizio animazione
         self.alertBox.Hide()
         self.scanLine.Hide()
+        self.scanGlow.Hide()
         for b in self.glitchBars:
             b.Hide()
-        
+
         # Avvia finestra principale
         self.Show()
         self.SetTop()
@@ -153,18 +272,19 @@ class GateEntryEffect(ui.Window):
         # FASE 1: BLACKOUT + SCANLINE (0.0s - 1.0s)
         if t < 1.0:
             self.scanLine.Show()
-            # La linea scende velocemente
+            self.scanGlow.Show()
             yPos = int((t / 1.0) * self.screenHeight)
             self.scanLine.SetPosition(0, yPos)
-            
-            # Glitch casuali
+            self.scanGlow.SetPosition(0, yPos - 4)
+
+            # Glitch casuali piu' intensi
             for b in self.glitchBars:
-                if app.GetRandom(0, 100) > 75:
-                    w = app.GetRandom(50, 400)
+                if app.GetRandom(0, 100) > 70:
+                    w = app.GetRandom(30, 500)
                     x = app.GetRandom(0, self.screenWidth - w)
                     y = app.GetRandom(0, self.screenHeight)
                     b.SetPosition(x, y)
-                    b.SetSize(w, app.GetRandom(2, 5))
+                    b.SetSize(w, app.GetRandom(1, 4))
                     b.SetColor(self.baseColor)
                     b.Show()
                 else:
@@ -173,68 +293,75 @@ class GateEntryEffect(ui.Window):
         # FASE 2: ALERT BOX IMPACT (1.0s - 1.2s)
         elif t < 1.2:
             self.scanLine.Hide()
+            self.scanGlow.Hide()
             for b in self.glitchBars: b.Hide()
-            
-            # Flash del box
+
+            # Flash del box + overlay colorato
             self.alertBox.Show()
             self.borderLeft.SetColor(self.baseColor)
             self.borderRight.SetColor(self.baseColor)
+            self.borderTop.SetColor(self.baseColor)
+            self.borderBot.SetColor(self.baseColor)
             self.mainText.SetPackedFontColor(self.baseColor)
             self.mainText.SetText("! DUNGEON DETECTED !")
+
+            # Flash overlay con colore del gate
+            r = (self.baseColor >> 16) & 0xFF
+            g = (self.baseColor >> 8) & 0xFF
+            b = self.baseColor & 0xFF
+            flashAlpha = int((1.2 - t) / 0.2 * 28)
+            self.bgOverlay.SetColor((flashAlpha << 24) | (r << 16) | (g << 8) | b)
 
         # FASE 3: TYPEWRITER EFFECT & PULSE (1.2s - 4.0s)
         elif t < 4.0:
             self.alertBox.Show()
-            
+            self.bgOverlay.SetColor(0x00000000)
+
             # Scrittura tipo terminale
             fullStr = "ENTERING: " + self.gateName
             dt = t - 1.2
-            charCount = int(dt * 25) # Velocità scrittura aumentata
+            charCount = int(dt * 25)
             if charCount > len(fullStr): charCount = len(fullStr)
             self.subText.SetText(fullStr[:charCount])
-            
-            # Pulsazione Colore
-            import math
-            pulse = abs(math.sin(t * 6.0)) # Più veloce
-            
-            # Estrazione RGB per interpolazione
+
+            # Pulsazione Colore bordi
+            pulse = abs(math.sin(t * 6.0))
             r = (self.baseColor >> 16) & 0xFF
             g = (self.baseColor >> 8) & 0xFF
             b = self.baseColor & 0xFF
-            
-            # Colore bordi che pulsa
             mr = int(r * pulse)
             mg = int(g * pulse)
             mb = int(b * pulse)
             col = (0xFF << 24) | (mr << 16) | (mg << 8) | mb
-            
+
             self.borderLeft.SetColor(col)
             self.borderRight.SetColor(col)
+            self.borderTop.SetColor(col)
+            self.borderBot.SetColor(col)
             self.subText.SetPackedFontColor(0xFFFFFFFF)
 
-            # Sfondo: Aura tech che pulsa leggermente
-            # Usiamo solo i canali colore con un alpha basso
+            # Sfondo: aura tech cromatica pulsante
             bgPulse = int(pulse * 80)
             br = int(r * 0.2)
-            bgcol = (bgPulse << 24) | (br << 16) | (0 << 8) | 0
-            self.bg.SetColor(bgcol) 
+            self.bg.SetColor((bgPulse << 24) | (br << 16))
 
         # FASE 4: SYSTEM SHUTDOWN (Fade Out) (4.0s - 5.0s)
         elif t < 5.0:
             normT = (t - 4.0)
-            # Box collassa orizzontalmente
             currentWidth = int(600 * (1.0 - normT))
             if currentWidth < 0: currentWidth = 0
-            
-            self.alertBox.SetSize(currentWidth, 150 if normT < 0.3 else 2) 
+
+            self.alertBox.SetSize(currentWidth, 150 if normT < 0.3 else 2)
             self.alertBox.SetPosition(int(self.screenWidth/2 - currentWidth/2), int(self.screenHeight/2 - 75))
-            
+
             self.mainText.Hide()
             self.subText.Hide()
+            self.alertHeaderText.Hide()
             self.borderLeft.Hide()
             self.borderRight.Hide()
-            
-            # Sfondo Fade to black e poi invisibile
+            self.borderTop.Hide()
+            self.borderBot.Hide()
+
             alpha = int((1.0 - normT) * 255)
             self.bg.SetColor((alpha << 24) | 0x000000)
 
@@ -257,58 +384,124 @@ class GateVictoryEffect(ui.Window):
         self.Hide()
 
     def __BuildUI(self):
+        # Sfondo scuro semi-trasparente
         self.bg = ui.Bar()
         self.bg.SetParent(self)
         self.bg.SetSize(self.screenWidth, self.screenHeight)
-        self.bg.SetColor(0xAA000000) 
+        self.bg.SetColor(0xBB000000)
         self.bg.Show()
 
+        # Glow dorato dietro al banner (piu' ampio)
+        self.bannerGlow = ui.Bar()
+        self.bannerGlow.SetParent(self)
+        self.bannerGlow.SetSize(0, 130)
+        self.bannerGlow.SetPosition(int(self.screenWidth/2), int(self.screenHeight/2 - 65))
+        self.bannerGlow.SetColor(0x22FFD700)
+        self.bannerGlow.AddFlag("not_pick")
+        self.bannerGlow.Show()
+
+        # Banner principale - core scuro con bordi oro
         self.banner = ui.Bar()
         self.banner.SetParent(self)
         self.banner.SetSize(0, 100)
         self.banner.SetPosition(int(self.screenWidth/2), int(self.screenHeight/2 - 50))
-        self.banner.SetColor(0xCCFFD700)
+        self.banner.SetColor(0xDD050300)
         self.banner.Show()
 
+        # Banner bordo superiore (3px)
+        self.bannerBorderTop = ui.Bar()
+        self.bannerBorderTop.SetParent(self.banner)
+        self.bannerBorderTop.SetPosition(0, 0)
+        self.bannerBorderTop.SetSize(0, 3)
+        self.bannerBorderTop.SetColor(0xFFFFD700)
+        self.bannerBorderTop.AddFlag("not_pick")
+        self.bannerBorderTop.Show()
+
+        # Banner bordo inferiore (2px)
+        self.bannerBorderBot = ui.Bar()
+        self.bannerBorderBot.SetParent(self.banner)
+        self.bannerBorderBot.SetPosition(0, 98)
+        self.bannerBorderBot.SetSize(0, 2)
+        self.bannerBorderBot.SetColor(0xFFCC8800)
+        self.bannerBorderBot.AddFlag("not_pick")
+        self.bannerBorderBot.Show()
+
+        # Linea accent sinistra (6px)
+        self.bannerAccentL = ui.Bar()
+        self.bannerAccentL.SetParent(self.banner)
+        self.bannerAccentL.SetPosition(0, 0)
+        self.bannerAccentL.SetSize(6, 100)
+        self.bannerAccentL.SetColor(0xFFFFD700)
+        self.bannerAccentL.AddFlag("not_pick")
+        self.bannerAccentL.Show()
+
+        # Separatore decorativo orizzontale nel banner
+        self.bannerSep = ui.Bar()
+        self.bannerSep.SetParent(self.banner)
+        self.bannerSep.SetPosition(20, 50)
+        self.bannerSep.SetSize(0, 1)
+        self.bannerSep.SetColor(0x44FFD700)
+        self.bannerSep.AddFlag("not_pick")
+        self.bannerSep.Show()
+
+        # Titolo principale
         self.title = ui.TextLine()
         self.title.SetParent(self)
-        self.title.SetPosition(int(self.screenWidth/2), int(self.screenHeight/2 - 20))
+        self.title.SetPosition(int(self.screenWidth/2), int(self.screenHeight/2 - 22))
         self.title.SetHorizontalAlignCenter()
         self.title.SetText("DUNGEON COMPLETATO")
         self.title.SetPackedFontColor(0xFFFFFFFF)
         self.title.SetOutline()
         self.title.Show()
 
+        # Label header "[ SISTEMA ]"
+        self.bannerHeader = ui.TextLine()
+        self.bannerHeader.SetParent(self)
+        self.bannerHeader.SetPosition(int(self.screenWidth/2), int(self.screenHeight/2 - 40))
+        self.bannerHeader.SetHorizontalAlignCenter()
+        self.bannerHeader.SetText("[ SISTEMA ]")
+        self.bannerHeader.SetPackedFontColor(0xFFCC8800)
+        self.bannerHeader.SetOutline()
+        self.bannerHeader.Show()
+
+        # Testo ricompensa
         self.rewardText = ui.TextLine()
         self.rewardText.SetParent(self)
-        self.rewardText.SetPosition(int(self.screenWidth/2), int(self.screenHeight/2 + 10))
+        self.rewardText.SetPosition(int(self.screenWidth/2), int(self.screenHeight/2 + 8))
         self.rewardText.SetHorizontalAlignCenter()
         self.rewardText.SetText("")
-        self.rewardText.SetPackedFontColor(0xFFFFFF00)
+        self.rewardText.SetPackedFontColor(0xFFFFD700)
         self.rewardText.SetOutline()
         self.rewardText.Show()
 
+        # Particelle con colori variati: oro, bianco, ciano
+        PARTICLE_COLORS = [0xFFFFD700, 0xFFFFFFFF, 0xFF00EEFF, 0xFFFFAA00, 0xFFFFEE88]
         self.particles = []
-        for i in xrange(20):
+        for i in xrange(28):
             p = ui.Bar()
             p.SetParent(self)
-            p.SetSize(4, 4)
-            p.SetColor(0xFFFFD700)
+            sz = 3 if i % 3 == 0 else 4
+            p.SetSize(sz, sz)
+            p.SetColor(PARTICLE_COLORS[i % len(PARTICLE_COLORS)])
             p.Hide()
             self.particles.append([p, 0, 0])
 
     def Start(self, gateName, gloria):
         self.startTime = app.GetTime()
-        self.rewardText.SetText("Ricompensa: +%d Gloria" % gloria)
+        self.rewardText.SetText("+ %d GLORIA" % gloria)
         self.banner.SetSize(0, 100)
+        self.bannerGlow.SetSize(0, 130)
+        self.bannerBorderTop.SetSize(0, 3)
+        self.bannerBorderBot.SetSize(0, 2)
+        self.bannerSep.SetSize(0, 1)
         self.Show()
         self.SetTop()
-        
+
         for p in self.particles:
             p[0].SetPosition(int(self.screenWidth/2), int(self.screenHeight/2))
             p[0].Show()
-            p[1] = app.GetRandom(-10, 10)
-            p[2] = app.GetRandom(-10, 10)
+            p[1] = app.GetRandom(-12, 12)
+            p[2] = app.GetRandom(-14, -2)
 
     def OnUpdate(self):
         if not self.IsShow(): return
@@ -316,20 +509,37 @@ class GateVictoryEffect(ui.Window):
 
         if t < 0.5:
             width = int((t / 0.5) * self.screenWidth)
+            halfW = int(width / 2)
             self.banner.SetSize(width, 100)
-            self.banner.SetPosition(int(self.screenWidth/2 - width/2), int(self.screenHeight/2 - 50))
+            self.banner.SetPosition(int(self.screenWidth/2 - halfW), int(self.screenHeight/2 - 50))
+            self.bannerGlow.SetSize(width, 130)
+            self.bannerGlow.SetPosition(int(self.screenWidth/2 - halfW), int(self.screenHeight/2 - 65))
+            self.bannerBorderTop.SetSize(width, 3)
+            self.bannerBorderBot.SetSize(width, 2)
+            innerW = max(0, width - 40)
+            self.bannerSep.SetSize(innerW, 1)
         else:
             self.banner.SetSize(self.screenWidth, 100)
             self.banner.SetPosition(0, int(self.screenHeight/2 - 50))
+            self.bannerGlow.SetSize(self.screenWidth, 130)
+            self.bannerGlow.SetPosition(0, int(self.screenHeight/2 - 65))
+            self.bannerBorderTop.SetSize(self.screenWidth, 3)
+            self.bannerBorderBot.SetSize(self.screenWidth, 2)
+            self.bannerSep.SetSize(self.screenWidth - 40, 1)
+
+        # Pulsazione glow oro
+        if t < 4.0:
+            glowAlpha = int(abs(math.sin(t * 3.0)) * 0x40 + 0x10)
+            self.bannerGlow.SetColor((glowAlpha << 24) | 0xFFD700)
 
         if t < 3.0:
             for p in self.particles:
                 x, y = p[0].GetLocalPosition()
                 x += p[1]
                 y += p[2]
-                p[2] += 0.5 # Gravità
+                p[2] += 0.4
                 p[0].SetPosition(int(x), int(y))
-                
+
         if t > 4.0:
             self.Hide()
 
@@ -349,20 +559,44 @@ class GateDefeatEffect(ui.Window):
         self.Hide()
 
     def __BuildUI(self):
+        # Sfondo nero (inizia vuoto, si riempie di rosso sangue)
         self.bg = ui.Bar()
         self.bg.SetParent(self)
         self.bg.SetSize(self.screenWidth, self.screenHeight)
         self.bg.SetColor(0x00000000)
         self.bg.Show()
 
+        # Overlay rosso vignette (bordi piu' scuri al centro piu' chiaro)
+        self.bloodOverlay = ui.Bar()
+        self.bloodOverlay.SetParent(self)
+        self.bloodOverlay.SetPosition(0, 0)
+        self.bloodOverlay.SetSize(self.screenWidth, self.screenHeight)
+        self.bloodOverlay.SetColor(0x00000000)
+        self.bloodOverlay.AddFlag("not_pick")
+        self.bloodOverlay.Show()
+
+        # Crack bars - piu' numerose e colorate di rosso/nero
         self.cracks = []
-        for i in xrange(5):
+        CRACK_COLORS = [0xFFAA0000, 0xFF880000, 0xFF660000, 0xFF440000, 0xFF220000,
+                        0xFFCC0000, 0xFF990000]
+        for i in xrange(10):
             c = ui.Bar()
             c.SetParent(self)
-            c.SetColor(0xFF000000)
+            c.SetColor(CRACK_COLORS[i % len(CRACK_COLORS)])
             c.Hide()
             self.cracks.append(c)
 
+        # Label "[ SISTEMA ]"
+        self.sysLabel = ui.TextLine()
+        self.sysLabel.SetParent(self)
+        self.sysLabel.SetPosition(int(self.screenWidth/2), int(self.screenHeight/2 - 28))
+        self.sysLabel.SetHorizontalAlignCenter()
+        self.sysLabel.SetText("[ SISTEMA ]")
+        self.sysLabel.SetPackedFontColor(0xFFAA0000)
+        self.sysLabel.SetOutline()
+        self.sysLabel.Show()
+
+        # Testo principale sconfitta
         self.text = ui.TextLine()
         self.text.SetParent(self)
         self.text.SetPosition(int(self.screenWidth/2), int(self.screenHeight/2))
@@ -372,19 +606,30 @@ class GateDefeatEffect(ui.Window):
         self.text.SetOutline()
         self.text.Show()
 
+        # Separatore sotto il testo
+        self.defeatSep = ui.Bar()
+        self.defeatSep.SetParent(self)
+        self.defeatSep.SetPosition(int(self.screenWidth/2) - 120, int(self.screenHeight/2) + 18)
+        self.defeatSep.SetSize(240, 1)
+        self.defeatSep.SetColor(0x55FF0000)
+        self.defeatSep.AddFlag("not_pick")
+        self.defeatSep.Show()
+
     def Start(self, penalty):
         self.startTime = app.GetTime()
         self.text.SetText("SEI MORTO (-%d GLORIA)" % penalty)
-        
+        self.text.SetPackedFontColor(0xFF000000)
+        self.sysLabel.SetPackedFontColor(0xFFAA0000)
+
         for c in self.cracks:
-            w = app.GetRandom(50, 400)
-            h = app.GetRandom(2, 5)
+            w = app.GetRandom(40, 500)
+            h = app.GetRandom(1, 4)
             x = app.GetRandom(0, self.screenWidth - w)
             y = app.GetRandom(0, self.screenHeight)
             c.SetPosition(x, y)
             c.SetSize(w, h)
             c.Show()
-            
+
         self.Show()
         self.SetTop()
 
@@ -392,11 +637,17 @@ class GateDefeatEffect(ui.Window):
         if not self.IsShow(): return
         t = app.GetTime() - self.startTime
 
-        if t < 0.2:
-            self.bg.SetColor(0xCCFFFFFF)
+        if t < 0.15:
+            # Flash bianco accecante
+            self.bg.SetColor(0xDDFFFFFF)
+            self.bloodOverlay.SetColor(0x00000000)
         elif t < 3.0:
-            self.bg.SetColor(0x88990000)
-            self.text.SetPackedFontColor(0xFFFFFFFF)
+            # Sangue rosso che si intensifica
+            redAlpha = min(0x99, int((t - 0.15) / 2.85 * 0x99))
+            self.bg.SetColor((redAlpha << 24) | 0x880000)
+            self.bloodOverlay.SetColor(0x22880000)
+            self.text.SetPackedFontColor(0xFFFFCCCC)
+            self.sysLabel.SetPackedFontColor(0xFFFF4444)
         else:
             self.Hide()
 
@@ -428,13 +679,51 @@ class TrialProgressPopup(ui.Window):
         self.Hide()
 
     def __BuildUI(self):
+        # Sfondo scuro profondo
         self.bg = ui.Bar()
         self.bg.SetParent(self)
         self.bg.SetSize(self.w, self.h)
         self.bg.SetPosition(0, 0)
-        self.bg.SetColor(0xEE111111) 
+        self.bg.SetColor(0xF0020210)
         self.bg.Show()
 
+        # Layer interiore depth
+        self.bgInner = ui.Bar()
+        self.bgInner.SetParent(self.bg)
+        self.bgInner.SetPosition(5, 0)
+        self.bgInner.SetSize(self.w - 5, self.h)
+        self.bgInner.SetColor(0x080808FF)
+        self.bgInner.AddFlag("not_pick")
+        self.bgInner.Show()
+
+        # Bordo superiore (2px, colore verrà aggiornato da AddPopup)
+        self.topBorder = ui.Bar()
+        self.topBorder.SetParent(self.bg)
+        self.topBorder.SetPosition(0, 0)
+        self.topBorder.SetSize(self.w, 2)
+        self.topBorder.SetColor(0xFFFFFFFF)
+        self.topBorder.AddFlag("not_pick")
+        self.topBorder.Show()
+
+        # Bordo destro (1px, dim)
+        self.rightBorder = ui.Bar()
+        self.rightBorder.SetParent(self.bg)
+        self.rightBorder.SetPosition(self.w - 1, 0)
+        self.rightBorder.SetSize(1, self.h)
+        self.rightBorder.SetColor(0x44FFFFFF)
+        self.rightBorder.AddFlag("not_pick")
+        self.rightBorder.Show()
+
+        # Bordo inferiore (1px, dim)
+        self.botBorder = ui.Bar()
+        self.botBorder.SetParent(self.bg)
+        self.botBorder.SetPosition(0, self.h - 1)
+        self.botBorder.SetSize(self.w, 1)
+        self.botBorder.SetColor(0x44FFFFFF)
+        self.botBorder.AddFlag("not_pick")
+        self.botBorder.Show()
+
+        # Accent bar sinistra (6px, colore del tipo)
         self.sideBar = ui.Bar()
         self.sideBar.SetParent(self.bg)
         self.sideBar.SetSize(5, self.h)
@@ -442,16 +731,35 @@ class TrialProgressPopup(ui.Window):
         self.sideBar.SetColor(0xFFFFFFFF)
         self.sideBar.Show()
 
+        # Corner ticks TL
+        self.cornerTL_H = ui.Bar()
+        self.cornerTL_H.SetParent(self.bg)
+        self.cornerTL_H.SetPosition(5, 2)
+        self.cornerTL_H.SetSize(10, 1)
+        self.cornerTL_H.SetColor(0xFFFFFFFF)
+        self.cornerTL_H.AddFlag("not_pick")
+        self.cornerTL_H.Show()
+
+        self.cornerTL_V = ui.Bar()
+        self.cornerTL_V.SetParent(self.bg)
+        self.cornerTL_V.SetPosition(5, 2)
+        self.cornerTL_V.SetSize(1, 10)
+        self.cornerTL_V.SetColor(0xFFFFFFFF)
+        self.cornerTL_V.AddFlag("not_pick")
+        self.cornerTL_V.Show()
+
+        # Label tipo (piccolo header)
         self.titleText = ui.TextLine()
         self.titleText.SetParent(self.bg)
-        self.titleText.SetPosition(15, 8)
-        self.titleText.SetText("UPDATE")
-        self.titleText.SetPackedFontColor(0xFFAAAAAA)
+        self.titleText.SetPosition(20, 7)
+        self.titleText.SetText("[ UPDATE ]")
+        self.titleText.SetPackedFontColor(0xFF888899)
         self.titleText.Show()
 
+        # Testo progresso (piu' grande, principale)
         self.progText = ui.TextLine()
         self.progText.SetParent(self.bg)
-        self.progText.SetPosition(15, 25)
+        self.progText.SetPosition(20, 26)
         self.progText.SetText("")
         self.progText.SetPackedFontColor(0xFFFFFFFF)
         self.progText.Show()
@@ -459,16 +767,20 @@ class TrialProgressPopup(ui.Window):
     def AddPopup(self, pType, current, required):
         pType = pType.upper()
         colMap = {
-            "BOSS": 0xFFFF0000,
-            "METIN": 0xFFFFD700,
-            "FRACTURE": 0xFF9900FF,
-            "MISSION": 0xFF00FF00,
-            "CHEST": 0xFF3498DB
+            "BOSS":     0xFFFF2222,
+            "METIN":    0xFFFFD700,
+            "FRACTURE": 0xFFBB00FF,
+            "MISSION":  0xFF00FF44,
+            "CHEST":    0xFF00AAFF
         }
-        barColor = colMap.get(pType, 0xFFFFFFFF)
+        barColor = colMap.get(pType, 0xFFCCCCCC)
         self.sideBar.SetColor(barColor)
-        
-        self.titleText.SetText(pType)
+        self.topBorder.SetColor(barColor)
+        self.cornerTL_H.SetColor(barColor)
+        self.cornerTL_V.SetColor(barColor)
+
+        self.titleText.SetText("[ " + pType + " ]")
+        self.titleText.SetPackedFontColor((0xFF << 24) | (barColor & 0x00FFFFFF))
         self.progText.SetText("Completato: %d / %d" % (current, required))
         
         # Reset stato

@@ -46,46 +46,46 @@ NPC_CONFIG = {
 			"Preparatevi..."
 		],
 		"colors": {
-			"bg_top": 0xD9201000,    # Marrone/Oro scuro
-			"bg_bot": 0xD9050200,    # Quasi nero
-			"border": 0xFFFFD700,    # Oro Puro
-			"glow":   0x00FFD700,    # Glow Oro
-			"text_main": 0xFFFFE0A0, # Oro Chiaro
-			"text_sub": 0xFFAAAAAA,  # Grigio
-			"inner_border": 0xFFCC8800
+			"bg_top": 0xF0180B00,    # Ambra dorata profonda
+			"bg_bot": 0xF5030100,    # Quasi nero caldo
+			"border": 0xFFFFD700,    # Oro Reale puro
+			"glow":   0x44FFD700,    # Glow Oro
+			"text_main": 0xFFFFE880, # Oro brillante
+			"text_sub": 0xFFBBBBBB,  # Grigio chiaro
+			"inner_border": 0xFFAA7700
 		}
 	},
-	
+
 	# 2. MAESTRO DELLE PROVE (Red/Dark Theme)
 	20020: {
 		"title": "|cFFFF3333=== MAESTRO DELLE PROVE ===",
 		"info_text": "Benvenuto dal Maestro delle Prove.\nPer salire di Rank devi completare una Prova d'Esame!\nRequisito: raggiungi la soglia Gloria del rank successivo.\nOgni prova ha obiettivi unici (Boss, Metin, Fratture...).\nSolo chi supera la prova ottiene il nuovo Rango!",
-		"height_offset": 230, # Piu' basso per umani (Standard 200-250)
+		"height_offset": 230,
 		"subtitles": [
 			"Esegui il Rank-Up Qui!",
 			"Solo i Degni Avanzano...",
-			"Sorgi!", # Cit. Solo Leveling (Arise)
+			"Sorgi!",
 			"Il Potere del Monarca ti attende.",
 			"Non puoi fermare l'ascesa.",
 			"La Gloria richiede sacrificio.",
 			"Affronta le tue paure..."
 		],
 		"colors": {
-			"bg_top": 0xD9200000,    # Rosso scuro/Sangue
-			"bg_bot": 0xD9050000,    # Nero rossastro
-			"border": 0xFFFF3333,    # Rosso Acceso
-			"glow":   0x00FF0000,    # Glow Rosso
-			"text_main": 0xFFFFAAAA, # Rosso Chiaro
+			"bg_top": 0xF0150000,    # Rosso sangue profondo
+			"bg_bot": 0xF5030000,    # Nero rossastro
+			"border": 0xFFFF2222,    # Rosso neon vivace
+			"glow":   0x44FF0000,    # Glow Rosso
+			"text_main": 0xFFFF9999, # Rosa-rosso chiaro
 			"text_sub": 0xFFCCCCCC,  # Grigio Chiaro
-			"inner_border": 0xFF880000
+			"inner_border": 0xFF770000
 		}
 	},
-	
+
 	# 3. PANZHUNTER - GUIDA HUNTER (Purple/Violet Theme)
 	200099: {
-		"title": "|cFF9900FF=== PANZHUNTER ===",
+		"title": "|cFFBB00FF=== PANZHUNTER ===",
 		"info_text": "Sono PanzHunter, la tua guida Hunter!\nApri il Terminale (CTRL+H) > Tab Guida per:\n- Fratture, Coraggio e Bottino Bauli\n- Supremo (World Boss), Prove d'Esame\n- Item Hunter: Scanner, Focus, Calibratore...\n- Missioni, Eventi, Shop, Karma\n- CTRL+J: Wiki Encyclopedia (mob/item/drop)\n12 sezioni di guida + 53 FAQ per te!",
-		"height_offset": 350, # NPC alto/montato
+		"height_offset": 350,
 		"subtitles": [
 			"Apri la Guida Completa!",
 			"Tutto cio' che devi sapere...",
@@ -97,13 +97,13 @@ NPC_CONFIG = {
 			"Ogni grande viaggio inizia qui."
 		],
 		"colors": {
-			"bg_top": 0xD9180030,    # Viola scuro
-			"bg_bot": 0xD9050010,    # Nero violaceo
-			"border": 0xFF9900FF,    # Viola Acceso
-			"glow":   0x009900FF,    # Glow Viola
-			"text_main": 0xFFCC99FF, # Lavanda Chiaro
+			"bg_top": 0xF0100020,    # Viola mistico profondo
+			"bg_bot": 0xF5020008,    # Nero violaceo
+			"border": 0xFFBB00FF,    # Viola neon vibrante
+			"glow":   0x44BB00FF,    # Glow Viola
+			"text_main": 0xFFDD88FF, # Lavanda brillante
 			"text_sub": 0xFFCCCCCC,  # Grigio Chiaro
-			"inner_border": 0xFF6600AA
+			"inner_border": 0xFF660088
 		}
 	}
 }
@@ -207,45 +207,70 @@ class FloatingBoard(ui.Window):
 		ui.Window.__del__(self)
 
 	def BuildWindow(self):
-		# 1. Background con Gradiente
+		# 1. Glow esterno (dietro tutto)
+		self.glow_board = ui.Bar()
+		self.glow_board.SetParent(self)
+		self.glow_board.SetPosition(-4, -4)
+		self.glow_board.SetSize(BOARD_WIDTH+8, BOARD_HEIGHT+8)
+		self.glow_board.SetColor(self.colors["glow"])
+		self.glow_board.Show()
+
+		# 2. Background con Gradiente (14 step per maggiore fluidita')
 		self.bg_layers = []
-		steps = 10
+		steps = 14
 		step_h = float(BOARD_HEIGHT) / steps
-		
-		# Decode colors
+
 		c_top = self.colors["bg_top"]
 		c_bot = self.colors["bg_bot"]
-		
+
 		r1, g1, b1 = (c_top >> 16) & 0xFF, (c_top >> 8) & 0xFF, c_top & 0xFF
 		r2, g2, b2 = (c_bot >> 16) & 0xFF, (c_bot >> 8) & 0xFF, c_bot & 0xFF
-		
+
 		for i in xrange(steps):
 			lines = ui.Bar()
 			lines.SetParent(self)
 			lines.SetPosition(0, int(i * step_h))
 			lines.SetSize(BOARD_WIDTH, int(step_h) + 1)
-			
-			# Lerp
+
 			t = float(i) / (steps - 1)
 			r = int(r1 + (r2 - r1) * t)
 			g = int(g1 + (g2 - g1) * t)
 			b = int(b1 + (b2 - b1) * t)
-			color = (0xD9 << 24) | (r << 16) | (g << 8) | b
-			
+			color = (0xEE << 24) | (r << 16) | (g << 8) | b
+
 			lines.SetColor(color)
-			lines.orig_color = color # Safe storage
+			lines.orig_color = color
 			lines.Show()
 			self.bg_layers.append(lines)
 
-		# 2. Glow effect
-		self.glow_board = ui.Bar()
-		self.glow_board.SetParent(self)
-		self.glow_board.SetPosition(-3, -3)
-		self.glow_board.SetSize(BOARD_WIDTH+6, BOARD_HEIGHT+6)
-		self.glow_board.SetColor(self.colors["glow"]) 
-		self.glow_board.Show()
+		# 3. Inner depth layer
+		self.bg_inner = ui.Bar()
+		self.bg_inner.SetParent(self)
+		self.bg_inner.SetPosition(5, 2)
+		self.bg_inner.SetSize(BOARD_WIDTH - 7, BOARD_HEIGHT - 4)
+		self.bg_inner.SetColor(0x080808FF)
+		self.bg_inner.AddFlag("not_pick")
+		self.bg_inner.Show()
 
-		# 3. Cornice
+		# 4. Highlight superiore
+		self.top_hl = ui.Bar()
+		self.top_hl.SetParent(self)
+		self.top_hl.SetPosition(5, 1)
+		self.top_hl.SetSize(BOARD_WIDTH - 10, 8)
+		self.top_hl.SetColor(0x0CFFFFFF)
+		self.top_hl.AddFlag("not_pick")
+		self.top_hl.Show()
+
+		# 5. Bordo sinistro accent (3px)
+		self.accent_bar = ui.Bar()
+		self.accent_bar.SetParent(self)
+		self.accent_bar.SetPosition(0, 0)
+		self.accent_bar.SetSize(3, BOARD_HEIGHT)
+		self.accent_bar.SetColor(self.colors["border"])
+		self.accent_bar.AddFlag("not_pick")
+		self.accent_bar.Show()
+
+		# 6. Cornici con L-bracket corners
 		self.borders = []
 		self.MakeBorder(1, 1, BOARD_WIDTH-2, BOARD_HEIGHT-2, self.colors["inner_border"])
 		self.MakeBorder(0, 0, BOARD_WIDTH, BOARD_HEIGHT, self.colors["border"])
@@ -318,6 +343,17 @@ class FloatingBoard(ui.Window):
 		b_left = ui.Bar(); b_left.SetParent(self); b_left.SetPosition(x, y); b_left.SetSize(1, h); b_left.SetColor(color); b_left.Show()
 		b_right = ui.Bar(); b_right.SetParent(self); b_right.SetPosition(x+w-1, y); b_right.SetSize(1, h); b_right.SetColor(color); b_right.Show()
 		self.borders.extend([b_top, b_bot, b_left, b_right])
+		# Corner L-bracket ticks (8px)
+		tickLen = 8
+		for (cx, cy, cw, ch) in [
+			(x+1, y, tickLen, 1),     (x, y+1, 1, tickLen),         # TL
+			(x+w-1-tickLen, y, tickLen, 1), (x+w-1, y+1, 1, tickLen), # TR
+			(x+1, y+h-1, tickLen, 1), (x, y+h-1-tickLen, 1, tickLen), # BL
+			(x+w-1-tickLen, y+h-1, tickLen, 1), (x+w-1, y+h-1-tickLen, 1, tickLen), # BR
+		]:
+			ct = ui.Bar(); ct.SetParent(self); ct.SetPosition(cx, cy); ct.SetSize(cw, ch)
+			ct.SetColor(color); ct.AddFlag("not_pick"); ct.Show()
+			self.borders.append(ct)
 
 	def _GetScreenPos(self):
 		"""Proiezione 3D->2D con metodo pre-cached"""
@@ -505,61 +541,112 @@ class InfoBoard(ui.Window):
 		ui.Window.__del__(self)
 
 	def BuildWindow(self):
-		WIDTH = 350
-		# Altezza dinamica basata sul numero di righe del testo
+		WIDTH = 360
 		lines_count = len(self.cfg.get("info_text", "").split("\n"))
-		HEIGHT = max(180, 50 + (lines_count * 20) + 45)
-		
+		HEIGHT = max(200, 60 + (lines_count * 20) + 50)
+
 		self.SetSize(WIDTH, HEIGHT)
 		self.SetCenterPosition()
 		self.AddFlag("movable")
 		self.AddFlag("float")
-		
-		# 1. Background (Stesso stile FloatingBoard)
+
+		# 1. Background gradiente (14 step, alpha alta F8)
 		self.bg_layers = []
-		steps = 10
+		steps = 14
 		step_h = float(HEIGHT) / steps
-		
-		# Decode colors
+
 		c_top = self.colors["bg_top"]
 		c_bot = self.colors["bg_bot"]
-		
+
 		r1, g1, b1 = (c_top >> 16) & 0xFF, (c_top >> 8) & 0xFF, c_top & 0xFF
 		r2, g2, b2 = (c_bot >> 16) & 0xFF, (c_bot >> 8) & 0xFF, c_bot & 0xFF
-		
+
 		for i in xrange(steps):
 			lines = ui.Bar()
 			lines.SetParent(self)
 			lines.SetPosition(0, int(i * step_h))
 			lines.SetSize(WIDTH, int(step_h) + 1)
-			
+
 			t = float(i) / (steps - 1)
 			r = int(r1 + (r2 - r1) * t)
 			g = int(g1 + (g2 - g1) * t)
 			b = int(b1 + (b2 - b1) * t)
-			color = (0xF0 << 24) | (r << 16) | (g << 8) | b # Alpha piu' alta (F0) per popup
-			
+			color = (0xF5 << 24) | (r << 16) | (g << 8) | b
+
 			lines.SetColor(color)
 			lines.Show()
 			self.bg_layers.append(lines)
 
-		# 2. Bordi
-		self.MakeBorder(0, 0, WIDTH, HEIGHT, self.colors["border"])
-		self.MakeBorder(2, 2, WIDTH-4, HEIGHT-4, self.colors["inner_border"])
+		# 2. Inner depth layer
+		bgInner = ui.Bar()
+		bgInner.SetParent(self)
+		bgInner.SetPosition(5, 3)
+		bgInner.SetSize(WIDTH - 10, HEIGHT - 6)
+		bgInner.SetColor(0x0A080820)
+		bgInner.AddFlag("not_pick")
+		bgInner.Show()
+		self.bg_layers.append(bgInner)
 
-		# 3. Titolo
+		# 3. Top highlight
+		topHL = ui.Bar()
+		topHL.SetParent(self)
+		topHL.SetPosition(5, 1)
+		topHL.SetSize(WIDTH - 10, 10)
+		topHL.SetColor(0x0EFFFFFF)
+		topHL.AddFlag("not_pick")
+		topHL.Show()
+		self.bg_layers.append(topHL)
+
+		# 4. Accent bar sinistra (5px)
+		accentL = ui.Bar()
+		accentL.SetParent(self)
+		accentL.SetPosition(0, 0)
+		accentL.SetSize(5, HEIGHT)
+		accentL.SetColor(self.colors["border"])
+		accentL.AddFlag("not_pick")
+		accentL.Show()
+		self.bg_layers.append(accentL)
+
+		# 5. Bordi con L-bracket corners
+		self.MakeBorder(0, 0, WIDTH, HEIGHT, self.colors["border"])
+		self.MakeBorder(3, 3, WIDTH-6, HEIGHT-6, self.colors["inner_border"])
+
+		# 6. Header bar
+		headerBar = ui.Bar()
+		headerBar.SetParent(self)
+		headerBar.SetPosition(5, 3)
+		headerBar.SetSize(WIDTH - 10, 24)
+		r_b = (self.colors["border"] >> 16) & 0xFF
+		g_b = (self.colors["border"] >> 8) & 0xFF
+		b_b = self.colors["border"] & 0xFF
+		headerBar.SetColor((0x18 << 24) | (r_b << 16) | (g_b << 8) | b_b)
+		headerBar.AddFlag("not_pick")
+		headerBar.Show()
+		self.bg_layers.append(headerBar)
+
+		# 7. Titolo
 		self.title = ui.TextLine()
 		self.title.SetParent(self)
-		self.title.SetPosition(0, 15)
+		self.title.SetPosition(0, 10)
 		self.title.SetWindowHorizontalAlignCenter()
 		self.title.SetHorizontalAlignCenter()
 		self.title.SetText(self.cfg["title"])
 		self.title.SetOutline()
 		self.title.Show()
-		
-		# 4. Testo Info (Multi-riga manuale)
+
+		# Separatore sotto titolo
+		sep = ui.Bar()
+		sep.SetParent(self)
+		sep.SetPosition(10, 34)
+		sep.SetSize(WIDTH - 20, 1)
+		sep.SetColor((0x44 << 24) | (self.colors["border"] & 0x00FFFFFF))
+		sep.AddFlag("not_pick")
+		sep.Show()
+		self.bg_layers.append(sep)
+
+		# 8. Testo Info (Multi-riga manuale)
 		img_desc = self.cfg.get("info_text", "").split("\n")
-		start_y = 50
+		start_y = 44
 		for line in img_desc:
 			t = ui.TextLine()
 			t.SetParent(self)
@@ -569,20 +656,30 @@ class InfoBoard(ui.Window):
 			t.SetText(line)
 			t.SetPackedFontColor(self.colors["text_main"])
 			t.Show()
-			self.bg_layers.append(t) # Keep ref
+			self.bg_layers.append(t)
 			start_y += 20
 
-		# 5. Bottone Chiudi CUSTOM
-		self.closeBtn = CustomButton(self, int(WIDTH/2) - 40, HEIGHT - 35, 80, 20, self.cfg["colors"], "CHIUDI")
+		# 9. Bottone Chiudi CUSTOM
+		self.closeBtn = CustomButton(self, int(WIDTH/2) - 44, HEIGHT - 38, 88, 22, self.cfg["colors"], "[ CHIUDI ]")
 		self.closeBtn.SetEvent(self.Close)
-		
+
 	def MakeBorder(self, x, y, w, h, color):
 		b_top = ui.Bar(); b_top.SetParent(self); b_top.SetPosition(x, y); b_top.SetSize(w, 1); b_top.SetColor(color); b_top.Show()
 		b_bot = ui.Bar(); b_bot.SetParent(self); b_bot.SetPosition(x, y+h-1); b_bot.SetSize(w, 1); b_bot.SetColor(color); b_bot.Show()
 		b_left = ui.Bar(); b_left.SetParent(self); b_left.SetPosition(x, y); b_left.SetSize(1, h); b_left.SetColor(color); b_left.Show()
 		b_right = ui.Bar(); b_right.SetParent(self); b_right.SetPosition(x+w-1, y); b_right.SetSize(1, h); b_right.SetColor(color); b_right.Show()
-		# Salva ref in bg_layers per comodita'
 		self.bg_layers.extend([b_top, b_bot, b_left, b_right])
+		# Corner L-bracket ticks (10px per popup)
+		tickLen = 10
+		for (cx, cy, cw, ch) in [
+			(x+1, y, tickLen, 1),     (x, y+1, 1, tickLen),
+			(x+w-1-tickLen, y, tickLen, 1), (x+w-1, y+1, 1, tickLen),
+			(x+1, y+h-1, tickLen, 1), (x, y+h-1-tickLen, 1, tickLen),
+			(x+w-1-tickLen, y+h-1, tickLen, 1), (x+w-1, y+h-1-tickLen, 1, tickLen),
+		]:
+			ct = ui.Bar(); ct.SetParent(self); ct.SetPosition(cx, cy); ct.SetSize(cw, ch)
+			ct.SetColor(color); ct.AddFlag("not_pick"); ct.Show()
+			self.bg_layers.append(ct)
 
 	def Close(self):
 		self.Hide()

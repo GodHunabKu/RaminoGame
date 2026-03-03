@@ -171,12 +171,21 @@ def ResetWindowPosition(windowName):
     return False
 
 # ═══════════════════════════════════════════════════════════════════════════════
-#  COLORI BASE DEL SISTEMA
+#  COLORI BASE DEL SISTEMA - SOLO LEVELING DEFINITIVE EDITION
 # ═══════════════════════════════════════════════════════════════════════════════
-COLOR_BG_DARK = 0xCC000000          # Sfondo nero 80% opacità
-COLOR_BG_HOVER = 0x44FFFFFF         # Hover leggero
-COLOR_TEXT_NORMAL = 0xFFFFFFFF
-COLOR_TEXT_MUTED = 0xFFAAAAAA
+COLOR_BG_DARK = 0xF0020208          # Sfondo quasi-nero con sfumatura blu profonda
+COLOR_BG_DARK2 = 0xF5010105        # Sfondo ancora più scuro (header/footer)
+COLOR_BG_HOVER = 0x33FFFFFF         # Hover leggero
+COLOR_BG_INNER = 0xDD050510        # Sfondo interno elementi
+COLOR_TEXT_NORMAL = 0xFFE8E8F8      # Bianco leggermente blu (più elegante)
+COLOR_TEXT_MUTED = 0xFF888899       # Grigio-blu (più sofisticato)
+COLOR_TEXT_DIM = 0xFF444455         # Testo quasi invisibile
+COLOR_SEPARATOR = 0x33FFFFFF        # Linee separatrici semitrasparenti
+COLOR_SEPARATOR_BRIGHT = 0x55FFFFFF # Separatori più visibili
+COLOR_GOLD = 0xFFFFD700             # Oro standard
+COLOR_GOLD_DIM = 0xFFCC9900         # Oro attenuato
+COLOR_SYSTEM_BLUE = 0xFF00A8FF      # Blu sistema scanline
+COLOR_SYSTEM_CYAN = 0xFF00EEFF      # Ciano sistema brillante
 
 # Colori per Rank Hunter
 RANK_COLORS = {
@@ -219,70 +228,97 @@ RANK_QUOTES = {
     "N": '"IO SONO IL MONARCA."',
 }
 
-# Schemi colori per Fratture e Codici Colore
+# Schemi colori per Fratture e Codici Colore – SOLO LEVELING DEFINITIVE
 COLOR_SCHEMES = {
     "GREEN": {
-        "border": 0xFF00FF00,       # Verde Neon
-        "glow": 0x4400FF00,
-        "title": 0xFF55FF55,
-        "text": 0xFFDDFFDD,
-        "accent": 0xFF00FF00,
+        "border": 0xFF00FF44,       # Verde Neon Smeraldo
+        "border_dim": 0xFF004422,
+        "glow": 0x4800FF44,
+        "title": 0xFF66FF88,
+        "text": 0xFFCCFFDD,
+        "accent": 0xFF00FF44,
+        "accent_dim": 0xFF00AA33,
+        "bg": 0xFF020A04,
     },
     "BLUE": {
-        "border": 0xFF0099FF,       # Blu System
-        "glow": 0x440099FF,
-        "title": 0xFF00CCFF,
-        "text": 0xFFDDFFFF,
-        "accent": 0xFF0099FF,
+        "border": 0xFF00AAFF,       # Blu Azzurro Intenso
+        "border_dim": 0xFF003355,
+        "glow": 0x4800AAFF,
+        "title": 0xFF55CCFF,
+        "text": 0xFFCCEEFF,
+        "accent": 0xFF00AAFF,
+        "accent_dim": 0xFF006688,
+        "bg": 0xFF020810,
     },
     "ORANGE": {
-        "border": 0xFFFF6600,       # Arancione Fuoco
-        "glow": 0x44FF6600,
-        "title": 0xFFFFAA00,
+        "border": 0xFFFF7700,       # Arancione Fuoco Intenso
+        "border_dim": 0xFF552200,
+        "glow": 0x48FF7700,
+        "title": 0xFFFFBB44,
         "text": 0xFFFFDDBB,
-        "accent": 0xFFFF6600,
+        "accent": 0xFFFF7700,
+        "accent_dim": 0xFF994400,
+        "bg": 0xFF100500,
     },
     "RED": {
-        "border": 0xFFFF0000,       # Rosso Sangue
-        "glow": 0x44FF0000,
-        "title": 0xFFFF4444,
-        "text": 0xFFFFDDDD,
-        "accent": 0xFFFF0000,
+        "border": 0xFFFF1111,       # Rosso Sangue Puro
+        "border_dim": 0xFF550000,
+        "glow": 0x48FF1111,
+        "title": 0xFFFF5555,
+        "text": 0xFFFFCCCC,
+        "accent": 0xFFFF1111,
+        "accent_dim": 0xFF880000,
+        "bg": 0xFF0C0000,
     },
     "GOLD": {
-        "border": 0xFFFFD700,       # Oro
-        "glow": 0x44FFD700,
-        "title": 0xFFFFEE55,
-        "text": 0xFFFFFFDD,
+        "border": 0xFFFFD700,       # Oro Reale
+        "border_dim": 0xFF664400,
+        "glow": 0x48FFD700,
+        "title": 0xFFFFEE66,
+        "text": 0xFFFFF5CC,
         "accent": 0xFFFFD700,
+        "accent_dim": 0xFFAA8800,
+        "bg": 0xFF100C00,
     },
     "PURPLE": {
-        "border": 0xFF9900FF,       # Viola Ombra
-        "glow": 0x449900FF,
-        "title": 0xFFCC55FF,
-        "text": 0xFFEEDDFF,
-        "accent": 0xFF9900FF,
+        "border": 0xFFBB00FF,       # Viola Mistico Profondo
+        "border_dim": 0xFF440055,
+        "glow": 0x48BB00FF,
+        "title": 0xFFDD66FF,
+        "text": 0xFFEECCFF,
+        "accent": 0xFFBB00FF,
+        "accent_dim": 0xFF770099,
+        "bg": 0xFF080010,
     },
     "CYAN": {
-        "border": 0xFF00FFFF,       # Ciano
-        "glow": 0x4400FFFF,
-        "title": 0xFF44FFFF,
-        "text": 0xFFDDFFFF,
+        "border": 0xFF00FFFF,       # Ciano Cristallo
+        "border_dim": 0xFF004455,
+        "glow": 0x4800FFFF,
+        "title": 0xFF66FFFF,
+        "text": 0xFFCCFFFF,
         "accent": 0xFF00FFFF,
+        "accent_dim": 0xFF008888,
+        "bg": 0xFF020C10,
     },
     "BLACKWHITE": {
-        "border": 0xFFFFFFFF,       # Bianco Puro
-        "glow": 0x44FFFFFF,
+        "border": 0xFFDDDDDD,       # Bianco Argentato
+        "border_dim": 0xFF444444,
+        "glow": 0x48FFFFFF,
         "title": 0xFFEEEEEE,
         "text": 0xFFCCCCCC,
-        "accent": 0xFFFFFFFF,
+        "accent": 0xFFDDDDDD,
+        "accent_dim": 0xFF666666,
+        "bg": 0xFF080808,
     },
     "SYSTEM": {
-        "border": 0xFF00A8FF,       # Azzurro Sistema
-        "glow": 0x4400A8FF,
-        "title": 0xFF00CCFF,
-        "text": 0xFFDDFFFF,
-        "accent": 0xFF00A8FF,
+        "border": 0xFF00CCFF,       # Azzurro Sistema Vibrante
+        "border_dim": 0xFF004466,
+        "glow": 0x4800CCFF,
+        "title": 0xFF44DDFF,
+        "text": 0xFFCCEEFF,
+        "accent": 0xFF00CCFF,
+        "accent_dim": 0xFF006688,
+        "bg": 0xFF020A14,
     },
 }
 
@@ -446,7 +482,7 @@ class DraggableMixin:
 # ═══════════════════════════════════════════════════════════════════════════════
 RANK_THEMES = {
     # ─────────────────────────────────────────────────────────────────────────────
-    # E-RANK: "Il Risvegliato" - Colori grigi, aspetto umile
+    # E-RANK: "Il Risvegliato" - Grigi profondi, umiltà dell'inizio
     # Rappresenta l'inizio del viaggio, quando Sung Jin-Woo era il piu' debole
     # ─────────────────────────────────────────────────────────────────────────────
     "E": {
@@ -455,32 +491,33 @@ RANK_THEMES = {
         "subtitle": "Il Piu' Debole",
         "min": 0,
         "max": 2000,
-        # Sfondi molto scuri - quasi neri
-        "bg_dark": 0xF5050505,
-        "bg_medium": 0xF5101010,
-        "bg_light": 0xF5181818,
-        # Bordi e accenti grigi
-        "border": 0xFF4A4A4A,
-        "accent": 0xFF707070,
-        "accent_bright": 0xFF909090,
+        # Sfondi profondi con sfumatura grigio-blu
+        "bg_dark": 0xF8030305,
+        "bg_medium": 0xF50C0C12,
+        "bg_light": 0xF5141420,
+        # Bordi e accenti grigi – più contrasto
+        "border": 0xFF5A5A6A,
+        "border_inner": 0xFF333340,
+        "accent": 0xFF7878A0,
+        "accent_bright": 0xFFAAAAAA,
         # Testi
-        "text_title": 0xFF858585,
-        "text_value": 0xFFB0B0B0,
-        "text_muted": 0xFF505050,
+        "text_title": 0xFF9898B8,
+        "text_value": 0xFFBBBBCC,
+        "text_muted": 0xFF444455,
         # Barre e effetti
-        "bar_fill": 0xFF606060,
-        "bar_bg": 0xFF1A1A1A,
-        "glow": 0x35707070,
-        "glow_strong": 0x55707070,
-        "pulse_color": 0xFF606060,
+        "bar_fill": 0xFF6060A0,
+        "bar_bg": 0xFF0E0E1A,
+        "glow": 0x30505070,
+        "glow_strong": 0x55606080,
+        "pulse_color": 0xFF7070A0,
         # Bottoni
-        "btn_normal": 0xFF1E1E1E,
-        "btn_hover": 0xFF2A2A2A,
-        "btn_down": 0xFF383838,
-        "btn_border": 0xFF4A4A4A,
+        "btn_normal": 0xFF18181E,
+        "btn_hover": 0xFF24242E,
+        "btn_down": 0xFF30303A,
+        "btn_border": 0xFF5A5A6A,
     },
     # ─────────────────────────────────────────────────────────────────────────────
-    # D-RANK: "L'Apprendista" - Verde neon, speranza
+    # D-RANK: "L'Apprendista" - Verde neon brillante, speranza che germoglia
     # Il primo passo verso la crescita
     # ─────────────────────────────────────────────────────────────────────────────
     "D": {
@@ -489,32 +526,33 @@ RANK_THEMES = {
         "subtitle": "Il Sopravvissuto",
         "min": 2000,
         "max": 10000,
-        # Sfondi scuri con sfumatura verde
-        "bg_dark": 0xF5030803,
-        "bg_medium": 0xF5081208,
-        "bg_light": 0xF50D1B0D,
-        # Bordi e accenti verde neon
-        "border": 0xFF00AA00,
-        "accent": 0xFF00FF00,
-        "accent_bright": 0xFF44FF44,
+        # Sfondi profondi con sfumatura verde-smeraldo
+        "bg_dark": 0xF8020A02,
+        "bg_medium": 0xF5061406,
+        "bg_light": 0xF50A1E0A,
+        # Bordi e accenti verde neon più intenso
+        "border": 0xFF00CC00,
+        "border_inner": 0xFF004400,
+        "accent": 0xFF00FF44,
+        "accent_bright": 0xFF66FF88,
         # Testi
-        "text_title": 0xFF33FF33,
-        "text_value": 0xFF99FF99,
-        "text_muted": 0xFF226622,
+        "text_title": 0xFF44FF66,
+        "text_value": 0xFFAAFFBB,
+        "text_muted": 0xFF1A5522,
         # Barre e effetti
-        "bar_fill": 0xFF00DD00,
-        "bar_bg": 0xFF0A200A,
-        "glow": 0x3500FF00,
-        "glow_strong": 0x6000FF00,
-        "pulse_color": 0xFF00FF00,
+        "bar_fill": 0xFF00EE44,
+        "bar_bg": 0xFF081A08,
+        "glow": 0x3800EE44,
+        "glow_strong": 0x6500EE44,
+        "pulse_color": 0xFF00FF44,
         # Bottoni
-        "btn_normal": 0xFF081808,
-        "btn_hover": 0xFF0C280C,
-        "btn_down": 0xFF103810,
-        "btn_border": 0xFF00AA00,
+        "btn_normal": 0xFF060F06,
+        "btn_hover": 0xFF0A1E0A,
+        "btn_down": 0xFF102810,
+        "btn_border": 0xFF00CC00,
     },
     # ─────────────────────────────────────────────────────────────────────────────
-    # C-RANK: "Il Cacciatore" - Ciano brillante, competenza
+    # C-RANK: "Il Cacciatore" - Ciano elettrico, competenza riconosciuta
     # Un vero cacciatore che ha dimostrato il suo valore
     # ─────────────────────────────────────────────────────────────────────────────
     "C": {
@@ -523,33 +561,34 @@ RANK_THEMES = {
         "subtitle": "Il Riconosciuto",
         "min": 10000,
         "max": 50000,
-        # Sfondi scuri con sfumatura ciano
-        "bg_dark": 0xF5030A10,
-        "bg_medium": 0xF5081520,
-        "bg_light": 0xF50D2030,
-        # Bordi e accenti ciano neon
-        "border": 0xFF00CCFF,
+        # Sfondi profondi con sfumatura ciano-oceano
+        "bg_dark": 0xF8020A10,
+        "bg_medium": 0xF5061520,
+        "bg_light": 0xF50A2030,
+        # Bordi e accenti ciano neon ultra-brillante
+        "border": 0xFF00DDFF,
+        "border_inner": 0xFF004455,
         "accent": 0xFF00FFFF,
-        "accent_bright": 0xFF66FFFF,
+        "accent_bright": 0xFF88FFFF,
         # Testi
-        "text_title": 0xFF44FFFF,
-        "text_value": 0xFFAAFFFF,
-        "text_muted": 0xFF226688,
+        "text_title": 0xFF55FFFF,
+        "text_value": 0xFFBBFFFF,
+        "text_muted": 0xFF1A4466,
         # Barre e effetti
-        "bar_fill": 0xFF00DDFF,
-        "bar_bg": 0xFF0A2030,
-        "glow": 0x3800FFFF,
-        "glow_strong": 0x6500FFFF,
+        "bar_fill": 0xFF00EEFF,
+        "bar_bg": 0xFF081828,
+        "glow": 0x4000EEFF,
+        "glow_strong": 0x7000EEFF,
         "pulse_color": 0xFF00FFFF,
         # Bottoni
-        "btn_normal": 0xFF081828,
-        "btn_hover": 0xFF0C2838,
-        "btn_down": 0xFF103848,
-        "btn_border": 0xFF00CCFF,
+        "btn_normal": 0xFF060F18,
+        "btn_hover": 0xFF0A1E28,
+        "btn_down": 0xFF102838,
+        "btn_border": 0xFF00DDFF,
     },
     # ─────────────────────────────────────────────────────────────────────────────
-    # B-RANK: "Il Veterano" - Blu intenso, autorità
-    # Un cacciatore esperto rispettato
+    # B-RANK: "Il Veterano" - Blu reale, autorità indiscussa
+    # Un cacciatore esperto rispettato da tutti
     # ─────────────────────────────────────────────────────────────────────────────
     "B": {
         "name": "B-Rank",
@@ -557,33 +596,34 @@ RANK_THEMES = {
         "subtitle": "L'Esperto",
         "min": 50000,
         "max": 150000,
-        # Sfondi scuri con sfumatura blu
-        "bg_dark": 0xF5030310,
-        "bg_medium": 0xF5080820,
-        "bg_light": 0xF50D0D30,
-        # Bordi e accenti blu elettrico
-        "border": 0xFF0066FF,
-        "accent": 0xFF4499FF,
-        "accent_bright": 0xFF77BBFF,
+        # Sfondi profondi con sfumatura blu-zaffiro
+        "bg_dark": 0xF8020218,
+        "bg_medium": 0xF5060628,
+        "bg_light": 0xF50A0A38,
+        # Bordi e accenti blu elettrico ultravibrante
+        "border": 0xFF1177FF,
+        "border_inner": 0xFF002255,
+        "accent": 0xFF55AAFF,
+        "accent_bright": 0xFF88CCFF,
         # Testi
-        "text_title": 0xFF66AAFF,
-        "text_value": 0xFFAADDFF,
-        "text_muted": 0xFF334488,
+        "text_title": 0xFF77BBFF,
+        "text_value": 0xFFBBDDFF,
+        "text_muted": 0xFF223366,
         # Barre e effetti
-        "bar_fill": 0xFF0077FF,
-        "bar_bg": 0xFF0A1030,
-        "glow": 0x400066FF,
-        "glow_strong": 0x700066FF,
-        "pulse_color": 0xFF4499FF,
+        "bar_fill": 0xFF1188FF,
+        "bar_bg": 0xFF080828,
+        "glow": 0x451188FF,
+        "glow_strong": 0x751188FF,
+        "pulse_color": 0xFF55AAFF,
         # Bottoni
-        "btn_normal": 0xFF080838,
-        "btn_hover": 0xFF0C0C48,
-        "btn_down": 0xFF101058,
-        "btn_border": 0xFF0066FF,
+        "btn_normal": 0xFF060620,
+        "btn_hover": 0xFF0A0A30,
+        "btn_down": 0xFF101040,
+        "btn_border": 0xFF1177FF,
     },
     # ─────────────────────────────────────────────────────────────────────────────
-    # A-RANK: "Il Maestro" - Viola mistico, potere elite
-    # Tra i migliori cacciatori esistenti
+    # A-RANK: "Il Maestro" - Viola mistico profondo, élite dell'umanità
+    # Tra i migliori cacciatori del mondo
     # ─────────────────────────────────────────────────────────────────────────────
     "A": {
         "name": "A-Rank",
@@ -591,33 +631,34 @@ RANK_THEMES = {
         "subtitle": "L'Elite",
         "min": 150000,
         "max": 500000,
-        # Sfondi scuri con sfumatura viola
-        "bg_dark": 0xF5080310,
-        "bg_medium": 0xF5100820,
-        "bg_light": 0xF5180D30,
-        # Bordi e accenti viola brillante
-        "border": 0xFFAA00FF,
-        "accent": 0xFFCC44FF,
-        "accent_bright": 0xFFDD88FF,
+        # Sfondi profondi con sfumatura viola-indaco
+        "bg_dark": 0xF8060210,
+        "bg_medium": 0xF50E0520,
+        "bg_light": 0xF5160830,
+        # Bordi e accenti viola ultra-brillante
+        "border": 0xFFBB00FF,
+        "border_inner": 0xFF440033,
+        "accent": 0xFFDD55FF,
+        "accent_bright": 0xFFEE99FF,
         # Testi
-        "text_title": 0xFFDD77FF,
-        "text_value": 0xFFEEBBFF,
-        "text_muted": 0xFF663399,
+        "text_title": 0xFFEE88FF,
+        "text_value": 0xFFF5CCFF,
+        "text_muted": 0xFF551188,
         # Barre e effetti
-        "bar_fill": 0xFFBB22FF,
-        "bar_bg": 0xFF150830,
-        "glow": 0x45AA00FF,
-        "glow_strong": 0x75AA00FF,
-        "pulse_color": 0xFFCC44FF,
+        "bar_fill": 0xFFCC33FF,
+        "bar_bg": 0xFF120630,
+        "glow": 0x50CC00FF,
+        "glow_strong": 0x80CC00FF,
+        "pulse_color": 0xFFDD55FF,
         # Bottoni
-        "btn_normal": 0xFF180838,
-        "btn_hover": 0xFF200C48,
-        "btn_down": 0xFF281058,
-        "btn_border": 0xFFAA00FF,
+        "btn_normal": 0xFF0E0620,
+        "btn_hover": 0xFF160A30,
+        "btn_down": 0xFF1E0E40,
+        "btn_border": 0xFFBB00FF,
     },
     # ─────────────────────────────────────────────────────────────────────────────
-    # S-RANK: "La Leggenda" - Arancione/Oro infuocato, gloria suprema
-    # Uno dei cacciatori piu' forti del mondo
+    # S-RANK: "La Leggenda" - Oro-Arancione infuocato, gloria suprema
+    # Tra i più forti dell'umanità – il loro nome è conosciuto da tutti
     # ─────────────────────────────────────────────────────────────────────────────
     "S": {
         "name": "S-Rank",
@@ -625,34 +666,35 @@ RANK_THEMES = {
         "subtitle": "Il Prescelto",
         "min": 500000,
         "max": 1500000,
-        # Sfondi scuri con sfumatura arancione/oro
-        "bg_dark": 0xF5100803,
-        "bg_medium": 0xF5201008,
-        "bg_light": 0xF530180D,
-        # Bordi e accenti arancione infuocato
-        "border": 0xFFFF6600,
-        "accent": 0xFFFFAA00,
-        "accent_bright": 0xFFFFCC44,
+        # Sfondi profondi con sfumatura ambra-bruciata
+        "bg_dark": 0xF8100602,
+        "bg_medium": 0xF5200C04,
+        "bg_light": 0xF5301408,
+        # Bordi e accenti fuoco-oro ultraintensivo
+        "border": 0xFFFF7700,
+        "border_inner": 0xFF662200,
+        "accent": 0xFFFFBB00,
+        "accent_bright": 0xFFFFDD66,
         # Testi
-        "text_title": 0xFFFFBB55,
-        "text_value": 0xFFFFDDAA,
-        "text_muted": 0xFF885522,
+        "text_title": 0xFFFFCC66,
+        "text_value": 0xFFFFEEBB,
+        "text_muted": 0xFF773311,
         # Barre e effetti
-        "bar_fill": 0xFFFF7700,
-        "bar_bg": 0xFF301808,
-        "glow": 0x55FF6600,
-        "glow_strong": 0x88FF6600,
-        "pulse_color": 0xFFFFAA00,
+        "bar_fill": 0xFFFF8800,
+        "bar_bg": 0xFF281406,
+        "glow": 0x60FF7700,
+        "glow_strong": 0x99FF7700,
+        "pulse_color": 0xFFFFBB00,
         # Bottoni
-        "btn_normal": 0xFF281808,
-        "btn_hover": 0xFF382810,
-        "btn_down": 0xFF483818,
-        "btn_border": 0xFFFF6600,
+        "btn_normal": 0xFF1C1004,
+        "btn_hover": 0xFF2C1A08,
+        "btn_down": 0xFF3C240C,
+        "btn_border": 0xFFFF7700,
     },
     # ─────────────────────────────────────────────────────────────────────────────
-    # N-RANK: "Il Monarca" - Rosso sangue/Nero, potere supremo
+    # N-RANK: "Il Monarca" - Rosso sangue / Nero assoluto
     # Ispirato al Re delle Ombre - Sung Jin-Woo nella sua forma finale
-    # Il colore piu' intenso, il potere assoluto
+    # POTERE ASSOLUTO - il buio che ingoia tutto
     # ─────────────────────────────────────────────────────────────────────────────
     "N": {
         "name": "MONARCA",
@@ -660,29 +702,30 @@ RANK_THEMES = {
         "subtitle": "Re delle Ombre",
         "min": 1500000,
         "max": 9999999,
-        # Sfondi quasi neri con sfumatura rosso sangue
-        "bg_dark": 0xF8080202,
-        "bg_medium": 0xF8100505,
-        "bg_light": 0xF8180808,
-        # Bordi e accenti rosso sangue intenso
-        "border": 0xFFDD0000,
-        "accent": 0xFFFF2222,
-        "accent_bright": 0xFFFF5555,
-        # Testi - rosso brillante su nero
-        "text_title": 0xFFFF4444,
-        "text_value": 0xFFFFAAAA,
-        "text_muted": 0xFF772222,
-        # Barre e effetti - MASSIMA INTENSITA' PER IL MONARCA
-        "bar_fill": 0xFFEE1111,
-        "bar_bg": 0xFF200808,
-        "glow": 0x65FF0000,
-        "glow_strong": 0x99FF0000,
-        "pulse_color": 0xFFFF2222,
+        # Sfondi quasi-neri puri con sfumatura sangue
+        "bg_dark": 0xFF050101,
+        "bg_medium": 0xFF0C0303,
+        "bg_light": 0xFF140505,
+        # Bordi e accenti rosso sangue – MASSIMA INTENSITA'
+        "border": 0xFFEE0000,
+        "border_inner": 0xFF550000,
+        "accent": 0xFFFF3333,
+        "accent_bright": 0xFFFF6666,
+        # Testi
+        "text_title": 0xFFFF5555,
+        "text_value": 0xFFFFBBBB,
+        "text_muted": 0xFF661111,
+        # Barre e effetti – EPICITÀ TOTALE
+        "bar_fill": 0xFFFF1111,
+        "bar_bg": 0xFF180606,
+        "glow": 0x70FF0000,
+        "glow_strong": 0xAAFF0000,
+        "pulse_color": 0xFFFF3333,
         # Bottoni
-        "btn_normal": 0xFF200808,
-        "btn_hover": 0xFF301010,
-        "btn_down": 0xFF401818,
-        "btn_border": 0xFFDD0000,
+        "btn_normal": 0xFF180404,
+        "btn_hover": 0xFF280808,
+        "btn_down": 0xFF380C0C,
+        "btn_border": 0xFFEE0000,
     },
 }
 

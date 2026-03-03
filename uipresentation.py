@@ -34,23 +34,23 @@ DETAIL_ITEM_W = RIGHT_W - 20
 
 RENDER_TARGET_INDEX = 66
 
-# Colori Wiki
-COLOR_BG_MAIN = 0xF0080810
-COLOR_BG_PANEL = 0xE6060612
-COLOR_BG_HEADER = 0xCC1a0a2a
-COLOR_BORDER = 0xFFFFD700
-COLOR_BORDER_DIM = 0xFFCC8800
-COLOR_BORDER_ACCENT = 0xFF886600
-COLOR_TEXT_GOLD = 0xFFFFD700
-COLOR_TEXT_LIGHT = 0xFFFFE0A0
+# Colori Wiki - Solo Leveling Definitive Palette
+COLOR_BG_MAIN = 0xF2040410      # Nero-blu abissale
+COLOR_BG_PANEL = 0xEC030310     # Panel leggermente piu' chiaro
+COLOR_BG_HEADER = 0xCC0A0520    # Viola-blu scuro per header
+COLOR_BORDER = 0xFFFFD700       # Oro reale puro (colore principale)
+COLOR_BORDER_DIM = 0xFFAA7700   # Oro attenuato per bordi secondari
+COLOR_BORDER_ACCENT = 0xFF665500 # Oro molto attenuato per terzo livello
+COLOR_TEXT_GOLD = 0xFFFFD700    # Testo oro puro
+COLOR_TEXT_LIGHT = 0xFFFFEEAA   # Oro chiaro caldo
 COLOR_TEXT_WHITE = 0xFFFFFFFF
 COLOR_TEXT_GRAY = 0xFFAAAAAA
-COLOR_TEXT_DARK = 0xFF666666
-COLOR_TEXT_GREEN = 0xFF88CC88
-COLOR_TEXT_RED = 0xFFFF6666
-COLOR_TEXT_CYAN = 0xFF66CCFF
-COLOR_TEXT_ORANGE = 0xFFFFAA44
-COLOR_TEXT_YELLOW = 0xFFFFDD55
+COLOR_TEXT_DARK = 0xFF555566    # Grigio-blu scuro
+COLOR_TEXT_GREEN = 0xFF66FF88   # Verde neon
+COLOR_TEXT_RED = 0xFFFF4444     # Rosso neon
+COLOR_TEXT_CYAN = 0xFF00CCFF    # Ciano sistema
+COLOR_TEXT_ORANGE = 0xFFFF8833  # Arancione fuoco
+COLOR_TEXT_YELLOW = 0xFFFFEE44  # Giallo vivace
 
 # Sottotipi arma/armatura per wiki
 WEAPON_SUBTYPES = {
@@ -69,11 +69,11 @@ ITEM_TYPE_NAMES = {
     23: "Scatola Regalo", 25: "Acconciatura", 28: "Costume",
     29: "Anima Drago", 32: "Anello", 33: "Cintura", 34: "Pet",
 }
-COLOR_BTN_NORMAL = 0xCC150A00
-COLOR_BTN_HOVER = 0xCC2A1500
-COLOR_BTN_ACTIVE = 0xCC3D1A00
+COLOR_BTN_NORMAL = 0xCC0A0800
+COLOR_BTN_HOVER = 0xCC201200
+COLOR_BTN_ACTIVE = 0xCC301A00
 COLOR_BTN_BORDER = 0xFFFFD700
-COLOR_SEPARATOR = 0xFF333355
+COLOR_SEPARATOR = 0xFF222244
 COLOR_NO_RESULT = 0xFFAAAAAA
 
 # Categorie disponibili
@@ -2426,44 +2426,130 @@ class WikiWindow(ui.ScriptWindow):
         self.board.AddFlag("not_pick")
         self.board.Show()
 
-        # Bordi principali
-        self.__MakeBorder(self, 0, 0, WIN_WIDTH, WIN_HEIGHT, COLOR_BORDER)
-        self.__MakeBorder(self, 2, 2, WIN_WIDTH - 4, WIN_HEIGHT - 4, COLOR_BORDER_DIM)
+        # Inner depth layer
+        boardInner = ui.Bar()
+        boardInner.SetParent(self)
+        boardInner.SetPosition(3, 3)
+        boardInner.SetSize(WIN_WIDTH - 6, WIN_HEIGHT - 6)
+        boardInner.SetColor(0x060808FF)
+        boardInner.AddFlag("not_pick")
+        boardInner.Show()
+        self._allBars.append(boardInner)
+
+        # Top highlight gradient sottile
+        topHL = ui.Bar()
+        topHL.SetParent(self)
+        topHL.SetPosition(3, 3)
+        topHL.SetSize(WIN_WIDTH - 6, 12)
+        topHL.SetColor(0x0EFFFFFF)
+        topHL.AddFlag("not_pick")
+        topHL.Show()
+        self._allBars.append(topHL)
+
+        # Bordi principali asimmetrici: top 3px, left 3px, bottom 2px, right 2px
+        bTop = ui.Bar(); bTop.SetParent(self); bTop.SetPosition(0,0); bTop.SetSize(WIN_WIDTH,3); bTop.SetColor(COLOR_BORDER); bTop.AddFlag("not_pick"); bTop.Show()
+        bLeft = ui.Bar(); bLeft.SetParent(self); bLeft.SetPosition(0,0); bLeft.SetSize(3,WIN_HEIGHT); bLeft.SetColor(COLOR_BORDER); bLeft.AddFlag("not_pick"); bLeft.Show()
+        bBot = ui.Bar(); bBot.SetParent(self); bBot.SetPosition(0,WIN_HEIGHT-2); bBot.SetSize(WIN_WIDTH,2); bBot.SetColor(COLOR_BORDER_DIM); bBot.AddFlag("not_pick"); bBot.Show()
+        bRight = ui.Bar(); bRight.SetParent(self); bRight.SetPosition(WIN_WIDTH-2,0); bRight.SetSize(2,WIN_HEIGHT); bRight.SetColor(COLOR_BORDER_DIM); bRight.AddFlag("not_pick"); bRight.Show()
+        self._allBars.extend([bTop, bLeft, bBot, bRight])
+
+        # Bordo interno dim (offset 4)
+        bTop2 = ui.Bar(); bTop2.SetParent(self); bTop2.SetPosition(4,4); bTop2.SetSize(WIN_WIDTH-8,1); bTop2.SetColor(COLOR_BORDER_DIM); bTop2.AddFlag("not_pick"); bTop2.Show()
+        bLeft2 = ui.Bar(); bLeft2.SetParent(self); bLeft2.SetPosition(4,4); bLeft2.SetSize(1,WIN_HEIGHT-8); bLeft2.SetColor(COLOR_BORDER_DIM); bLeft2.AddFlag("not_pick"); bLeft2.Show()
+        self._allBars.extend([bTop2, bLeft2])
+
+        # Corner L-bracket outer (30px) + inner (14px offset 6)
+        CORNER_OUTER = 30
+        CORNER_INNER = 14
+        INNER_OFF = 6
+        for (cx, cy, cw, ch, col) in [
+            # Outer TL H+V
+            (3, 3, CORNER_OUTER, 3, COLOR_BORDER), (3, 3, 3, CORNER_OUTER, COLOR_BORDER),
+            # Outer TR H+V
+            (WIN_WIDTH-3-CORNER_OUTER, 3, CORNER_OUTER, 3, COLOR_BORDER), (WIN_WIDTH-3, 3, 3, CORNER_OUTER, COLOR_BORDER),
+            # Outer BL H+V
+            (3, WIN_HEIGHT-3, CORNER_OUTER, 3, COLOR_BORDER), (3, WIN_HEIGHT-3-CORNER_OUTER, 3, CORNER_OUTER, COLOR_BORDER),
+            # Outer BR H+V
+            (WIN_WIDTH-3-CORNER_OUTER, WIN_HEIGHT-3, CORNER_OUTER, 3, COLOR_BORDER), (WIN_WIDTH-3, WIN_HEIGHT-3-CORNER_OUTER, 3, CORNER_OUTER, COLOR_BORDER),
+            # Inner TL H+V
+            (3+INNER_OFF, 3+INNER_OFF, CORNER_INNER, 1, COLOR_BORDER_DIM), (3+INNER_OFF, 3+INNER_OFF, 1, CORNER_INNER, COLOR_BORDER_DIM),
+            # Inner TR H+V
+            (WIN_WIDTH-3-INNER_OFF-CORNER_INNER, 3+INNER_OFF, CORNER_INNER, 1, COLOR_BORDER_DIM), (WIN_WIDTH-3-INNER_OFF, 3+INNER_OFF, 1, CORNER_INNER, COLOR_BORDER_DIM),
+            # Inner BL H+V
+            (3+INNER_OFF, WIN_HEIGHT-3-INNER_OFF, CORNER_INNER, 1, COLOR_BORDER_DIM), (3+INNER_OFF, WIN_HEIGHT-3-INNER_OFF-CORNER_INNER, 1, CORNER_INNER, COLOR_BORDER_DIM),
+            # Inner BR H+V
+            (WIN_WIDTH-3-INNER_OFF-CORNER_INNER, WIN_HEIGHT-3-INNER_OFF, CORNER_INNER, 1, COLOR_BORDER_DIM), (WIN_WIDTH-3-INNER_OFF, WIN_HEIGHT-3-INNER_OFF-CORNER_INNER, 1, CORNER_INNER, COLOR_BORDER_DIM),
+        ]:
+            ct = ui.Bar(); ct.SetParent(self); ct.SetPosition(cx, cy); ct.SetSize(cw, ch)
+            ct.SetColor(col); ct.AddFlag("not_pick"); ct.Show()
+            self._allBars.append(ct)
 
         # Header bar (drag handle) - NON not_pick per permettere il drag
         headerBar = ui.Bar()
         headerBar.SetParent(self)
         headerBar.SetPosition(3, 3)
-        headerBar.SetSize(WIN_WIDTH - 6, 32)
+        headerBar.SetSize(WIN_WIDTH - 6, 34)
         headerBar.SetColor(COLOR_BG_HEADER)
         headerBar.AddFlag("not_pick")
         headerBar.Show()
         self._allBars.append(headerBar)
 
+        # Accent bar sinistra nel header (4px, oro)
+        headerAccent = ui.Bar()
+        headerAccent.SetParent(self)
+        headerAccent.SetPosition(3, 3)
+        headerAccent.SetSize(4, 34)
+        headerAccent.SetColor(COLOR_BORDER)
+        headerAccent.AddFlag("not_pick")
+        headerAccent.Show()
+        self._allBars.append(headerAccent)
+
+        # Separatore sotto header
+        headerSep = ui.Bar()
+        headerSep.SetParent(self)
+        headerSep.SetPosition(10, 37)
+        headerSep.SetSize(WIN_WIDTH - 20, 1)
+        headerSep.SetColor(0x55FFD700)
+        headerSep.AddFlag("not_pick")
+        headerSep.Show()
+        self._allBars.append(headerSep)
+
         # Titolo
-        self.titleText = self.__Text(self, WIN_WIDTH // 2, 10,
+        self.titleText = self.__Text(self, WIN_WIDTH // 2, 11,
                                       "WIKI HUNTER - ENCYCLOPEDIA", COLOR_TEXT_GOLD, center=True, outline=True)
 
-        # Bottone chiudi (X) - testuale, sempre visibile
+        # Label header sinistra "[ WIKI ]"
+        self.__Text(self, 20, 11, "[ WIKI ]", COLOR_BORDER_DIM)
+
+        # Bottone chiudi (X) - piu' elaborato
         self.btnClose = ui.Window()
         self.btnClose.SetParent(self)
-        self.btnClose.SetPosition(WIN_WIDTH - 32, 7)
-        self.btnClose.SetSize(26, 26)
+        self.btnClose.SetPosition(WIN_WIDTH - 34, 5)
+        self.btnClose.SetSize(28, 26)
 
         self.btnCloseBg = ui.Bar()
         self.btnCloseBg.SetParent(self.btnClose)
         self.btnCloseBg.SetPosition(0, 0)
-        self.btnCloseBg.SetSize(26, 26)
-        self.btnCloseBg.SetColor(0xAA8B0000)
+        self.btnCloseBg.SetSize(28, 26)
+        self.btnCloseBg.SetColor(0xCC080004)
         self.btnCloseBg.AddFlag("not_pick")
         self.btnCloseBg.Show()
 
+        # Bordo top rosso del tasto X
+        btnTopBorder = ui.Bar()
+        btnTopBorder.SetParent(self.btnClose)
+        btnTopBorder.SetPosition(0, 0)
+        btnTopBorder.SetSize(28, 2)
+        btnTopBorder.SetColor(0xFFFF2222)
+        btnTopBorder.AddFlag("not_pick")
+        btnTopBorder.Show()
+
         self.btnCloseText = ui.TextLine()
         self.btnCloseText.SetParent(self.btnClose)
-        self.btnCloseText.SetPosition(13, 4)
+        self.btnCloseText.SetPosition(14, 5)
         self.btnCloseText.SetHorizontalAlignCenter()
         self.btnCloseText.SetText("X")
-        self.btnCloseText.SetPackedFontColor(0xFFFFFFFF)
+        self.btnCloseText.SetPackedFontColor(0xFFFF4444)
         self.btnCloseText.AddFlag("not_pick")
         self.btnCloseText.Show()
 
@@ -2492,10 +2578,16 @@ class WikiWindow(ui.ScriptWindow):
         self.sidebar = self.__Bar(self, sideX, sideY, SIDEBAR_WIDTH, sideH, COLOR_BG_PANEL)
         self.__MakeBorder(self, sideX, sideY, SIDEBAR_WIDTH, sideH, COLOR_BORDER_DIM)
 
+        # Accent bar sinistra della sidebar (3px, oro dim)
+        self.__Bar(self, sideX, sideY, 3, sideH, COLOR_BORDER_DIM)
+
+        # Top highlight della sidebar
+        self.__Bar(self, sideX+3, sideY, SIDEBAR_WIDTH-3, 6, 0x0AFFFFFF)
+
         # Titolo sidebar
-        self.__Text(self, sideX + SIDEBAR_WIDTH // 2, sideY + 8,
+        self.__Text(self, sideX + SIDEBAR_WIDTH // 2, sideY + 9,
                     "CATEGORIE", COLOR_TEXT_GOLD, center=True)
-        self.__Bar(self, sideX + 10, sideY + 26, SIDEBAR_WIDTH - 20, 1, COLOR_SEPARATOR)
+        self.__Bar(self, sideX + 8, sideY + 28, SIDEBAR_WIDTH - 16, 1, COLOR_SEPARATOR)
 
         # Bottoni categoria - Mob
         btnY = sideY + 35
@@ -2547,7 +2639,7 @@ class WikiWindow(ui.ScriptWindow):
         self.statChestText = self.__Text(self, sideX + 10, infoY, "Forzieri: ...", COLOR_TEXT_DARK)
 
     def __CreateCatButton(self, x, y, w, h, label, code):
-        """Crea un bottone categoria con sfondo, bordo e testo."""
+        """Crea un bottone categoria stile Solo Leveling con accent bar sinistra."""
         btn = ui.Window()
         btn.SetParent(self)
         btn.SetPosition(x, y)
@@ -2561,11 +2653,29 @@ class WikiWindow(ui.ScriptWindow):
         btn.bg.AddFlag("not_pick")
         btn.bg.Show()
 
+        # Accent bar sinistra (3px, oro)
+        btn.accentL = ui.Bar()
+        btn.accentL.SetParent(btn)
+        btn.accentL.SetPosition(0, 0)
+        btn.accentL.SetSize(3, h)
+        btn.accentL.SetColor(0xFF554400)
+        btn.accentL.AddFlag("not_pick")
+        btn.accentL.Show()
+
+        # Top highlight
+        btn.topHL = ui.Bar()
+        btn.topHL.SetParent(btn)
+        btn.topHL.SetPosition(3, 0)
+        btn.topHL.SetSize(w - 3, 4)
+        btn.topHL.SetColor(0x0AFFFFFF)
+        btn.topHL.AddFlag("not_pick")
+        btn.topHL.Show()
+
         self.__MakeBorderOn(btn, 0, 0, w, h, COLOR_BTN_BORDER)
 
         btn.textLine = ui.TextLine()
         btn.textLine.SetParent(btn)
-        btn.textLine.SetPosition(w // 2, (h - 14) // 2)
+        btn.textLine.SetPosition(w // 2 + 2, (h - 14) // 2)
         btn.textLine.SetHorizontalAlignCenter()
         btn.textLine.SetText(label)
         btn.textLine.SetPackedFontColor(COLOR_TEXT_LIGHT)
@@ -2611,8 +2721,12 @@ class WikiWindow(ui.ScriptWindow):
             return
         if isOver:
             btn.bg.SetColor(COLOR_BTN_HOVER)
+            if hasattr(btn, "accentL"):
+                btn.accentL.SetColor(0xFFAA7700)
         else:
             btn.bg.SetColor(COLOR_BTN_NORMAL)
+            if hasattr(btn, "accentL"):
+                btn.accentL.SetColor(0xFF554400)
 
     def __UpdateCategoryButtons(self):
         """Aggiorna l'aspetto dei bottoni categoria."""
@@ -2620,9 +2734,13 @@ class WikiWindow(ui.ScriptWindow):
             if code == self.currentCategory:
                 btn.bg.SetColor(COLOR_BTN_ACTIVE)
                 btn.textLine.SetPackedFontColor(COLOR_TEXT_GOLD)
+                if hasattr(btn, "accentL"):
+                    btn.accentL.SetColor(COLOR_BORDER)  # Oro pieno = attivo
             else:
                 btn.bg.SetColor(COLOR_BTN_NORMAL)
                 btn.textLine.SetPackedFontColor(COLOR_TEXT_LIGHT)
+                if hasattr(btn, "accentL"):
+                    btn.accentL.SetColor(0xFF554400)  # Oro scuro = inattivo
 
     # ================================================================
     #  SEARCH AREA

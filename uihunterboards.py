@@ -79,74 +79,74 @@ TIER_LETTER = {1: "E", 2: "D", 3: "C", 4: "B", 5: "A", 6: "S", 7: "N"}
 # GOLD, PURPLE, BLACKWHITE). Questi temi sostituiscono il vecchio TIER_ACCENT.
 COLOR_THEMES = {
 	"GREEN": {
-		"bg_top":       0xDD002800,
-		"bg_bot":       0xEE000C00,
+		"bg_top":       0xF0010A01,
+		"bg_bot":       0xF5000600,
 		"border":       0xFF00FF44,
-		"glow":         0x0000FF44,
-		"text_main":    0xFFFFFFFF,
+		"glow":         0x3000FF44,
+		"text_main":    0xFFEEFFEE,
 		"text_sub":     0xFF88FFAA,
-		"inner_border": 0xFF007722,
+		"inner_border": 0xFF005522,
 		"accent_hex":   "00FF44",
 	},
 	"BLUE": {
-		"bg_top":       0xDD001838,
-		"bg_bot":       0xEE000818,
-		"border":       0xFF4499FF,
-		"glow":         0x004499FF,
-		"text_main":    0xFFFFFFFF,
-		"text_sub":     0xFFA0CCFF,
-		"inner_border": 0xFF224488,
-		"accent_hex":   "4499FF",
+		"bg_top":       0xF0010818,
+		"bg_bot":       0xF5000510,
+		"border":       0xFF00AAFF,
+		"glow":         0x3000AAFF,
+		"text_main":    0xFFEEF8FF,
+		"text_sub":     0xFF88CCFF,
+		"inner_border": 0xFF003366,
+		"accent_hex":   "00AAFF",
 	},
 	"ORANGE": {
-		"bg_top":       0xDD2A1500,
-		"bg_bot":       0xEE0C0600,
+		"bg_top":       0xF0100600,
+		"bg_bot":       0xF5060300,
 		"border":       0xFFFF8800,
-		"glow":         0x00FF8800,
-		"text_main":    0xFFFFFFFF,
+		"glow":         0x30FF8800,
+		"text_main":    0xFFFFF8EE,
 		"text_sub":     0xFFFFCC88,
-		"inner_border": 0xFF885500,
+		"inner_border": 0xFF663300,
 		"accent_hex":   "FF8800",
 	},
 	"RED": {
-		"bg_top":       0xDD300000,
-		"bg_bot":       0xEE100000,
+		"bg_top":       0xF0100000,
+		"bg_bot":       0xF5060000,
 		"border":       0xFFFF2222,
-		"glow":         0x00FF2222,
-		"text_main":    0xFFFFFFFF,
+		"glow":         0x30FF2222,
+		"text_main":    0xFFFFF0F0,
 		"text_sub":     0xFFFF9999,
-		"inner_border": 0xFF881111,
+		"inner_border": 0xFF660000,
 		"accent_hex":   "FF2222",
 	},
 	"GOLD": {
-		"bg_top":       0xDD241800,
-		"bg_bot":       0xEE0A0600,
+		"bg_top":       0xF0100800,
+		"bg_bot":       0xF5060400,
 		"border":       0xFFFFD700,
-		"glow":         0x00FFD700,
-		"text_main":    0xFFFFFFFF,
-		"text_sub":     0xFFFFE888,
-		"inner_border": 0xFFAA8800,
+		"glow":         0x30FFD700,
+		"text_main":    0xFFFFFBEE,
+		"text_sub":     0xFFFFEE88,
+		"inner_border": 0xFF886600,
 		"accent_hex":   "FFD700",
 	},
 	"PURPLE": {
-		"bg_top":       0xDD1A0030,
-		"bg_bot":       0xEE080012,
-		"border":       0xFFAA44FF,
-		"glow":         0x00AA44FF,
-		"text_main":    0xFFFFFFFF,
-		"text_sub":     0xFFCC99FF,
-		"inner_border": 0xFF6622AA,
-		"accent_hex":   "AA44FF",
+		"bg_top":       0xF0080018,
+		"bg_bot":       0xF5040010,
+		"border":       0xFFBB00FF,
+		"glow":         0x30BB00FF,
+		"text_main":    0xFFF8EEFF,
+		"text_sub":     0xFFCC88FF,
+		"inner_border": 0xFF550099,
+		"accent_hex":   "BB00FF",
 	},
 	"BLACKWHITE": {
-		"bg_top":       0xDD181818,
-		"bg_bot":       0xEE080808,
-		"border":       0xFFEEEEEE,
-		"glow":         0x00FFFFFF,
+		"bg_top":       0xF0101010,
+		"bg_bot":       0xF5060606,
+		"border":       0xFFDDDDDD,
+		"glow":         0x30FFFFFF,
 		"text_main":    0xFFFFFFFF,
 		"text_sub":     0xFFCCCCCC,
-		"inner_border": 0xFF555555,
-		"accent_hex":   "EEEEEE",
+		"inner_border": 0xFF444444,
+		"accent_hex":   "DDDDDD",
 	},
 }
 
@@ -395,14 +395,27 @@ class HunterInfoBoard(ui.Window):
 		self.closeBtn.SetEvent(self.Close)
 
 	def _MakeBorder(self, x, y, w, h, color):
+		# Bordi principali
 		for pos, sz in [((x, y), (w, 1)), ((x, y + h - 1), (w, 1)), ((x, y), (1, h)), ((x + w - 1, y), (1, h))]:
 			b = ui.Bar()
 			b.SetParent(self)
 			b.SetPosition(pos[0], pos[1])
 			b.SetSize(sz[0], sz[1])
 			b.SetColor(color)
+			b.AddFlag("not_pick")
 			b.Show()
 			self._parts.append(b)
+		# Corner ticks decorativi (L-brackets stile Solo Leveling)
+		tickLen = 8
+		colorDim = (color & 0x00FFFFFF) | 0x66000000
+		for (cx, cy, cw, ch) in [
+			(x + 1, y, tickLen, 1), (x, y + 1, 1, tickLen),
+			(x + w - tickLen - 1, y, tickLen, 1), (x + w - 1, y + 1, 1, tickLen),
+			(x + 1, y + h - 1, tickLen, 1), (x, y + h - tickLen - 1, 1, tickLen),
+			(x + w - tickLen - 1, y + h - 1, tickLen, 1), (x + w - 1, y + h - tickLen - 1, 1, tickLen),
+		]:
+			ct = ui.Bar(); ct.SetParent(self); ct.SetPosition(cx, cy); ct.SetSize(cw, ch); ct.SetColor(colorDim); ct.AddFlag("not_pick"); ct.Show()
+			self._parts.append(ct)
 
 	def Close(self):
 		self.Hide()
@@ -472,33 +485,41 @@ class HunterFloatingBoard(ui.Window):
 	# Visivamente unica: sembra un ingresso dimensionale.
 	# ------------------------------------------------------------------
 	def _BuildFractureBoard(self):
-		W = 220
-		H = 85
-		HEADER_H = 14     # architrave colorato spesso (firma visiva)
+		W = 240
+		H = 90
+		HEADER_H = 16     # architrave colorato spesso (firma visiva)
 		COL_W = 5          # larghezza colonne portale
-		COL_H = 16         # altezza colonne sotto la board
-		FOOT_W = 50        # segmento bordo bottom (centro aperto)
+		COL_H = 18         # altezza colonne sotto la board
+		FOOT_W = 55        # segmento bordo bottom (centro aperto)
 		self.bw = W
 		self.bh = H
-		
+
 		c_top = self.colors["bg_top"]
 		c_bot = self.colors["bg_bot"]
 		r1 = (c_top >> 16) & 0xFF; g1 = (c_top >> 8) & 0xFF; b1 = c_top & 0xFF
 		r2 = (c_bot >> 16) & 0xFF; g2 = (c_bot >> 8) & 0xFF; b2 = c_bot & 0xFF
 		bc = self.colors["border"]
 		ic = self.colors["inner_border"]
-		
-		# === ARCHITRAVE: Header bar spesso colorato (14px, full-width) ===
-		header_col = (0xBB << 24) | (bc & 0x00FFFFFF)
+
+		# === ARCHITRAVE: Header bar spesso colorato (più alto, più drammatico) ===
+		header_col = (0xCC << 24) | (bc & 0x00FFFFFF)
 		self._AddBar(0, 0, W, HEADER_H, header_col, self.deco_bars)
-		# Linee luminose interne all'architrave
-		accent_line = (0x44 << 24) | (bc & 0x00FFFFFF)
+		# Linee luminose interne all'architrave (doppia riga)
+		accent_line = (0x55 << 24) | (bc & 0x00FFFFFF)
+		accent_dim = (0x28 << 24) | (bc & 0x00FFFFFF)
 		self._AddBar(4, 3, W - 8, 1, accent_line, self.deco_bars)
-		self._AddBar(4, HEADER_H - 4, W - 8, 1, accent_line, self.deco_bars)
-		
-		# === BG gradient (body sotto header) ===
+		self._AddBar(4, 5, W - 8, 1, accent_dim, self.deco_bars)
+		self._AddBar(4, HEADER_H - 3, W - 8, 1, accent_line, self.deco_bars)
+
+		# Corner ticks sull'architrave
+		tick = 10
+		tickC = (0x88 << 24) | (bc & 0x00FFFFFF)
+		self._AddBar(0, 0, tick, 2, tickC, self.deco_bars)
+		self._AddBar(W - tick, 0, tick, 2, tickC, self.deco_bars)
+
+		# === BG gradient (body sotto header) – più passi = più morbido ===
 		body_h = H - HEADER_H
-		steps = 12
+		steps = 16
 		for i in xrange(steps):
 			y0 = HEADER_H + int(float(i) / steps * body_h)
 			y1 = HEADER_H + int(float(i + 1) / steps * body_h)
@@ -507,31 +528,31 @@ class HunterFloatingBoard(ui.Window):
 			r = int(r1 + (r2 - r1) * t)
 			g = int(g1 + (g2 - g1) * t)
 			b = int(b1 + (b2 - b1) * t)
-			color = (0xDD << 24) | (r << 16) | (g << 8) | b
+			color = (0xEE << 24) | (r << 16) | (g << 8) | b
 			self._AddBar(0, y0, W, rh, color, self.bg_layers)
-		
-		# === Glow pulsante (sottile) ===
+
+		# === Glow pulsante (area più ampia per effetto alone) ===
 		self.glow_board = ui.Bar()
 		self.glow_board.SetParent(self)
-		self.glow_board.SetPosition(-2, -2)
-		self.glow_board.SetSize(W + 4, H + 4)
+		self.glow_board.SetPosition(-3, -3)
+		self.glow_board.SetSize(W + 6, H + 6)
 		self.glow_board.SetColor(self.colors["glow"])
 		self.glow_board.AddFlag("not_pick")
 		self.glow_board.Show()
-		
-		# === BORDO ESTERNO ===
-		self._AddBar(0, 0, W, 1, bc, self.borders)                          # top
+
+		# === BORDO ESTERNO (2px top – più visibile) ===
+		self._AddBar(0, 0, W, 2, bc, self.borders)                          # top (2px)
 		self._AddBar(0, HEADER_H, W, 1, bc, self.borders)                   # sotto architrave
 		self._AddBar(0, 0, 1, H, bc, self.borders)                          # lato sinistro
 		self._AddBar(W - 1, 0, 1, H, bc, self.borders)                      # lato destro
 		# Bottom APERTO al centro (il passaggio del portale)
 		self._AddBar(0, H - 1, FOOT_W, 1, bc, self.borders)                 # piede sinistro
 		self._AddBar(W - FOOT_W, H - 1, FOOT_W, 1, bc, self.borders)        # piede destro
-		
-		# === BORDO INTERNO (body) ===
-		self._AddBar(2, HEADER_H + 2, W - 4, 1, ic, self.borders)
-		self._AddBar(2, HEADER_H + 2, 1, body_h - 4, ic, self.borders)
-		self._AddBar(W - 3, HEADER_H + 2, 1, body_h - 4, ic, self.borders)
+
+		# === BORDO INTERNO (body) – più definito ===
+		self._AddBar(3, HEADER_H + 2, W - 6, 1, ic, self.borders)
+		self._AddBar(3, HEADER_H + 2, 1, body_h - 4, ic, self.borders)
+		self._AddBar(W - 4, HEADER_H + 2, 1, body_h - 4, ic, self.borders)
 		
 		# === COLONNE DEL PORTALE (estese sotto la board) ===
 		col_col = (0xBB << 24) | (bc & 0x00FFFFFF)
