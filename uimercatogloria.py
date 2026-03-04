@@ -9,6 +9,8 @@ import grp
 import math
 import uiCommon
 
+from hunter_components import _DimColor
+
 # ==============================================================================
 # CONFIGURAZIONE GENERALE & TEMI
 # ==============================================================================
@@ -215,9 +217,9 @@ class FloatingBoard(ui.Window):
 		self.glow_board.SetColor(self.colors["glow"])
 		self.glow_board.Show()
 
-		# 2. Background con Gradiente (14 step per maggiore fluidita')
+		# 2. Background con Gradiente (4 step leggeri)
 		self.bg_layers = []
-		steps = 14
+		steps = 4
 		step_h = float(BOARD_HEIGHT) / steps
 
 		c_top = self.colors["bg_top"]
@@ -243,25 +245,7 @@ class FloatingBoard(ui.Window):
 			lines.Show()
 			self.bg_layers.append(lines)
 
-		# 3. Inner depth layer
-		self.bg_inner = ui.Bar()
-		self.bg_inner.SetParent(self)
-		self.bg_inner.SetPosition(5, 2)
-		self.bg_inner.SetSize(BOARD_WIDTH - 7, BOARD_HEIGHT - 4)
-		self.bg_inner.SetColor(0x080808FF)
-		self.bg_inner.AddFlag("not_pick")
-		self.bg_inner.Show()
-
-		# 4. Highlight superiore
-		self.top_hl = ui.Bar()
-		self.top_hl.SetParent(self)
-		self.top_hl.SetPosition(5, 1)
-		self.top_hl.SetSize(BOARD_WIDTH - 10, 8)
-		self.top_hl.SetColor(0x0CFFFFFF)
-		self.top_hl.AddFlag("not_pick")
-		self.top_hl.Show()
-
-		# 5. Bordo sinistro accent (3px)
+		# 3. Bordo sinistro accent (3px)
 		self.accent_bar = ui.Bar()
 		self.accent_bar.SetParent(self)
 		self.accent_bar.SetPosition(0, 0)
@@ -275,11 +259,11 @@ class FloatingBoard(ui.Window):
 		self.MakeBorder(1, 1, BOARD_WIDTH-2, BOARD_HEIGHT-2, self.colors["inner_border"])
 		self.MakeBorder(0, 0, BOARD_WIDTH, BOARD_HEIGHT, self.colors["border"])
 
-		# 4. Freccia "Fumetto"
+		# 4. Freccia "Fumetto" (6 step leggeri)
 		self.arrow_parts = []
 		self.arrow_borders = []
-		base_w = 24
-		steps = 12
+		base_w = 20
+		steps = 6
 		
 		for i in xrange(steps):
 			w = base_w - (i * 2)
@@ -343,13 +327,11 @@ class FloatingBoard(ui.Window):
 		b_left = ui.Bar(); b_left.SetParent(self); b_left.SetPosition(x, y); b_left.SetSize(1, h); b_left.SetColor(color); b_left.Show()
 		b_right = ui.Bar(); b_right.SetParent(self); b_right.SetPosition(x+w-1, y); b_right.SetSize(1, h); b_right.SetColor(color); b_right.Show()
 		self.borders.extend([b_top, b_bot, b_left, b_right])
-		# Corner L-bracket ticks (8px)
-		tickLen = 8
+		# Corner ticks (4 orizzontali, leggeri)
+		tickLen = 10
 		for (cx, cy, cw, ch) in [
-			(x+1, y, tickLen, 1),     (x, y+1, 1, tickLen),         # TL
-			(x+w-1-tickLen, y, tickLen, 1), (x+w-1, y+1, 1, tickLen), # TR
-			(x+1, y+h-1, tickLen, 1), (x, y+h-1-tickLen, 1, tickLen), # BL
-			(x+w-1-tickLen, y+h-1, tickLen, 1), (x+w-1, y+h-1-tickLen, 1, tickLen), # BR
+			(x+1, y, tickLen, 1), (x+w-1-tickLen, y, tickLen, 1),     # Top
+			(x+1, y+h-1, tickLen, 1), (x+w-1-tickLen, y+h-1, tickLen, 1), # Bot
 		]:
 			ct = ui.Bar(); ct.SetParent(self); ct.SetPosition(cx, cy); ct.SetSize(cw, ch)
 			ct.SetColor(color); ct.AddFlag("not_pick"); ct.Show()
@@ -550,9 +532,9 @@ class InfoBoard(ui.Window):
 		self.AddFlag("movable")
 		self.AddFlag("float")
 
-		# 1. Background gradiente (14 step, alpha alta F8)
+		# 1. Background gradiente (4 step leggeri)
 		self.bg_layers = []
-		steps = 14
+		steps = 4
 		step_h = float(HEIGHT) / steps
 
 		c_top = self.colors["bg_top"]
@@ -577,27 +559,7 @@ class InfoBoard(ui.Window):
 			lines.Show()
 			self.bg_layers.append(lines)
 
-		# 2. Inner depth layer
-		bgInner = ui.Bar()
-		bgInner.SetParent(self)
-		bgInner.SetPosition(5, 3)
-		bgInner.SetSize(WIDTH - 10, HEIGHT - 6)
-		bgInner.SetColor(0x0A080820)
-		bgInner.AddFlag("not_pick")
-		bgInner.Show()
-		self.bg_layers.append(bgInner)
-
-		# 3. Top highlight
-		topHL = ui.Bar()
-		topHL.SetParent(self)
-		topHL.SetPosition(5, 1)
-		topHL.SetSize(WIDTH - 10, 10)
-		topHL.SetColor(0x0EFFFFFF)
-		topHL.AddFlag("not_pick")
-		topHL.Show()
-		self.bg_layers.append(topHL)
-
-		# 4. Accent bar sinistra (5px)
+		# 2. Accent bar sinistra (4px)
 		accentL = ui.Bar()
 		accentL.SetParent(self)
 		accentL.SetPosition(0, 0)
@@ -669,13 +631,11 @@ class InfoBoard(ui.Window):
 		b_left = ui.Bar(); b_left.SetParent(self); b_left.SetPosition(x, y); b_left.SetSize(1, h); b_left.SetColor(color); b_left.Show()
 		b_right = ui.Bar(); b_right.SetParent(self); b_right.SetPosition(x+w-1, y); b_right.SetSize(1, h); b_right.SetColor(color); b_right.Show()
 		self.bg_layers.extend([b_top, b_bot, b_left, b_right])
-		# Corner L-bracket ticks (10px per popup)
-		tickLen = 10
+		# Corner ticks (4 orizzontali, puliti)
+		tickLen = 12
 		for (cx, cy, cw, ch) in [
-			(x+1, y, tickLen, 1),     (x, y+1, 1, tickLen),
-			(x+w-1-tickLen, y, tickLen, 1), (x+w-1, y+1, 1, tickLen),
-			(x+1, y+h-1, tickLen, 1), (x, y+h-1-tickLen, 1, tickLen),
-			(x+w-1-tickLen, y+h-1, tickLen, 1), (x+w-1, y+h-1-tickLen, 1, tickLen),
+			(x+1, y, tickLen, 1), (x+w-1-tickLen, y, tickLen, 1),
+			(x+1, y+h-1, tickLen, 1), (x+w-1-tickLen, y+h-1, tickLen, 1),
 		]:
 			ct = ui.Bar(); ct.SetParent(self); ct.SetPosition(cx, cy); ct.SetSize(cw, ch)
 			ct.SetColor(color); ct.AddFlag("not_pick"); ct.Show()

@@ -7,6 +7,8 @@ import app
 import grp
 import math
 
+from hunter_components import _DimColor, _BrightenColor
+
 # ==============================================================================
 # HUNTER ENTITY FLOATING BOARD SYSTEM
 # ==============================================================================
@@ -337,7 +339,7 @@ class HunterInfoBoard(ui.Window):
 		r1, g1, b1 = (c_top >> 16) & 0xFF, (c_top >> 8) & 0xFF, c_top & 0xFF
 		r2, g2, b2 = (c_bot >> 16) & 0xFF, (c_bot >> 8) & 0xFF, c_bot & 0xFF
 		
-		steps = 12
+		steps = 4
 		step_h = float(H) / steps
 		for i in xrange(steps):
 			bar = ui.Bar()
@@ -405,14 +407,12 @@ class HunterInfoBoard(ui.Window):
 			b.AddFlag("not_pick")
 			b.Show()
 			self._parts.append(b)
-		# Corner ticks decorativi (L-brackets stile Solo Leveling)
-		tickLen = 8
+		# Corner ticks (4 orizzontali, leggeri)
+		tickLen = 10
 		colorDim = (color & 0x00FFFFFF) | 0x66000000
 		for (cx, cy, cw, ch) in [
-			(x + 1, y, tickLen, 1), (x, y + 1, 1, tickLen),
-			(x + w - tickLen - 1, y, tickLen, 1), (x + w - 1, y + 1, 1, tickLen),
-			(x + 1, y + h - 1, tickLen, 1), (x, y + h - tickLen - 1, 1, tickLen),
-			(x + w - tickLen - 1, y + h - 1, tickLen, 1), (x + w - 1, y + h - tickLen - 1, 1, tickLen),
+			(x + 1, y, tickLen, 1), (x + w - tickLen - 1, y, tickLen, 1),
+			(x + 1, y + h - 1, tickLen, 1), (x + w - tickLen - 1, y + h - 1, tickLen, 1),
 		]:
 			ct = ui.Bar(); ct.SetParent(self); ct.SetPosition(cx, cy); ct.SetSize(cw, ch); ct.SetColor(colorDim); ct.AddFlag("not_pick"); ct.Show()
 			self._parts.append(ct)
@@ -517,9 +517,9 @@ class HunterFloatingBoard(ui.Window):
 		self._AddBar(0, 0, tick, 2, tickC, self.deco_bars)
 		self._AddBar(W - tick, 0, tick, 2, tickC, self.deco_bars)
 
-		# === BG gradient (body sotto header) – più passi = più morbido ===
+		# === BG gradient (body sotto header) – 4 step leggeri ===
 		body_h = H - HEADER_H
-		steps = 16
+		steps = 4
 		for i in xrange(steps):
 			y0 = HEADER_H + int(float(i) / steps * body_h)
 			y1 = HEADER_H + int(float(i + 1) / steps * body_h)
@@ -580,11 +580,11 @@ class HunterFloatingBoard(ui.Window):
 		self._AddBar(5, ny2, ns, ns, bc, self.deco_bars)
 		self._AddBar(W - 5 - ns, ny2, ns, ns, bc, self.deco_bars)
 		
-		# === Separatore: trattini energetici ===
+		# === Separatore: trattini energetici (4, più puliti) ===
 		sep_y = HEADER_H + int(body_h * 0.38)
-		dash_n = 7
-		dash_w = 6
-		dash_gap = 5
+		dash_n = 4
+		dash_w = 10
+		dash_gap = 8
 		total_w = dash_n * (dash_w + dash_gap) - dash_gap
 		dx = (W - total_w) / 2
 		for d in xrange(dash_n):
@@ -637,9 +637,9 @@ class HunterFloatingBoard(ui.Window):
 		bc = self.colors["border"]
 		ic = self.colors["inner_border"]
 		
-		# === BG gradient (area interna tra le barre frame) ===
+		# === BG gradient (area interna tra le barre frame) - 4 step leggeri ===
 		inner_h = H - 2 * FRAME
-		steps = 10
+		steps = 4
 		for i in xrange(steps):
 			y0 = FRAME + int(float(i) / steps * inner_h)
 			y1 = FRAME + int(float(i + 1) / steps * inner_h)
@@ -693,14 +693,8 @@ class HunterFloatingBoard(ui.Window):
 		self._AddBar(sep_margin, sep_y, cx - sep_margin - gem_s - 3, 1, ic, self.deco_bars)
 		self._AddBar(cx + gem_s + 3, sep_y, cx - sep_margin - gem_s - 3, 1, ic, self.deco_bars)
 		
-		# Gemma grande (diamante 10px, visibile)
-		gy = sep_y - gem_s
-		for gj in xrange(gem_s):
-			gw = 2 * (gj + 1)
-			self._AddBar(cx - gj - 1, gy + gj, gw, 1, bc, self.deco_bars)
-		for gj in xrange(gem_s):
-			gw = 2 * (gem_s - gj)
-			self._AddBar(cx - (gem_s - gj) + 1, gy + gem_s + gj, gw, 1, bc, self.deco_bars)
+		# Gemma compatta (diamante 3px, leggero ma visibile)
+		self._AddBar(cx - 1, sep_y - 2, 3, 3, bc, self.deco_bars)
 		
 		# === Pendente sotto la board (clasp/lucchetto) ===
 		self._AddBar(cx - 1, H, 3, 6, bc, self.arrow_borders)

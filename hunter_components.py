@@ -856,6 +856,260 @@ class SystemPopup(ui.Window):
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
+#  FRAME BUILDER HELPERS - Riduce drasticamente il numero di ui.Bar() per finestra
+#  Ogni finestra usava 20-50 barre individuali. Ora ne usa 8-12.
+# ═══════════════════════════════════════════════════════════════════════════════
+
+def BuildFrame(parent, w, h, borderColor, cornerLen=10):
+    """
+    Costruisce un frame completo Solo Leveling style con elementi minimi.
+    Ritorna un dict con tutti gli elementi per aggiornamento colori successivo.
+
+    Elementi creati: bg(1) + borders(4) + corners(4) + accent(1) = 10 totali
+    vs i precedenti 20-40 per finestra.
+    """
+    frame = {"bars": [], "corners": []}
+
+    # Background scuro profondo
+    bg = ui.Bar()
+    bg.SetParent(parent)
+    bg.SetPosition(0, 0)
+    bg.SetSize(w, h)
+    bg.SetColor(0xF0030310)
+    bg.AddFlag("not_pick")
+    bg.Show()
+    frame["bg"] = bg
+
+    # Bordi: top(2px) + left(2px) brillanti, bottom(1px) + right(1px) attenuati
+    dimColor = _DimColor(borderColor, 0.5)
+
+    bTop = ui.Bar(); bTop.SetParent(parent); bTop.SetPosition(0, 0); bTop.SetSize(w, 2); bTop.SetColor(borderColor); bTop.AddFlag("not_pick"); bTop.Show()
+    bBot = ui.Bar(); bBot.SetParent(parent); bBot.SetPosition(0, h-1); bBot.SetSize(w, 1); bBot.SetColor(dimColor); bBot.AddFlag("not_pick"); bBot.Show()
+    bLeft = ui.Bar(); bLeft.SetParent(parent); bLeft.SetPosition(0, 0); bLeft.SetSize(2, h); bLeft.SetColor(borderColor); bLeft.AddFlag("not_pick"); bLeft.Show()
+    bRight = ui.Bar(); bRight.SetParent(parent); bRight.SetPosition(w-1, 0); bRight.SetSize(1, h); bRight.SetColor(dimColor); bRight.AddFlag("not_pick"); bRight.Show()
+    frame["borders"] = [bTop, bBot, bLeft, bRight]
+
+    # Left accent bar (3px, colore pieno - signature Solo Leveling)
+    accent = ui.Bar()
+    accent.SetParent(parent)
+    accent.SetPosition(0, 2)
+    accent.SetSize(3, h - 3)
+    accent.SetColor(borderColor)
+    accent.AddFlag("not_pick")
+    accent.Show()
+    frame["accent"] = accent
+
+    # Corner L-brackets (solo 4 angoli, puliti e precisi)
+    cL = cornerLen
+    cornerDim = _DimColor(borderColor, 0.6)
+    for (cx, cy, cw, ch) in [
+        (3, 2, cL, 1), (w-cL-1, 2, cL, 1),       # Top-L, Top-R
+        (3, h-2, cL, 1), (w-cL-1, h-2, cL, 1),    # Bot-L, Bot-R
+    ]:
+        ct = ui.Bar(); ct.SetParent(parent); ct.SetPosition(cx, cy); ct.SetSize(cw, ch); ct.SetColor(cornerDim); ct.AddFlag("not_pick"); ct.Show()
+        frame["corners"].append(ct)
+
+    return frame
+
+
+def BuildFrameWithHeader(parent, w, h, borderColor, headerText, headerH=24, cornerLen=10):
+    """
+    Frame completo + header bar con titolo.
+    Ritorna frame dict + headerBg + headerLabel.
+    """
+    frame = BuildFrame(parent, w, h, borderColor, cornerLen)
+
+    # Header background
+    hBg = ui.Bar()
+    hBg.SetParent(parent)
+    hBg.SetPosition(2, 2)
+    hBg.SetSize(w - 3, headerH)
+    hBg.SetColor(_DimColor(borderColor, 0.15) | 0xAA000000)
+    hBg.AddFlag("not_pick")
+    hBg.Show()
+    frame["headerBg"] = hBg
+
+    # Header text
+    hText = ui.TextLine()
+    hText.SetParent(parent)
+    hText.SetPosition(w // 2, (headerH - 14) // 2 + 2)
+    hText.SetHorizontalAlignCenter()
+    hText.SetText(headerText)
+    hText.SetPackedFontColor(borderColor)
+    hText.SetOutline()
+    hText.AddFlag("not_pick")
+    hText.Show()
+    frame["headerText"] = hText
+
+    # Separator sotto header
+    sep = ui.Bar()
+    sep.SetParent(parent)
+    sep.SetPosition(6, headerH + 3)
+    sep.SetSize(w - 12, 1)
+    sep.SetColor(_DimColor(borderColor, 0.3))
+    sep.AddFlag("not_pick")
+    sep.Show()
+    frame["headerSep"] = sep
+
+    return frame
+
+
+def UpdateFrameColors(frame, borderColor):
+    """Aggiorna tutti i colori di un frame costruito con BuildFrame."""
+    dimColor = _DimColor(borderColor, 0.5)
+    cornerDim = _DimColor(borderColor, 0.6)
+
+    if "borders" in frame:
+        borders = frame["borders"]
+        if len(borders) == 4:
+            borders[0].SetColor(borderColor)   # Top
+            borders[1].SetColor(dimColor)       # Bottom
+            borders[2].SetColor(borderColor)    # Left
+            borders[3].SetColor(dimColor)       # Right
+
+    if "accent" in frame:
+        frame["accent"].SetColor(borderColor)
+
+    if "corners" in frame:
+        for ct in frame["corners"]:
+            ct.SetColor(cornerDim)
+
+    if "headerBg" in frame:
+        frame["headerBg"].SetColor(_DimColor(borderColor, 0.15) | 0xAA000000)
+
+    if "headerText" in frame:
+        frame["headerText"].SetPackedFontColor(borderColor)
+
+    if "headerSep" in frame:
+        frame["headerSep"].SetColor(_DimColor(borderColor, 0.3))
+
+
+def BuildProgressBar(parent, x, y, w, h, barColor):
+    """
+    Progress bar compatta Solo Leveling style.
+    Ritorna dict con bg, fill, text per aggiornamento.
+    Solo 3 elementi vs i precedenti 12+.
+    """
+    bar = {}
+
+    # Background
+    bg = ui.Bar()
+    bg.SetParent(parent)
+    bg.SetPosition(x, y)
+    bg.SetSize(w, h)
+    bg.SetColor(0xFF060614)
+    bg.AddFlag("not_pick")
+    bg.Show()
+    bar["bg"] = bg
+
+    # Fill
+    fill = ui.Bar()
+    fill.SetParent(parent)
+    fill.SetPosition(x + 1, y + 1)
+    fill.SetSize(0, h - 2)
+    fill.SetColor(barColor)
+    fill.AddFlag("not_pick")
+    fill.Show()
+    bar["fill"] = fill
+
+    # Text overlay
+    text = ui.TextLine()
+    text.SetParent(parent)
+    text.SetPosition(x + w // 2, y + (h - 14) // 2)
+    text.SetHorizontalAlignCenter()
+    text.SetText("")
+    text.SetPackedFontColor(0xFFEEEEFF)
+    text.SetOutline()
+    text.AddFlag("not_pick")
+    text.Show()
+    bar["text"] = text
+
+    bar["width"] = w - 2
+    bar["color"] = barColor
+    return bar
+
+
+def UpdateProgressBar(bar, current, maximum, showText=True):
+    """Aggiorna fill e testo di una progress bar."""
+    if maximum > 0:
+        ratio = min(1.0, float(current) / float(maximum))
+    else:
+        ratio = 0.0
+    fillW = int(bar["width"] * ratio)
+    bar["fill"].SetSize(max(0, fillW), bar["fill"].GetHeight() if hasattr(bar["fill"], 'GetHeight') else 18)
+    if showText:
+        bar["text"].SetText("%d / %d" % (int(current), int(maximum)))
+
+
+def BuildSectionLabel(parent, x, y, text, color):
+    """Crea una label di sezione stile Solo Leveling (testo + lineetta)."""
+    label = ui.TextLine()
+    label.SetParent(parent)
+    label.SetPosition(x, y)
+    label.SetText(text)
+    label.SetPackedFontColor(color)
+    label.AddFlag("not_pick")
+    label.Show()
+    return label
+
+
+def BuildValueRow(parent, x, y, w, labelText, valueText, labelColor=0xFF888899, valueColor=0xFFFFFFFF):
+    """Crea una riga label: valore (label a sinistra, valore allineato a destra)."""
+    row = {}
+
+    label = ui.TextLine()
+    label.SetParent(parent)
+    label.SetPosition(x, y)
+    label.SetText(labelText)
+    label.SetPackedFontColor(labelColor)
+    label.AddFlag("not_pick")
+    label.Show()
+    row["label"] = label
+
+    value = ui.TextLine()
+    value.SetParent(parent)
+    value.SetPosition(x + w, y)
+    value.SetHorizontalAlignRight()
+    value.SetText(valueText)
+    value.SetPackedFontColor(valueColor)
+    value.SetOutline()
+    value.AddFlag("not_pick")
+    value.Show()
+    row["value"] = value
+
+    return row
+
+
+def _DimColor(color, factor):
+    """Attenua un colore mantenendo l'alpha a 0xFF."""
+    r = int(((color >> 16) & 0xFF) * factor)
+    g = int(((color >> 8) & 0xFF) * factor)
+    b = int((color & 0xFF) * factor)
+    return 0xFF000000 | (min(255, r) << 16) | (min(255, g) << 8) | min(255, b)
+
+
+def _BrightenColor(color, amount):
+    """Schiarisce un colore aggiungendo un valore fisso a R,G,B."""
+    r = min(255, ((color >> 16) & 0xFF) + amount)
+    g = min(255, ((color >> 8) & 0xFF) + amount)
+    b = min(255, (color & 0xFF) + amount)
+    return 0xFF000000 | (r << 16) | (g << 8) | b
+
+
+def PulseBorderColor(borderColor, phase, intensity=0.3):
+    """Calcola colore pulsante per bordi. Ritorna il colore modulato."""
+    pulse = (math.sin(phase) + 1.0) / 2.0
+    r = ((borderColor >> 16) & 0xFF)
+    g = ((borderColor >> 8) & 0xFF)
+    b = (borderColor & 0xFF)
+    factor = (1.0 - intensity) + (pulse * intensity)
+    r = min(255, int(r * factor))
+    g = min(255, int(g * factor))
+    b = min(255, int(b * factor))
+    return 0xFF000000 | (r << 16) | (g << 8) | b
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
 #  GLOBAL POPUP INSTANCE
 # ═══════════════════════════════════════════════════════════════════════════════
 g_systemPopup = None

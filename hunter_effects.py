@@ -35,103 +35,51 @@ class BossAlertWindow(ui.Window):
         self.barHeight = 130
         self.barY = (self.screenHeight - self.barHeight) // 2
 
-        # Layer 1: Glow esterno ultra-ampio (2x altezza – alone spettacolare)
+        # Glow esterno (alone unico, più leggero)
         self.glowOuter = ui.Bar()
         self.glowOuter.SetParent(self)
-        self.glowOuter.SetPosition(0, self.barY - 50)
-        self.glowOuter.SetSize(self.screenWidth, self.barHeight + 100)
-        self.glowOuter.SetColor(0x10FF0000)
+        self.glowOuter.SetPosition(0, self.barY - 30)
+        self.glowOuter.SetSize(self.screenWidth, self.barHeight + 60)
+        self.glowOuter.SetColor(0x18FF0000)
         self.glowOuter.AddFlag("not_pick")
         self.glowOuter.Show()
 
-        # Layer 2: Glow medio
-        self.glowMiddle = ui.Bar()
-        self.glowMiddle.SetParent(self)
-        self.glowMiddle.SetPosition(0, self.barY - 25)
-        self.glowMiddle.SetSize(self.screenWidth, self.barHeight + 50)
-        self.glowMiddle.SetColor(0x20FF0000)
-        self.glowMiddle.AddFlag("not_pick")
-        self.glowMiddle.Show()
-
-        # Layer 3: Barra principale (più intensa)
+        # Barra principale
         self.mainBar = ui.Bar()
         self.mainBar.SetParent(self)
         self.mainBar.SetPosition(0, self.barY)
         self.mainBar.SetSize(self.screenWidth, self.barHeight)
-        self.mainBar.SetColor(0x95FF0000)
+        self.mainBar.SetColor(0x88FF0000)
         self.mainBar.AddFlag("not_pick")
         self.mainBar.Show()
 
-        # Highlight superiore della barra (effetto depth)
-        self.barHL = ui.Bar()
-        self.barHL.SetParent(self)
-        self.barHL.SetPosition(0, self.barY)
-        self.barHL.SetSize(self.screenWidth, 20)
-        self.barHL.SetColor(0x18FFFFFF)
-        self.barHL.AddFlag("not_pick")
-        self.barHL.Show()
-
-        # Linee NEON superiori (3px + 5px glow)
+        # Linee NEON superiori/inferiori (2 soli bordi neon, più puliti)
         self.neonTop = ui.Bar()
         self.neonTop.SetParent(self)
-        self.neonTop.SetPosition(0, self.barY - 3)
-        self.neonTop.SetSize(self.screenWidth, 6)
-        self.neonTop.SetColor(0xFFFF1111)
+        self.neonTop.SetPosition(0, self.barY - 2)
+        self.neonTop.SetSize(self.screenWidth, 4)
+        self.neonTop.SetColor(0xEEFF1111)
         self.neonTop.AddFlag("not_pick")
         self.neonTop.Show()
 
-        self.neonTopGlow = ui.Bar()
-        self.neonTopGlow.SetParent(self)
-        self.neonTopGlow.SetPosition(0, self.barY - 10)
-        self.neonTopGlow.SetSize(self.screenWidth, 7)
-        self.neonTopGlow.SetColor(0x55FF4444)
-        self.neonTopGlow.AddFlag("not_pick")
-        self.neonTopGlow.Show()
-
-        # Linee NEON inferiori
         self.neonBottom = ui.Bar()
         self.neonBottom.SetParent(self)
-        self.neonBottom.SetPosition(0, self.barY + self.barHeight - 3)
-        self.neonBottom.SetSize(self.screenWidth, 6)
-        self.neonBottom.SetColor(0xFFFF1111)
+        self.neonBottom.SetPosition(0, self.barY + self.barHeight - 2)
+        self.neonBottom.SetSize(self.screenWidth, 4)
+        self.neonBottom.SetColor(0xEEFF1111)
         self.neonBottom.AddFlag("not_pick")
         self.neonBottom.Show()
 
-        self.neonBottomGlow = ui.Bar()
-        self.neonBottomGlow.SetParent(self)
-        self.neonBottomGlow.SetPosition(0, self.barY + self.barHeight + 3)
-        self.neonBottomGlow.SetSize(self.screenWidth, 7)
-        self.neonBottomGlow.SetColor(0x55FF4444)
-        self.neonBottomGlow.AddFlag("not_pick")
-        self.neonBottomGlow.Show()
-
-        # Accent laterali (barre verticali sx/dx)
-        self.accentLeft = ui.Bar()
-        self.accentLeft.SetParent(self)
-        self.accentLeft.SetPosition(0, self.barY)
-        self.accentLeft.SetSize(8, self.barHeight)
-        self.accentLeft.SetColor(0x55FF0000)
-        self.accentLeft.AddFlag("not_pick")
-        self.accentLeft.Show()
-
-        self.accentRight = ui.Bar()
-        self.accentRight.SetParent(self)
-        self.accentRight.SetPosition(self.screenWidth - 8, self.barY)
-        self.accentRight.SetSize(8, self.barHeight)
-        self.accentRight.SetColor(0x55FF0000)
-        self.accentRight.AddFlag("not_pick")
-        self.accentRight.Show()
-
-        # Linea separatrice centrale più lunga e visibile
+        # Linea separatrice centrale
         self.sepLine = ui.Bar()
         self.sepLine.SetParent(self)
-        self.sepLine.SetPosition(self.screenWidth // 2 - 160, self.barY + 68)
-        self.sepLine.SetSize(320, 1)
+        self.sepLine.SetPosition(self.screenWidth // 2 - 180, self.barY + 68)
+        self.sepLine.SetSize(360, 1)
         self.sepLine.SetColor(0x66FF4444)
         self.sepLine.AddFlag("not_pick")
         self.sepLine.Show()
 
-        # Slow scanline (singola riga che scorre lentamente nella barra - NON epilettico)
+        # Scanline lenta (riga sottile che scorre)
         self.scanLine = ui.Bar()
         self.scanLine.SetParent(self)
         self.scanLine.SetPosition(0, self.barY)
@@ -187,75 +135,40 @@ class BossAlertWindow(ui.Window):
         self.Hide()
     
     def __BuildCorners(self):
-        """Crea angoli decorativi stile Solo Leveling"""
+        """Crea angoli decorativi stile Solo Leveling (4 L-brackets puliti)"""
         goldColor = 0xFFFFD700
-        
-        # Top-Left
-        self.cornerTL = ui.Bar()
-        self.cornerTL.SetParent(self); self.cornerTL.SetPosition(50, self.barY - 3)
-        self.cornerTL.SetSize(80, 6); self.cornerTL.SetColor(goldColor)
-        self.cornerTL.AddFlag("not_pick"); self.cornerTL.Show()
-        
-        self.cornerTLv = ui.Bar()
-        self.cornerTLv.SetParent(self); self.cornerTLv.SetPosition(50, self.barY - 3)
-        self.cornerTLv.SetSize(6, 40); self.cornerTLv.SetColor(goldColor)
-        self.cornerTLv.AddFlag("not_pick"); self.cornerTLv.Show()
-        
-        # Top-Right
-        self.cornerTR = ui.Bar()
-        self.cornerTR.SetParent(self); self.cornerTR.SetPosition(self.screenWidth - 130, self.barY - 3)
-        self.cornerTR.SetSize(80, 6); self.cornerTR.SetColor(goldColor)
-        self.cornerTR.AddFlag("not_pick"); self.cornerTR.Show()
-        
-        self.cornerTRv = ui.Bar()
-        self.cornerTRv.SetParent(self); self.cornerTRv.SetPosition(self.screenWidth - 56, self.barY - 3)
-        self.cornerTRv.SetSize(6, 40); self.cornerTRv.SetColor(goldColor)
-        self.cornerTRv.AddFlag("not_pick"); self.cornerTRv.Show()
-        
-        # Bottom-Left
-        self.cornerBL = ui.Bar()
-        self.cornerBL.SetParent(self); self.cornerBL.SetPosition(50, self.barY + self.barHeight - 3)
-        self.cornerBL.SetSize(80, 6); self.cornerBL.SetColor(goldColor)
-        self.cornerBL.AddFlag("not_pick"); self.cornerBL.Show()
-        
-        self.cornerBLv = ui.Bar()
-        self.cornerBLv.SetParent(self); self.cornerBLv.SetPosition(50, self.barY + self.barHeight - 37)
-        self.cornerBLv.SetSize(6, 40); self.cornerBLv.SetColor(goldColor)
-        self.cornerBLv.AddFlag("not_pick"); self.cornerBLv.Show()
-        
-        # Bottom-Right
-        self.cornerBR = ui.Bar()
-        self.cornerBR.SetParent(self); self.cornerBR.SetPosition(self.screenWidth - 130, self.barY + self.barHeight - 3)
-        self.cornerBR.SetSize(80, 6); self.cornerBR.SetColor(goldColor)
-        self.cornerBR.AddFlag("not_pick"); self.cornerBR.Show()
-        
-        self.cornerBRv = ui.Bar()
-        self.cornerBRv.SetParent(self); self.cornerBRv.SetPosition(self.screenWidth - 56, self.barY + self.barHeight - 37)
-        self.cornerBRv.SetSize(6, 40); self.cornerBRv.SetColor(goldColor)
-        self.cornerBRv.AddFlag("not_pick"); self.cornerBRv.Show()
+        self.cornerBars = []
+        cLen = 60
+        cThick = 4
+        for (cx, cy, cw, ch) in [
+            # Top-Left L
+            (50, self.barY - 2, cLen, cThick), (50, self.barY - 2, cThick, 30),
+            # Top-Right L
+            (self.screenWidth - 50 - cLen, self.barY - 2, cLen, cThick), (self.screenWidth - 50 - cThick, self.barY - 2, cThick, 30),
+            # Bottom-Left L
+            (50, self.barY + self.barHeight - 2, cLen, cThick), (50, self.barY + self.barHeight - 28, cThick, 30),
+            # Bottom-Right L
+            (self.screenWidth - 50 - cLen, self.barY + self.barHeight - 2, cLen, cThick), (self.screenWidth - 50 - cThick, self.barY + self.barHeight - 28, cThick, 30),
+        ]:
+            b = ui.Bar()
+            b.SetParent(self); b.SetPosition(cx, cy); b.SetSize(cw, ch)
+            b.SetColor(goldColor); b.AddFlag("not_pick"); b.Show()
+            self.cornerBars.append(b)
     
     def Destroy(self):
         """Pulizia memoria - Distrugge tutti gli oggetti UI figli"""
         self.glowOuter = None
-        self.glowMiddle = None
         self.mainBar = None
         self.neonTop = None
-        self.neonTopGlow = None
         self.neonBottom = None
-        self.neonBottomGlow = None
         self.alertText = None
         self.subText = None
         self.bossName = None
-        self.cornerTL = None
-        self.cornerTLv = None
-        self.cornerTR = None
-        self.cornerTRv = None
-        self.cornerBL = None
-        self.cornerBLv = None
-        self.cornerBR = None
-        self.cornerBRv = None
-        self.accentLeft = None
-        self.accentRight = None
+        if hasattr(self, 'cornerBars') and self.cornerBars:
+            for b in self.cornerBars:
+                if b:
+                    b.Hide()
+            self.cornerBars = []
         self.sepLine = None
         self.scanLine = None
         self.responseText = None
@@ -290,40 +203,27 @@ class BossAlertWindow(ui.Window):
             return
 
         # Pulse LENTO (0.5 Hz - epilepsy safe, variazione minima)
-        pulse = (math.sin(currentTime * 1.0) + 1.0) / 2.0  # ~0.5 Hz
+        pulse = (math.sin(currentTime * 1.0) + 1.0) / 2.0
 
         # Layer principali
-        mainAlpha = int(0x77 + pulse * 0x2A)
-        glowOuterAlpha = int(0x12 + pulse * 0x12)
-        glowMiddleAlpha = int(0x22 + pulse * 0x20)
+        mainAlpha = int(0x70 + pulse * 0x28)
+        glowAlpha = int(0x14 + pulse * 0x10)
         self.mainBar.SetColor((mainAlpha << 24) | 0x00FF0000)
-        self.glowOuter.SetColor((glowOuterAlpha << 24) | 0x00FF0000)
-        self.glowMiddle.SetColor((glowMiddleAlpha << 24) | 0x00FF0000)
+        self.glowOuter.SetColor((glowAlpha << 24) | 0x00FF0000)
 
         # Neon - variazione leggera
         neonAlpha = int(0xCC + pulse * 0x22)
         self.neonTop.SetColor((neonAlpha << 24) | 0x00FF0000)
         self.neonBottom.SetColor((neonAlpha << 24) | 0x00FF0000)
 
-        # Testo stabile
-        self.alertText.SetPackedFontColor(0xFFFFFFFF)
-        self.subText.SetPackedFontColor(0xFFFF5555)
-
         # Angoli dorati (pulsazione lenta)
-        goldPulse = int(pulse * 70) + 180
-        goldColor = 0x00FFD700 | (goldPulse << 24)
-        self.cornerTL.SetColor(goldColor); self.cornerTLv.SetColor(goldColor)
-        self.cornerTR.SetColor(goldColor); self.cornerTRv.SetColor(goldColor)
-        self.cornerBL.SetColor(goldColor); self.cornerBLv.SetColor(goldColor)
-        self.cornerBR.SetColor(goldColor); self.cornerBRv.SetColor(goldColor)
+        goldAlpha = int(180 + pulse * 70)
+        goldColor = (goldAlpha << 24) | 0x00FFD700
+        if hasattr(self, 'cornerBars'):
+            for b in self.cornerBars:
+                b.SetColor(goldColor)
 
-        # Accenti laterali (pulsano con il ritmo principale)
-        if self.accentLeft is not None:
-            accentAlpha = int(0x30 + pulse * 0x30)
-            self.accentLeft.SetColor((accentAlpha << 24) | 0x00FF0000)
-            self.accentRight.SetColor((accentAlpha << 24) | 0x00FF0000)
-
-        # Scanline lenta (attraversa la barra in ~6s - assolutamente non epilettica)
+        # Scanline lenta
         if self.scanLine is not None:
             scanY = self.barY + int((currentTime * 20) % self.barHeight)
             self.scanLine.SetPosition(0, scanY)
@@ -550,9 +450,9 @@ class AwakeningEffect(ui.Window):
         self.flash.AddFlag("not_pick")
         self.flash.Show()
 
-        # Scan lines
+        # Scan lines (3 linee, più pulite)
         self.scanLines = []
-        for i in range(5):
+        for i in range(3):
             line = ui.Bar()
             line.SetParent(self)
             line.SetSize(self.screenWidth, 2)
@@ -562,9 +462,9 @@ class AwakeningEffect(ui.Window):
             line.Show()
             self.scanLines.append(line)
 
-        # Anelli energia
+        # Anelli energia (3, più drammatici)
         self.rings = []
-        for i in range(5):
+        for i in range(3):
             ring = ui.Bar()
             ring.SetParent(self)
             ring.SetSize(10, 10)
@@ -841,7 +741,7 @@ class AwakeningEffect(ui.Window):
             self.flash.SetColor(0x00000000)
             
             for i, line in enumerate(self.scanLines):
-                lineStart = 0.3 + i * 0.15
+                lineStart = 0.3 + i * 0.25
                 if elapsed >= lineStart:
                     lineProgress = min(1.0, (elapsed - lineStart) / 0.5)
                     yPos = int(lineProgress * self.screenHeight)
@@ -868,12 +768,12 @@ class AwakeningEffect(ui.Window):
         # FASE 3: Anelli energia (0.8 - 2.5s)
         if elapsed >= 0.8 and elapsed < 2.5:
             for i, ring in enumerate(self.rings):
-                ringStart = 0.8 + i * 0.25
+                ringStart = 0.8 + i * 0.35
                 if elapsed >= ringStart:
                     ringProgress = min(1.0, (elapsed - ringStart) / 0.8)
-                    ringSize = int(50 + ringProgress * 280)
+                    ringSize = int(60 + ringProgress * 300)
                     if effect == "monarch":
-                        ringSize = int(80 + ringProgress * 400)
+                        ringSize = int(90 + ringProgress * 420)
                     
                     ring.SetSize(ringSize, ringSize)
                     ring.SetPosition(
@@ -1003,9 +903,9 @@ class RankUpEffect(ui.Window):
         self.lineBottom.AddFlag("not_pick")
         self.lineBottom.Show()
 
-        # Anelli
+        # Anelli (4, più impattanti)
         self.rings = []
-        for i in range(7):
+        for i in range(4):
             ring = ui.Bar()
             ring.SetParent(self)
             ring.SetSize(10, 10)
@@ -1253,12 +1153,12 @@ class RankUpEffect(ui.Window):
         # FASE 3: Anelli
         if elapsed >= 1.0 and elapsed < 3.5:
             for i, ring in enumerate(self.rings):
-                ringStart = 1.0 + i * 0.2
+                ringStart = 1.0 + i * 0.3
                 if elapsed >= ringStart:
                     ringProgress = min(1.0, (elapsed - ringStart) / 1.0)
-                    ringSize = int(60 + ringProgress * 350)
+                    ringSize = int(70 + ringProgress * 380)
                     if isMonarch:
-                        ringSize = int(100 + ringProgress * 500)
+                        ringSize = int(110 + ringProgress * 520)
                     
                     ring.SetSize(ringSize, ringSize)
                     ring.SetPosition(

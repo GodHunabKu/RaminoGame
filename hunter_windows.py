@@ -21,7 +21,11 @@ from hunter_core import (
     FormatTime
 )
 from hunter_components import (
-    SoloLevelingWindow, SystemButton, AnimatedProgressBar
+    SoloLevelingWindow, SystemButton, AnimatedProgressBar,
+    BuildFrame, BuildFrameWithHeader, UpdateFrameColors,
+    BuildProgressBar, UpdateProgressBar,
+    BuildSectionLabel, BuildValueRow,
+    _DimColor, _BrightenColor, PulseBorderColor
 )
 
 
@@ -191,94 +195,12 @@ class SystemMessageWindow(ui.Window, DraggableMixin):
         self.currentMessage = None
         self.messageDelay = 4.0
 
-        # Sfondo principale profondo – quasi nero con sfumatura blu
-        self.bg = ui.Bar()
-        self.bg.SetParent(self)
-        self.bg.SetPosition(0, 0)
-        self.bg.SetSize(500, 60)
-        self.bg.SetColor(0xF2040412)
-        self.bg.Show()
-
-        # Inner bg (layer profondità interna)
-        self.innerBg = ui.Bar()
-        self.innerBg.SetParent(self)
-        self.innerBg.SetPosition(6, 2)
-        self.innerBg.SetSize(488, 56)
-        self.innerBg.SetColor(0x0C040410)
-        self.innerBg.AddFlag("not_pick")
-        self.innerBg.Show()
-
-        # Top highlight
-        self.topHL = ui.Bar()
-        self.topHL.SetParent(self)
-        self.topHL.SetPosition(8, 3)
-        self.topHL.SetSize(484, 1)
-        self.topHL.SetColor(0x18FFFFFF)
-        self.topHL.AddFlag("not_pick")
-        self.topHL.Show()
-
-        # Bordi
-        self.borders = []
-        color = 0xFF00AAFF
-        # Top (2px spesso)
-        b1 = ui.Bar(); b1.SetParent(self); b1.SetPosition(0, 0); b1.SetSize(500, 2); b1.SetColor(color); b1.Show()
-        self.borders.append(b1)
-        # Bottom (1px sottile)
-        b2 = ui.Bar(); b2.SetParent(self); b2.SetPosition(0, 59); b2.SetSize(500, 1); b2.SetColor((color & 0x00FFFFFF) | 0x55000000); b2.Show()
-        self.borders.append(b2)
-        # Left (2px)
-        b3 = ui.Bar(); b3.SetParent(self); b3.SetPosition(0, 0); b3.SetSize(2, 60); b3.SetColor(color); b3.Show()
-        self.borders.append(b3)
-        # Right (1px sottile)
-        b4 = ui.Bar(); b4.SetParent(self); b4.SetPosition(499, 0); b4.SetSize(1, 60); b4.SetColor((color & 0x00FFFFFF) | 0x44000000); b4.Show()
-        self.borders.append(b4)
-
-        # Left accent bar (spessa barra neon sx – iconica)
-        self.leftAccent = ui.Bar()
-        self.leftAccent.SetParent(self)
-        self.leftAccent.SetPosition(2, 2)
-        self.leftAccent.SetSize(6, 56)
-        self.leftAccent.SetColor(color)
-        self.leftAccent.AddFlag("not_pick")
-        self.leftAccent.Show()
-
-        # Corner ticks DOPPI – outer brillanti, inner attenuati
-        tickOuter = 12
-        tickInner = 6
-        self.cornerTicks = []
-        self.cornerTicksInner = []
-        # Outer brackets
-        for (cx, cy, cw, ch) in [
-            (6, 0, tickOuter, 1), (0, 2, 1, tickOuter),                     # TL
-            (500 - tickOuter - 6, 0, tickOuter, 1), (499, 2, 1, tickOuter), # TR
-            (6, 59, tickOuter, 1), (0, 60 - tickOuter - 2, 1, tickOuter),   # BL
-            (500 - tickOuter - 6, 59, tickOuter, 1), (499, 60 - tickOuter - 2, 1, tickOuter), # BR
-        ]:
-            ct = ui.Bar(); ct.SetParent(self); ct.SetPosition(cx, cy); ct.SetSize(cw, ch); ct.SetColor(color); ct.AddFlag("not_pick"); ct.Show()
-            self.cornerTicks.append(ct)
-        # Inner brackets (attenuati)
-        innerColor = (color & 0x00FFFFFF) | 0x55000000
-        for (cx, cy, cw, ch) in [
-            (9, 3, tickInner, 1), (3, 5, 1, tickInner),
-            (500 - tickInner - 9, 3, tickInner, 1), (496, 5, 1, tickInner),
-            (9, 56, tickInner, 1), (3, 60 - tickInner - 5, 1, tickInner),
-            (500 - tickInner - 9, 56, tickInner, 1), (496, 60 - tickInner - 5, 1, tickInner),
-        ]:
-            ct = ui.Bar(); ct.SetParent(self); ct.SetPosition(cx, cy); ct.SetSize(cw, ch); ct.SetColor(innerColor); ct.AddFlag("not_pick"); ct.Show()
-            self.cornerTicksInner.append(ct)
-
-        # Label sistema in alto a sinistra
-        self.sysLabel = ui.TextLine()
-        self.sysLabel.SetParent(self)
-        self.sysLabel.SetPosition(16, 3)
-        self.sysLabel.SetText("[ SYSTEM ]")
-        self.sysLabel.SetPackedFontColor((color & 0x00FFFFFF) | 0x88000000)
-        self.sysLabel.AddFlag("not_pick")
-        self.sysLabel.Show()
+        # Frame completo con header via helper (10 bar vs 24 precedenti)
+        self._frame = BuildFrameWithHeader(self, 500, 60, 0xFF00AAFF, "[ SYSTEM ]", 18, 14)
 
         self.text = ui.TextLine()
         self.text.SetParent(self)
-        self.text.SetPosition(255, 21)
+        self.text.SetPosition(255, 28)
         self.text.SetHorizontalAlignCenter()
         self.text.SetPackedFontColor(0xFF00AAFF)
         self.text.SetOutline()
@@ -288,25 +210,8 @@ class SystemMessageWindow(ui.Window, DraggableMixin):
 
     def __UpdateColors(self, color):
         self.currentColor = color
-        colorDim = (color & 0x00FFFFFF) | 0x55000000
-        colorFaint = (color & 0x00FFFFFF) | 0x44000000
-        # Bordi: top/left brillanti, bottom/right attenuati
-        if hasattr(self, 'borders') and len(self.borders) == 4:
-            self.borders[0].SetColor(color)
-            self.borders[1].SetColor(colorDim)
-            self.borders[2].SetColor(color)
-            self.borders[3].SetColor(colorFaint)
+        UpdateFrameColors(self._frame, color)
         self.text.SetPackedFontColor(color)
-        if hasattr(self, 'leftAccent'):
-            self.leftAccent.SetColor(color)
-        if hasattr(self, 'cornerTicks'):
-            for ct in self.cornerTicks:
-                ct.SetColor(color)
-        if hasattr(self, 'cornerTicksInner'):
-            for ct in self.cornerTicksInner:
-                ct.SetColor(colorDim)
-        if hasattr(self, 'sysLabel'):
-            self.sysLabel.SetPackedFontColor(colorDim)
 
     def ShowMessage(self, msg, color=None):
         """Aggiungi messaggio alla coda"""
