@@ -1059,10 +1059,22 @@ class GameWindow(ui.ScriptWindow):
 	if app.RENEWAL_DEAD_PACKET:
 		def OnGameOver(self, d_time):
 			self.CloseTargetBoard()
+			# Auto-stop tutte le modalita' caccia su morte
+			try:
+				import autohunt
+				autohunt.ForceStopAll()
+			except:
+				pass
 			self.OpenRestartDialog(d_time)
 	else:
 		def OnGameOver(self):
 			self.CloseTargetBoard()
+			# Auto-stop tutte le modalita' caccia su morte
+			try:
+				import autohunt
+				autohunt.ForceStopAll()
+			except:
+				pass
 			self.OpenRestartDialog()
 
 	if app.RENEWAL_DEAD_PACKET:
@@ -2797,6 +2809,7 @@ class GameWindow(ui.ScriptWindow):
 		serverCommandList["HunterChestShopItems"] = self.__HunterChestShopItems
 		serverCommandList["HunterShopRefresh"]   = self.__HunterShopRefresh
 		serverCommandList["HunterAchievements"]  = self.__HunterAchievements
+		serverCommandList["HunterAchievementsMore"] = self.__HunterAchievementsMore
 		serverCommandList["HunterAchievementClaimed"] = self.__HunterAchievementClaimed
 		serverCommandList["HunterCalendar"]      = self.__HunterCalendar
 		serverCommandList["HunterActiveEvent"]   = self.__HunterActiveEvent
@@ -2855,6 +2868,7 @@ class GameWindow(ui.ScriptWindow):
 		serverCommandList["HunterChestItem"]     = self.__HunterChestItem
 		serverCommandList["HunterPartyChest"]    = self.__HunterPartyChest
 		serverCommandList["HunterChestSpawn"]    = self.__HunterChestSpawn
+		serverCommandList["HunterChestPreview"]  = self.__HunterChestPreview
 
 		# Fracture Portal Preview (nuova UI immersiva)
 		serverCommandList["HunterFracturePortal"] = self.__HunterFracturePortal
@@ -2904,6 +2918,7 @@ class GameWindow(ui.ScriptWindow):
 			"closebotcontrol" : self.CloseBotControl,
 			"botcontrolname" : self.UpdateBotControlRealName,
 			"botcontrolrof" : self.UpdateBotControlRof,
+			"botcontrolnonce" : self.UpdateBotControlNonce,
 		})
 
 		# Auto Hunt License & Occupied & Dungeon
@@ -3836,12 +3851,15 @@ class GameWindow(ui.ScriptWindow):
 
 	def UpdateBotControlRealName(self, name):
 		if self.interface and hasattr(self.interface, 'wndBotControl') and self.interface.wndBotControl:
-			chat.AppendChat(1, "{}".format(name))
 			self.interface.wndBotControl.SetRealItemName(str(name))
 
 	def UpdateBotControlRof(self, rof):
 		if self.interface and hasattr(self.interface, 'wndBotControl') and self.interface.wndBotControl:
 			self.interface.wndBotControl.SetROF(int(rof))
+
+	def UpdateBotControlNonce(self, nonce):
+		if self.interface and hasattr(self.interface, 'wndBotControl') and self.interface.wndBotControl:
+			self.interface.wndBotControl.SetNonce(int(nonce))
 
 	def CloseBotControl(self):
 		if self.interface and hasattr(self.interface, 'wndBotControl') and self.interface.wndBotControl:
@@ -4068,6 +4086,38 @@ class GameWindow(ui.ScriptWindow):
 		except Exception as e:
 			import dbg
 			dbg.TraceError("__HunterAchievements error: " + str(e))
+
+	def __HunterAchievementsMore(self, dataStr):
+		"""FIX 04/03/2026: Pacchetto aggiuntivo achievements - append ai dati esistenti"""
+		try:
+			if not dataStr or dataStr == "EMPTY":
+				return
+			moreList = []
+			entries = dataStr.split(";")
+			for entry in entries:
+				if entry:
+					parts = entry.split(",")
+					if len(parts) >= 7:
+						ach = {
+							"id": int(parts[0]),
+							"name": parts[1].replace("+", " "),
+							"type": int(parts[2]),
+							"requirement": int(parts[3]),
+							"progress": int(parts[4]),
+							"unlocked": int(parts[5]) == 1,
+							"claimed": int(parts[6]) == 1
+						}
+						if len(parts) >= 11:
+							ach["reward_vnum"] = int(parts[7])
+							ach["reward_count"] = int(parts[8])
+							ach["reward_yang_vnum"] = int(parts[9])
+							ach["reward_yang_count"] = int(parts[10])
+						moreList.append(ach)
+			wnd = uihunterlevel.GetHunterLevelWindow()
+			if wnd: wnd.AppendAchievements(moreList)
+		except Exception as e:
+			import dbg
+			dbg.TraceError("__HunterAchievementsMore error: " + str(e))
 
 	def __HunterAchievementClaimed(self, achId):
 		"""Chiamato quando un achievement viene riscosso - richiede refresh UI e aggiorna pagina"""
@@ -4603,6 +4653,16 @@ class GameWindow(ui.ScriptWindow):
 		except Exception as e:
 			import dbg
 			dbg.TraceError("__HunterChestSpawn error: " + str(e))
+
+	def __HunterChestPreview(self, data):
+		"""Anteprima contenuto scrigno: NAME|TIER|GMIN|GMAX|IVNUM|IQTY|ICHANCE|LOOTDATA"""
+		try:
+			wnd = uihunterlevel.GetHunterLevelWindow()
+			if wnd:
+				wnd.ShowChestPreview(data)
+		except Exception as e:
+			import dbg
+			dbg.TraceError("__HunterChestPreview error: " + str(e))
 
 	def __HunterFracturePortal(self, data):
 		"""

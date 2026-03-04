@@ -12,7 +12,7 @@ import math
 import player  # Per GetMainCharacterPosition
 
 from hunter_core import (
-    DraggableMixin,
+    DraggableMixin, WINDOW_POSITIONS,
     SaveWindowPosition, GetWindowPosition, HasSavedPosition,
     GetDefaultPosition, ResetAllWindowPositions, ResetWindowPosition,
     COLOR_BG_DARK, COLOR_TEXT_NORMAL, COLOR_TEXT_MUTED,
@@ -157,7 +157,10 @@ class WhatIfChoiceWindow(SoloLevelingWindow, DraggableMixin):
         
     def Close(self):
         self.Hide()
-        
+
+    def OnUpdate(self):
+        self._DraggablePositionCheck()
+
     def OnKeyDown(self, key):
         if key == app.DIK_ESCAPE:
             if len(self.buttons) >= 3:
@@ -171,16 +174,17 @@ class WhatIfChoiceWindow(SoloLevelingWindow, DraggableMixin):
 # ═══════════════════════════════════════════════════════════════════════════════
 #  SYSTEM MESSAGE WINDOW - Messaggi di sistema con coda
 # ═══════════════════════════════════════════════════════════════════════════════
-class SystemMessageWindow(ui.Window):
-    """Messaggio di sistema con colori dinamici e coda messaggi"""
+class SystemMessageWindow(ui.Window, DraggableMixin):
+    """Messaggio di sistema con colori dinamici e coda messaggi.
+    FIX 04/03/2026: Aggiunto DraggableMixin per salvare posizione durante sessione."""
     
     def __init__(self):
         ui.Window.__init__(self)
         self.SetSize(500, 60)
         screenWidth = wndMgr.GetScreenWidth()
-        self.SetPosition((screenWidth - 500) // 2, 180)
-        self.AddFlag("not_pick")
-        self.AddFlag("float")
+        defaultX = (screenWidth - 500) // 2
+        defaultY = 180
+        self.InitDraggable("SystemMessageWindow", defaultX, defaultY)
 
         self.currentColor = 0xFF00AAFF
         self.messageQueue = []
@@ -306,8 +310,7 @@ class SystemMessageWindow(ui.Window):
 
     def ShowMessage(self, msg, color=None):
         """Aggiungi messaggio alla coda"""
-        screenWidth = wndMgr.GetScreenWidth()
-        self.SetPosition((screenWidth - 500) // 2, 180)
+        # FIX 04/03/2026: Rimosso SetPosition forzato — la posizione e' gestita da DraggableMixin
 
         finalColor = self.currentColor
         if color:
@@ -347,6 +350,7 @@ class SystemMessageWindow(ui.Window):
         self.__UpdateColors(color)
 
     def OnUpdate(self):
+        self._DraggablePositionCheck()
         if self.endTime > 0 and app.GetTime() > self.endTime:
             self.Hide()
             self.endTime = 0
@@ -787,6 +791,7 @@ class EmergencyQuestWindow(ui.Window, DraggableMixin):
         self.endTime = app.GetTime() + 4.0
 
     def OnUpdate(self):
+        self._DraggablePositionCheck()
         if self.endTime > 0:
             left = self.endTime - app.GetTime()
             if left <= 0:
@@ -971,6 +976,7 @@ class EventStatusWindow(ui.Window, DraggableMixin):
         self.labelText.SetPackedFontColor(color)
     
     def OnUpdate(self):
+        self._DraggablePositionCheck()
         if not self.IsShow():
             return
         
@@ -1313,6 +1319,7 @@ class RivalTrackerWindow(ui.Window, DraggableMixin):
         self.SetTop()
         
     def OnUpdate(self):
+        self._DraggablePositionCheck()
         if self.endTime > 0:
             remaining = self.endTime - app.GetTime()
             if remaining <= 0:
@@ -1546,6 +1553,7 @@ class OvertakeWindow(ui.Window, DraggableMixin):
         self.SetTop()
     
     def OnUpdate(self):
+        self._DraggablePositionCheck()
         if self.endTime == 0:
             return
         
@@ -2224,6 +2232,12 @@ class FractureDefenseWindow(ui.Window, DraggableMixin):
         self.zeroTimeStart = 0
 
         if success:
+            # FIX 03/03: Mostra il conteggio finale COMPLETO prima di chiudere
+            if self.mobsRequired > 0:
+                self.progressText.SetText("%d / %d - COMPLETATO!" % (self.mobsRequired, self.mobsRequired))
+                self.progressBarFill.SetSize(378, 18)
+                self.progressBarGlow.SetSize(378, 6)
+                self.progressBarFill.SetColor(0xFF00FF44)
             self.statusText.SetText("DIFESA COMPLETATA!")
             self.statusText.SetPackedFontColor(0xFF00FF44)
             self.statusSubText.SetText("Tocca il portale per aprire la frattura!")
@@ -2261,6 +2275,7 @@ class FractureDefenseWindow(ui.Window, DraggableMixin):
         self.Hide()
 
     def OnUpdate(self):
+        self._DraggablePositionCheck()
         if not self.IsShow():
             return
 
@@ -2661,6 +2676,7 @@ class SpeedKillTimerWindow(ui.Window, DraggableMixin):
         self.Hide()
 
     def OnUpdate(self):
+        self._DraggablePositionCheck()
         if not self.IsShow():
             return
 
@@ -2864,6 +2880,7 @@ class HunterTipsWindow(ui.Window, DraggableMixin):
         self.Hide()
 
     def OnUpdate(self):
+        self._DraggablePositionCheck()
         if not self.IsShow():
             return
 
@@ -3165,6 +3182,7 @@ class HunterNotificationWindow(ui.Window, DraggableMixin):
         self.Hide()
 
     def OnUpdate(self):
+        self._DraggablePositionCheck()
         if not self.IsShow():
             return
 
@@ -3779,6 +3797,7 @@ class SupremoChallengeWindow(ui.Window, DraggableMixin):
         self.warningText.Show()
     
     def OnUpdate(self):
+        self._DraggablePositionCheck()
         if self.endTime > 0:
             now = app.GetTime()
             if now >= self.endTime:
@@ -4258,12 +4277,17 @@ class GloryDetailWindow(ui.Window, DraggableMixin):
         self.borders[3].SetPosition(self.PANEL_WIDTH - 2, 0)
         self.borders[3].SetSize(2, totalH)                 # right
 
-        # Posizione: centro schermo (o salvata se spostata manualmente)
+        # FIX 04/03/2026: Posizione salvata via DraggableMixin (RAM + file).
+        # Usa la posizione in WINDOW_POSITIONS se disponibile (aggiornata anche da
+        # _DraggablePositionCheck in OnUpdate), altrimenti centro schermo.
         screenW = wndMgr.GetScreenWidth()
         screenH = wndMgr.GetScreenHeight()
         defX = (screenW - self.PANEL_WIDTH) // 2
         defY = (screenH - totalH) // 2
-        if HasSavedPosition("GloryDetail"):
+        savedPos = WINDOW_POSITIONS.get("GloryDetail")
+        if savedPos:
+            defX, defY = savedPos[0], savedPos[1]
+        elif HasSavedPosition("GloryDetail"):
             defX, defY = GetWindowPosition("GloryDetail", defX, defY)
         self.SetPosition(defX, defY)
 
@@ -4286,6 +4310,7 @@ class GloryDetailWindow(ui.Window, DraggableMixin):
         self.SetTop()
 
     def OnUpdate(self):
+        self._DraggablePositionCheck()
         if not self.isShowing:
             return
         now = app.GetTime()

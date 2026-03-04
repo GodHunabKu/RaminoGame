@@ -406,7 +406,11 @@ def FormatTime(seconds):
 class DraggableMixin:
     """
     Mixin che aggiunge funzionalità di drag a qualsiasi finestra.
-    Memorizza automaticamente la posizione durante la sessione.
+    Memorizza automaticamente la posizione durante la sessione (RAM + file).
+    
+    FIX 04/03/2026: Rimosso OnMouseDrag custom che conflittava con il flag "movable"
+    del motore Metin2. Ora il motore gestisce il drag pixel-by-pixel, e Python
+    salva la posizione finale su mouse-up + backup periodico in OnUpdate.
     
     Uso:
         class MyWindow(ui.Window, DraggableMixin):
@@ -418,11 +422,10 @@ class DraggableMixin:
     def InitDraggable(self, windowName, defaultX=None, defaultY=None):
         """Inizializza il sistema di drag per questa finestra"""
         self.windowName = windowName
-        self.isDragging = False
-        self.dragOffsetX = 0
-        self.dragOffsetY = 0
+        self._drag_prevX = 0
+        self._drag_prevY = 0
         
-        # Imposta flag movable e float
+        # Imposta flag movable e float - il MOTORE gestisce il drag
         if hasattr(self, 'AddFlag'):
             self.AddFlag("movable")
             self.AddFlag("float")
@@ -431,41 +434,33 @@ class DraggableMixin:
         if defaultX is not None and defaultY is not None:
             savedX, savedY = GetWindowPosition(windowName, defaultX, defaultY)
             self.SetPosition(savedX, savedY)
-    
-    def OnMouseLeftButtonDown(self):
-        """Inizia il drag"""
-        self.isDragging = True
-        mouseX, mouseY = wndMgr.GetMousePosition()
-        winX, winY = self.GetGlobalPosition()
-        self.dragOffsetX = mouseX - winX
-        self.dragOffsetY = mouseY - winY
-        return True
+            self._drag_prevX = savedX
+            self._drag_prevY = savedY
     
     def OnMouseLeftButtonUp(self):
-        """Termina il drag e salva la posizione"""
-        if self.isDragging:
-            self.isDragging = False
+        """Salva posizione dopo drag (il motore ha gia' spostato la finestra)"""
+        try:
             x, y = self.GetGlobalPosition()
-            SaveWindowPosition(self.windowName, x, y)
+            if x != self._drag_prevX or y != self._drag_prevY:
+                SaveWindowPosition(self.windowName, x, y)
+                self._drag_prevX = x
+                self._drag_prevY = y
+        except:
+            pass
         return True
     
-    def OnMouseDrag(self, x, y):
-        """Gestisce il movimento durante il drag"""
-        if self.isDragging:
-            mouseX, mouseY = wndMgr.GetMousePosition()
-            newX = mouseX - self.dragOffsetX
-            newY = mouseY - self.dragOffsetY
-            
-            # Limita alla schermata
-            screenW = wndMgr.GetScreenWidth()
-            screenH = wndMgr.GetScreenHeight()
-            winW, winH = self.GetWidth(), self.GetHeight()
-            
-            newX = max(0, min(newX, screenW - winW))
-            newY = max(0, min(newY, screenH - winH))
-            
-            self.SetPosition(newX, newY)
-        return True
+    def _DraggablePositionCheck(self):
+        """Backup: controlla e salva posizione se cambiata (chiamare da OnUpdate).
+        Salva solo in RAM per evitare I/O ogni frame. Il file viene aggiornato
+        da SaveWindowPosition su mouse-up."""
+        try:
+            x, y = self.GetGlobalPosition()
+            if x != self._drag_prevX or y != self._drag_prevY:
+                self._drag_prevX = x
+                self._drag_prevY = y
+                WINDOW_POSITIONS[self.windowName] = (x, y)
+        except:
+            pass
     
     def RestorePosition(self):
         """Ripristina la posizione salvata"""
@@ -473,6 +468,8 @@ class DraggableMixin:
             pos = WINDOW_POSITIONS.get(self.windowName)
             if pos:
                 self.SetPosition(pos[0], pos[1])
+                self._drag_prevX = pos[0]
+                self._drag_prevY = pos[1]
 
 
 # ═══════════════════════════════════════════════════════════════════════════════

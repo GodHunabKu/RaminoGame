@@ -50,6 +50,7 @@ from hunter_components import SoloLevelingButton
 WINDOW_WIDTH = 500
 WINDOW_HEIGHT = 540  # Leggermente piu' alto per effetti
 CONTENT_HEIGHT = 310
+CONTENT_VISIBLE_H = CONTENT_HEIGHT - 10  # Actual visible panel height (clip threshold)
 HEADER_HEIGHT = 100
 TAB_HEIGHT = 30
 FOOTER_HEIGHT = 38
@@ -456,6 +457,9 @@ class HunterLevelWindow(ui.ScriptWindow):
         
         self.systemMsgWnd = None
         self.emergencyWnd = None
+        self._chestPreviewPopup = None
+        self._chestPreviewElements = []
+        self._chestPreviewCloseTime = 0
         self.whatIfWnd = None
         self.rivalWnd = None
         
@@ -1347,6 +1351,7 @@ class HunterLevelWindow(ui.ScriptWindow):
         self.contentPanel.SetParent(self.baseWindow)
         self.contentPanel.SetPosition(15, contentY + 5)
         self.contentPanel.SetSize(WINDOW_WIDTH - 50, contentH - 10)
+        self.contentPanel.SetInsideRender(True)
         self.contentPanel.Show()
         self._DisableMousePick(self.contentPanel)
         
@@ -1435,7 +1440,7 @@ class HunterLevelWindow(ui.ScriptWindow):
             except:
                 pass
         self.totalContentHeight = maxY
-        if maxY > CONTENT_HEIGHT - 10:
+        if maxY > CONTENT_VISIBLE_H:
             self.scrollBar.Show()
             self.scrollBar.SetPos(0)
         else:
@@ -1444,7 +1449,7 @@ class HunterLevelWindow(ui.ScriptWindow):
         for e in self.contentElements:
             try:
                 oy = e._oy if hasattr(e, '_oy') else e.GetLocalPosition()[1]
-                if oy < -30 or oy > CONTENT_HEIGHT:
+                if oy < 0 or oy >= CONTENT_VISIBLE_H:
                     e.Hide()
             except:
                 pass
@@ -1456,7 +1461,7 @@ class HunterLevelWindow(ui.ScriptWindow):
             pos = self.scrollBar.GetPos()
         except:
             pos = 0
-        scrollH = max(0, self.totalContentHeight - (CONTENT_HEIGHT - 10))
+        scrollH = max(0, self.totalContentHeight - CONTENT_VISIBLE_H)
         off = -int(pos * scrollH)
         for e in self.contentElements:
             try:
@@ -1465,7 +1470,7 @@ class HunterLevelWindow(ui.ScriptWindow):
                 x = e.GetLocalPosition()[0]
                 ny = e._oy + off
                 e.SetPosition(x, ny)
-                if ny < -30 or ny > CONTENT_HEIGHT:
+                if ny < -20 or ny >= CONTENT_VISIBLE_H:
                     e.Hide()
                 else:
                     e.Show()
@@ -1516,7 +1521,7 @@ class HunterLevelWindow(ui.ScriptWindow):
         t.SetText(str(txt))
         t.SetPackedFontColor(col)
         t._oy = int(y)  # Salva posizione originale subito
-        if y >= -30 and y <= CONTENT_HEIGHT:
+        if y >= 0 and y < CONTENT_VISIBLE_H:
             t.Show()
         self._DisableMousePick(t)
         self.contentElements.append(t)
@@ -1529,7 +1534,7 @@ class HunterLevelWindow(ui.ScriptWindow):
         b.SetSize(int(w), int(h))
         b.SetColor(col)
         b._oy = int(y)  # Salva posizione originale subito
-        if y >= -30 and y <= CONTENT_HEIGHT:
+        if y >= 0 and y < CONTENT_VISIBLE_H:
             b.Show()
         self._DisableMousePick(b)
         self.contentElements.append(b)
@@ -1546,6 +1551,7 @@ class HunterLevelWindow(ui.ScriptWindow):
     def __CButton(self, x, y, text, callback, arg=None):
         btn = SoloLevelingButton()
         btn.Create(self.contentPanel, x, y, 80, 22, text, self.theme)
+        btn._oy = int(y)
         if arg is not None:
             btn.SetEvent(callback, arg)
         else:
@@ -1556,7 +1562,7 @@ class HunterLevelWindow(ui.ScriptWindow):
     def __CTextTip(self, txt, x, y, col, tipTitle, tipColor, tipLines, w=420, h=18):
         """Crea un testo con area hover che mostra un tooltip dettagliato.
         tipLines = lista di stringhe o tuple (testo, colore). Usa '---' per separatore."""
-        inView = (y >= -30 and y <= CONTENT_HEIGHT)
+        inView = (y >= 0 and y < CONTENT_VISIBLE_H)
         # Testo visibile
         t = ui.TextLine()
         t.SetParent(self.contentPanel)
@@ -1910,7 +1916,7 @@ class HunterLevelWindow(ui.ScriptWindow):
             img.AddFlag("not_pick")
             img.LoadImage(iconPath)
             img._oy = int(y)
-            if y >= -30 and y <= CONTENT_HEIGHT:
+            if y >= 0 and y < CONTENT_VISIBLE_H:
                 img.Show()
             self.contentElements.append(img)
             # Hover tooltip per icona
@@ -1921,7 +1927,7 @@ class HunterLevelWindow(ui.ScriptWindow):
                 hoverBar.SetSize(32, 32)
                 hoverBar.SetColor(0x00000000)
                 hoverBar._oy = int(y)
-                if y >= -30 and y <= CONTENT_HEIGHT:
+                if y >= 0 and y < CONTENT_VISIBLE_H:
                     hoverBar.Show()
                 self.contentElements.append(hoverBar)
         except:
@@ -2231,7 +2237,13 @@ class HunterLevelWindow(ui.ScriptWindow):
 
             # Nome scrigno
             self.__CText(name[:30], 54, y + 6, tierCol)
-            self.__CText("#%d" % vnum, 54, y + 22, 0xFF443355)
+
+            # Bottone Anteprima contenuto (apre ChestDropInfoWindow)
+            prevBtn = SoloLevelingButton()
+            prevBtn.Create(self.contentPanel, 54, y + 20, 80, 18, "Anteprima", self.theme)
+            prevBtn.SetEvent(ui.__mem_func__(self.__OnChestPreview), vnum)
+            prevBtn._oy = int(y + 20)
+            self.contentElements.append(prevBtn)
 
             # Righe varianti (x1, x10, x100)
             vy = y + 42
@@ -5305,6 +5317,22 @@ class HunterLevelWindow(ui.ScriptWindow):
     def __OnBuy100(self, iid):
         net.SendChatPacket("/hunter_buy %d" % (iid + 20000))
 
+    def __OnChestPreview(self, vnum):
+        """Apre la finestra Anteprima Contenuto dello scrigno."""
+        try:
+            import uiChestDropInfo
+            import constInfo
+            isMain = True
+            if not item.HasDropInfo(vnum, True):
+                isMain = False
+            constInfo.LAST_CHESTINFO_VNUM = 0
+            if not hasattr(self, '_chestDropWnd') or self._chestDropWnd is None:
+                self._chestDropWnd = uiChestDropInfo.ChestDropInfoWindow()
+            self._chestDropWnd.Open(vnum, isMain)
+        except:
+            # Fallback: usa il preview server-side se uiChestDropInfo non disponibile
+            net.SendChatPacket("/hunter_chest_preview %d" % vnum)
+
     def __OnBuyChest(self, iid):
         net.SendChatPacket("/hunter_chest_buy %d" % iid)
 
@@ -5781,9 +5809,229 @@ class HunterLevelWindow(ui.ScriptWindow):
             except:
                 pass
     
+    def ShowChestPreview(self, data):
+        """Mostra popup anteprima contenuto scrigno.
+        Formato: NAME|TIER|GMIN|GMAX|IVNUM|IQTY|ICHANCE|LOOTDATA
+        LOOTDATA = name:type:vnum:qty:gmin:gmax:pct:jp; ripetuto
+        """
+        try:
+            parts = data.split("|")
+            if len(parts) < 8:
+                return
+            
+            chestName = parts[0].replace("+", " ")
+            tier = int(parts[1])
+            gloryMin = int(parts[2])
+            gloryMax = int(parts[3])
+            itemVnum = int(parts[4])
+            itemQty = int(parts[5])
+            itemChance = int(parts[6])
+            lootRaw = parts[7]
+
+            TIER_COLORS = {
+                1: (0xFFC0C0C0, "T1 - Comune"),
+                2: (0xFF00CCFF, "T2 - Raro"),
+                3: (0xFFCC44FF, "T3 - Epico"),
+                4: (0xFFFFD700, "T4 - Leggendario"),
+            }
+            tierCol, tierLabel = TIER_COLORS.get(tier, TIER_COLORS[1])
+
+            # Costruisci righe del popup
+            lines = []
+            lines.append((chestName, tierCol))
+            lines.append((tierLabel, tierCol))
+            lines.append(("", 0))  # separator
+            lines.append(("RICOMPENSA BASE:", 0xFFFFD700))
+            lines.append(("  Gloria: %d ~ %d" % (gloryMin, gloryMax), 0xFFFFA500))
+            
+            if itemVnum > 0 and itemChance > 0:
+                iName = ""
+                try:
+                    import item
+                    item.SelectItem(itemVnum)
+                    iName = item.GetItemName()
+                except:
+                    iName = "#%d" % itemVnum
+                chancePct = "%.1f%%" % (itemChance / 100.0) if itemChance < 10000 else "100%"
+                lines.append(("  Item: %s x%d (%s)" % (iName, itemQty, chancePct), 0xFF00FF88))
+
+            # Parse jackpot loot
+            if lootRaw and lootRaw != "NONE":
+                lines.append(("", 0))  # separator
+                lines.append(("BONUS JACKPOT POSSIBILI:", 0xFFFF4444))
+                loots = lootRaw.split(";")
+                for entry in loots:
+                    if not entry:
+                        continue
+                    lp = entry.split(":")
+                    if len(lp) < 8:
+                        continue
+                    lName = lp[0].replace("+", " ")
+                    lType = lp[1]
+                    lQty = int(lp[3])
+                    lgMin = int(lp[4])
+                    lgMax = int(lp[5])
+                    lPct = lp[6]
+                    lJp = int(lp[7])
+                    
+                    jpTag = " [JACKPOT]" if lJp == 1 else ""
+                    lineCol = 0xFFFFD700 if lJp == 1 else 0xFFCCCCCC
+                    
+                    if lType == "GLORY":
+                        lines.append(("  %s: %d~%d Gloria (%s%%)%s" % (lName, lgMin, lgMax, lPct, jpTag), lineCol))
+                    else:
+                        lines.append(("  %s x%d (%s%%)%s" % (lName, lQty, lPct, jpTag), lineCol))
+
+            # === CREA POPUP WINDOW ===
+            # Distruggi precedente se esiste
+            if hasattr(self, '_chestPreviewPopup') and self._chestPreviewPopup:
+                try:
+                    self._chestPreviewPopup.Hide()
+                except:
+                    pass
+
+            lineH = 18
+            padTop = 35
+            padBot = 35
+            popW = 350
+            popH = padTop + len(lines) * lineH + padBot
+
+            popup = ui.Window()
+            popup.SetSize(popW, popH)
+            screenW = wndMgr.GetScreenWidth()
+            screenH = wndMgr.GetScreenHeight()
+            popup.SetPosition((screenW - popW) // 2, (screenH - popH) // 3)
+            popup.AddFlag("float")
+            popup.Show()
+            popup.SetTop()
+            self._chestPreviewPopup = popup
+            self._chestPreviewElements = []
+
+            # Background scuro
+            bg = ui.Bar()
+            bg.SetParent(popup)
+            bg.SetPosition(0, 0)
+            bg.SetSize(popW, popH)
+            bg.SetColor(0xF0080818)
+            bg.AddFlag("not_pick")
+            bg.Show()
+            self._chestPreviewElements.append(bg)
+
+            # Bordi tier color
+            for bx, by, bw, bh in [(0, 0, popW, 2), (0, popH - 2, popW, 2), (0, 0, 2, popH), (popW - 2, 0, 2, popH)]:
+                bd = ui.Bar()
+                bd.SetParent(popup)
+                bd.SetPosition(bx, by)
+                bd.SetSize(bw, bh)
+                bd.SetColor(tierCol)
+                bd.AddFlag("not_pick")
+                bd.Show()
+                self._chestPreviewElements.append(bd)
+
+            # Header bar
+            hdr = ui.Bar()
+            hdr.SetParent(popup)
+            hdr.SetPosition(2, 2)
+            hdr.SetSize(popW - 4, 28)
+            hdr.SetColor((tierCol & 0x00FFFFFF) | 0x44000000)
+            hdr.AddFlag("not_pick")
+            hdr.Show()
+            self._chestPreviewElements.append(hdr)
+
+            # Header title
+            ht = ui.TextLine()
+            ht.SetParent(popup)
+            ht.SetPosition(popW // 2, 7)
+            ht.SetHorizontalAlignCenter()
+            ht.SetText("ANTEPRIMA SCRIGNO")
+            ht.SetPackedFontColor(tierCol)
+            ht.SetOutline()
+            ht.AddFlag("not_pick")
+            ht.Show()
+            self._chestPreviewElements.append(ht)
+
+            # Close [X] button
+            closeBtn = ui.TextLine()
+            closeBtn.SetParent(popup)
+            closeBtn.SetPosition(popW - 18, 7)
+            closeBtn.SetText("X")
+            closeBtn.SetPackedFontColor(0xFFFF4444)
+            closeBtn.SetOutline()
+            closeBtn.Show()
+            self._chestPreviewElements.append(closeBtn)
+
+            # Close hover area
+            closeBar = ui.Bar()
+            closeBar.SetParent(popup)
+            closeBar.SetPosition(popW - 25, 2)
+            closeBar.SetSize(23, 26)
+            closeBar.SetColor(0x00000000)
+            closeBar.OnMouseLeftButtonUp = lambda: self.__CloseChestPreview()
+            closeBar.Show()
+            self._chestPreviewElements.append(closeBar)
+
+            # Content lines
+            cy = padTop
+            for txt, col in lines:
+                if not txt:  # separator
+                    sepBar = ui.Bar()
+                    sepBar.SetParent(popup)
+                    sepBar.SetPosition(10, cy + lineH // 2)
+                    sepBar.SetSize(popW - 20, 1)
+                    sepBar.SetColor(0xFF333355)
+                    sepBar.AddFlag("not_pick")
+                    sepBar.Show()
+                    self._chestPreviewElements.append(sepBar)
+                    cy += lineH
+                    continue
+                tl = ui.TextLine()
+                tl.SetParent(popup)
+                tl.SetPosition(15, cy)
+                tl.SetText(txt)
+                tl.SetPackedFontColor(col)
+                tl.AddFlag("not_pick")
+                tl.Show()
+                self._chestPreviewElements.append(tl)
+                cy += lineH
+
+            # Auto-close timer (15 secondi)
+            self._chestPreviewCloseTime = app.GetTime() + 15.0
+
+        except Exception as e:
+            import dbg
+            dbg.TraceError("ShowChestPreview error: " + str(e))
+
+    def __CloseChestPreview(self):
+        """Chiudi popup anteprima scrigno."""
+        if hasattr(self, '_chestPreviewPopup') and self._chestPreviewPopup:
+            self._chestPreviewPopup.Hide()
+            self._chestPreviewPopup = None
+        if hasattr(self, '_chestPreviewElements'):
+            for el in self._chestPreviewElements:
+                try:
+                    el.Hide()
+                except:
+                    pass
+            self._chestPreviewElements = []
+        self._chestPreviewCloseTime = 0
+
     def SetAchievements(self, d):
         self.achievementsData = d
         # Se la tab achievements è aperta, aggiorna automaticamente
+        if self.IsShow() and self.currentTab == 3:
+            self.__LoadTabContent(3)
+
+    def AppendAchievements(self, d):
+        """FIX 04/03/2026: Append dati da pacchetto aggiuntivo (multi-packet)"""
+        if not d:
+            return
+        # Evita duplicati: filtra per ID
+        existingIds = set(a.get("id", 0) for a in self.achievementsData)
+        for ach in d:
+            if ach.get("id", 0) not in existingIds:
+                self.achievementsData.append(ach)
+                existingIds.add(ach.get("id", 0))
+        # Aggiorna UI se tab aperta
         if self.IsShow() and self.currentTab == 3:
             self.__LoadTabContent(3)
     
@@ -5822,6 +6070,11 @@ class HunterLevelWindow(ui.ScriptWindow):
         if self.eventWnd:
             self.eventWnd.OnUpdate()
         
+        # Auto-close popup anteprima scrigno
+        if hasattr(self, '_chestPreviewCloseTime') and self._chestPreviewCloseTime > 0:
+            if app.GetTime() >= self._chestPreviewCloseTime:
+                self.__CloseChestPreview()
+
         ct = app.GetTime()
         dt = ct - self.lastUpdateTime
         self.lastUpdateTime = ct
@@ -5874,6 +6127,10 @@ class HunterLevelWindow(ui.ScriptWindow):
             self.__LoadTabContent(self.currentTab)
     
     def OnPressEscapeKey(self):
+        # Chiudi prima il popup anteprima se aperto
+        if hasattr(self, '_chestPreviewPopup') and self._chestPreviewPopup:
+            self.__CloseChestPreview()
+            return True
         self.Close()
         return True
 
