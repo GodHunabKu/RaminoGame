@@ -86,24 +86,6 @@ class GateEntryEffect(ui.Window):
         self.alertBox.SetColor(0xEE020210)
         self.alertBox.Hide()
 
-        # Layer interiore profondita'
-        self.alertBgInner = ui.Bar()
-        self.alertBgInner.SetParent(self.alertBox)
-        self.alertBgInner.SetPosition(6, 3)
-        self.alertBgInner.SetSize(588, 144)
-        self.alertBgInner.SetColor(0x0C080820)
-        self.alertBgInner.AddFlag("not_pick")
-        self.alertBgInner.Show()
-
-        # Striscia header superiore (effetto profondita')
-        self.alertTopStrip = ui.Bar()
-        self.alertTopStrip.SetParent(self.alertBox)
-        self.alertTopStrip.SetPosition(6, 3)
-        self.alertTopStrip.SetSize(588, 18)
-        self.alertTopStrip.SetColor(0x1800A8FF)
-        self.alertTopStrip.AddFlag("not_pick")
-        self.alertTopStrip.Show()
-
         # Bordo superiore - 3px (spesso = priorita' visiva massima)
         self.borderTop = ui.Bar()
         self.borderTop.SetParent(self.alertBox)
@@ -136,14 +118,12 @@ class GateEntryEffect(ui.Window):
         self.borderRight.SetColor(0xFF00CCFF)
         self.borderRight.Show()
 
-        # Corner ticks L-bracket (angoli decorativi - stile Solo Leveling)
+        # Corner ticks (4 orizzontali, puliti)
         self.alertCorners = []
-        tickLen = 16
+        tickLen = 18
         for (cx, cy, cw, ch) in [
-            (6, 3, tickLen, 1),   (6, 3, 1, tickLen),                          # TL H + V
-            (600-tickLen-2, 3, tickLen, 1), (598, 3, 1, tickLen),              # TR H + V
-            (6, 147, tickLen, 1), (6, 147-tickLen, 1, tickLen),                # BL H + V
-            (600-tickLen-2, 147, tickLen, 1), (598, 147-tickLen, 1, tickLen),  # BR H + V
+            (8, 3, tickLen, 1), (600-tickLen-2, 3, tickLen, 1),     # Top
+            (8, 147, tickLen, 1), (600-tickLen-2, 147, tickLen, 1), # Bottom
         ]:
             ct = ui.Bar()
             ct.SetParent(self.alertBox)
@@ -191,9 +171,9 @@ class GateEntryEffect(ui.Window):
         self.subText.SetOutline()
         self.subText.Show()
 
-        # Glitch Bars - aumentate a 22 per effetto piu' caotico
+        # Glitch Bars - 10 con dimensioni variabili per effetto caotico
         self.glitchBars = []
-        for i in xrange(22):
+        for i in xrange(10):
             b = ui.Bar()
             b.SetParent(self)
             b.SetColor(0xFFFFFFFF)
@@ -474,10 +454,10 @@ class GateVictoryEffect(ui.Window):
         self.rewardText.SetOutline()
         self.rewardText.Show()
 
-        # Particelle con colori variati: oro, bianco, ciano
+        # Particelle (14, meno ma più grandi)
         PARTICLE_COLORS = [0xFFFFD700, 0xFFFFFFFF, 0xFF00EEFF, 0xFFFFAA00, 0xFFFFEE88]
         self.particles = []
-        for i in xrange(28):
+        for i in xrange(14):
             p = ui.Bar()
             p.SetParent(self)
             sz = 3 if i % 3 == 0 else 4
@@ -873,9 +853,9 @@ class ChestOpenEffect(ui.Window):
         self.bg.SetColor(0x00000000)
         self.bg.Show()
 
-        # === GLITCH BARS (effetto interferenza) ===
+        # === GLITCH BARS (6, più grandi per stesso effetto) ===
         self.glitchBars = []
-        for i in xrange(12):
+        for i in xrange(6):
             b = ui.Bar()
             b.SetParent(self)
             b.SetColor(0xFF00A8FF)

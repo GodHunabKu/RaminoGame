@@ -339,27 +339,8 @@ class FracturePortalWindow(ui.Window):
         self.elements["border_right"].Show()
         
         # ═══════════════════════════════════════════════════════════════════
-        # LAYER 4: Inner depth layer + top highlight + accent bar sinistra
+        # LAYER 4: Left accent bar (firma Solo Leveling)
         # ═══════════════════════════════════════════════════════════════════
-        # Inner depth
-        self.elements["inner_depth"] = ui.Bar()
-        self.elements["inner_depth"].SetParent(self)
-        self.elements["inner_depth"].SetPosition(borderW, borderW)
-        self.elements["inner_depth"].SetSize(w - borderW * 2, h - borderW * 2)
-        self.elements["inner_depth"].SetColor(0x0A080820)
-        self.elements["inner_depth"].AddFlag("not_pick")
-        self.elements["inner_depth"].Show()
-
-        # Top highlight (soffio di luce in cima)
-        self.elements["top_hl"] = ui.Bar()
-        self.elements["top_hl"].SetParent(self)
-        self.elements["top_hl"].SetPosition(borderW, borderW)
-        self.elements["top_hl"].SetSize(w - borderW * 2, 12)
-        self.elements["top_hl"].SetColor(0x0EFFFFFF)
-        self.elements["top_hl"].AddFlag("not_pick")
-        self.elements["top_hl"].Show()
-
-        # Left accent bar (borderW+2 wide, full height, accent color)
         self.elements["accent_l"] = ui.Bar()
         self.elements["accent_l"].SetParent(self)
         self.elements["accent_l"].SetPosition(0, 0)
@@ -368,40 +349,18 @@ class FracturePortalWindow(ui.Window):
         self.elements["accent_l"].AddFlag("not_pick")
         self.elements["accent_l"].Show()
 
-        # Corner L-bracket ticks (outer, 16px)
-        tickLen = 16
+        # Corner L-bracket ticks (4 orizzontali, puliti)
+        tickLen = 18
         cTickColor = colors["primary"]
         for key, cx, cy, cw, ch in [
-            ("cTLH", borderW, 0, tickLen, borderW),
-            ("cTLV", 0, borderW, borderW, tickLen),
-            ("cTRH", w - borderW - tickLen, 0, tickLen, borderW),
-            ("cTRV", w - borderW, borderW, borderW, tickLen),
-            ("cBLH", borderW, h - borderW, tickLen, borderW),
-            ("cBLV", 0, h - borderW - tickLen, borderW, tickLen),
-            ("cBRH", w - borderW - tickLen, h - borderW, tickLen, borderW),
-            ("cBRV", w - borderW, h - borderW - tickLen, borderW, tickLen),
+            ("cTLH", borderW + 2, borderW, tickLen, 1),
+            ("cTRH", w - borderW - tickLen - 2, borderW, tickLen, 1),
+            ("cBLH", borderW + 2, h - borderW - 1, tickLen, 1),
+            ("cBRH", w - borderW - tickLen - 2, h - borderW - 1, tickLen, 1),
         ]:
             ct = ui.Bar(); ct.SetParent(self); ct.SetPosition(cx, cy); ct.SetSize(cw, ch)
             ct.SetColor(cTickColor); ct.AddFlag("not_pick"); ct.Show()
             self.elements[key] = ct
-
-        # Inner glow lines (top + bottom)
-        innerGlow = borderW + 2
-        self.elements["inner_glow_top"] = ui.Bar()
-        self.elements["inner_glow_top"].SetParent(self)
-        self.elements["inner_glow_top"].SetPosition(innerGlow, innerGlow)
-        self.elements["inner_glow_top"].SetSize(w - innerGlow * 2, 1)
-        self.elements["inner_glow_top"].SetColor(colors["accent"])
-        self.elements["inner_glow_top"].AddFlag("not_pick")
-        self.elements["inner_glow_top"].Show()
-
-        self.elements["inner_glow_bottom"] = ui.Bar()
-        self.elements["inner_glow_bottom"].SetParent(self)
-        self.elements["inner_glow_bottom"].SetPosition(innerGlow, h - innerGlow - 1)
-        self.elements["inner_glow_bottom"].SetSize(w - innerGlow * 2, 1)
-        self.elements["inner_glow_bottom"].SetColor(colors["accent"])
-        self.elements["inner_glow_bottom"].AddFlag("not_pick")
-        self.elements["inner_glow_bottom"].Show()
         
         # ═══════════════════════════════════════════════════════════════════
         # TITOLO FRATTURA (grande, in alto)
@@ -657,13 +616,6 @@ class FracturePortalWindow(ui.Window):
         ]
 
         for name, bx, bgCol, topCol, acCol, glCol, label, event in btnDefs:
-            # Glow sottile sotto il bottone
-            bg_glow = ui.Bar(); bg_glow.SetParent(self)
-            bg_glow.SetPosition(bx - 2, btnY - 2)
-            bg_glow.SetSize(btnW + 4, btnH + 4)
-            bg_glow.SetColor(glCol); bg_glow.AddFlag("not_pick"); bg_glow.Show()
-            self.elements["btn_%s_glow" % name] = bg_glow
-
             # Background scuro
             bg = ui.Bar(); bg.SetParent(self)
             bg.SetPosition(bx, btnY)
@@ -671,54 +623,19 @@ class FracturePortalWindow(ui.Window):
             bg.SetColor(bgCol); bg.AddFlag("not_pick"); bg.Show()
             self.elements["btn_%s_bg" % name] = bg
 
-            # Bordo top 3px colorato
+            # Bordo top 3px colorato (firma visiva)
             tb = ui.Bar(); tb.SetParent(self)
             tb.SetPosition(bx, btnY)
             tb.SetSize(btnW, 3)
             tb.SetColor(topCol); tb.AddFlag("not_pick"); tb.Show()
             self.elements["btn_%s_top" % name] = tb
 
-            # Bordo bottom dim 1px
-            bb = ui.Bar(); bb.SetParent(self)
-            bb.SetPosition(bx, btnY + btnH - 1)
-            bb.SetSize(btnW, 1)
-            bb.SetColor(acCol); bb.AddFlag("not_pick"); bb.Show()
-            self.elements["btn_%s_bot" % name] = bb
-
-            # Accent bar left 4px
+            # Accent bar left 3px
             al = ui.Bar(); al.SetParent(self)
             al.SetPosition(bx, btnY)
-            al.SetSize(4, btnH)
+            al.SetSize(3, btnH)
             al.SetColor(acCol); al.AddFlag("not_pick"); al.Show()
             self.elements["btn_%s_acc" % name] = al
-
-            # Corner TL (H tick)
-            cTLH = ui.Bar(); cTLH.SetParent(self)
-            cTLH.SetPosition(bx + 4, btnY)
-            cTLH.SetSize(10, 2)
-            cTLH.SetColor(topCol); cTLH.AddFlag("not_pick"); cTLH.Show()
-            self.elements["btn_%s_cTLH" % name] = cTLH
-
-            # Corner TL (V tick)
-            cTLV = ui.Bar(); cTLV.SetParent(self)
-            cTLV.SetPosition(bx, btnY + 3)
-            cTLV.SetSize(2, 8)
-            cTLV.SetColor(topCol); cTLV.AddFlag("not_pick"); cTLV.Show()
-            self.elements["btn_%s_cTLV" % name] = cTLV
-
-            # Corner BR (H tick)
-            cBRH = ui.Bar(); cBRH.SetParent(self)
-            cBRH.SetPosition(bx + btnW - 14, btnY + btnH - 2)
-            cBRH.SetSize(10, 2)
-            cBRH.SetColor(acCol); cBRH.AddFlag("not_pick"); cBRH.Show()
-            self.elements["btn_%s_cBRH" % name] = cBRH
-
-            # Corner BR (V tick)
-            cBRV = ui.Bar(); cBRV.SetParent(self)
-            cBRV.SetPosition(bx + btnW - 2, btnY + btnH - 11)
-            cBRV.SetSize(2, 8)
-            cBRV.SetColor(acCol); cBRV.AddFlag("not_pick"); cBRV.Show()
-            self.elements["btn_%s_cBRV" % name] = cBRV
 
             # Pulsante interattivo sopra tutto
             btn = ui.Button(); btn.SetParent(self)
